@@ -124,6 +124,7 @@ export const partners = sqliteTable(
     programId: text("program_id").notNull().references(() => programs.id),
     name: text("name").notNull(),
     email: text("email").notNull(),
+    phone: text("phone").notNull().default(""),
     status: text("status").notNull().default("ACTIVE"),
     joinedAt: text("joined_at").notNull().default(sql`CURRENT_TIMESTAMP`),
     lastActiveAt: text("last_active_at"),
@@ -149,6 +150,11 @@ export const partnerAccessLinks = sqliteTable(
 
 export const partnerProfiles = sqliteTable("partner_profiles", {
   partnerId: text("partner_id").primaryKey().references(() => partners.id),
+  firstName: text("first_name").notNull().default(""),
+  lastName: text("last_name").notNull().default(""),
+  middleName: text("middle_name").notNull().default(""),
+  instagram: text("instagram").notNull().default(""),
+  avatarObjectKey: text("avatar_object_key"),
   skillsJson: text("skills_json").notNull().default("[]"),
   industriesJson: text("industries_json").notNull().default("[]"),
   geographiesJson: text("geographies_json").notNull().default("[]"),

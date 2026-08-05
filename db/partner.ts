@@ -94,6 +94,11 @@ export async function getPartnerPortal(token: string) {
     rewards: rewardRows,
     acceptances: acceptanceRows,
     profile: {
+      firstName: profile?.firstName || partner.name.split(/\s+/)[0] || "",
+      lastName: profile?.lastName || partner.name.split(/\s+/).slice(1).join(" "),
+      middleName: profile?.middleName ?? "",
+      instagram: profile?.instagram ?? "",
+      avatarObjectKey: profile?.avatarObjectKey ?? null,
       skills: parseList(profile?.skillsJson),
       industries: parseList(profile?.industriesJson),
       geographies: parseList(profile?.geographiesJson),
