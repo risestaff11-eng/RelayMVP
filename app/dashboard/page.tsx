@@ -17,8 +17,8 @@ export default async function DashboardPage() {
   const hasProgram = programs.length > 0;
   const hasPublished = programs.some((program) => program.status === "ACTIVE");
   const progress = hasPublished ? 100 : hasProgram ? 75 : profile ? 50 : 25;
-  const nextHref = !profile ? "/dashboard/company-profile" : !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
-  const nextLabel = !profile ? "Продолжить настройку" : !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить программу";
+  const nextHref = !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
+  const nextLabel = !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить программу";
 
   return (
     <div className="dashboard-content">
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
 
           <article className="panel" style={{ marginTop: 14 }}>
             <div className="panel-header"><h2>Партнёрские программы</h2><Link href="/dashboard/programs">Открыть раздел →</Link></div>
-            {programs[0] ? <div className="dashboard-program-card"><div><span className={`program-status status-${programs[0].status.toLowerCase()}`}>● {programs[0].status === "ACTIVE" ? "Опубликована" : "Черновик"}</span><h3>{programs[0].name}</h3><p>{programs[0].missions.length} миссий · {programs[0].currency}</p></div><Link className="button button-ghost compact-button" href={`/dashboard/programs/${programs[0].id}`}>Открыть →</Link></div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Подтвердите профиль компании, затем Gemini подготовит миссии.</p><Link className="empty-link" href={profile ? "/dashboard/programs/new" : "/dashboard/company-profile"}>{profile ? "Создать программу" : "Перейти к профилю"}</Link></div></div>}
+            {programs[0] ? <div className="dashboard-program-card"><div><span className={`program-status status-${programs[0].status.toLowerCase()}`}>● {programs[0].status === "ACTIVE" ? "Опубликована" : "Черновик"}</span><h3>{programs[0].name}</h3><p>{programs[0].missions.length} миссий · {programs[0].currency}</p></div><Link className="button button-ghost compact-button" href={`/dashboard/programs/${programs[0].id}`}>Открыть →</Link></div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Создайте её сразу — AI-профиль можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать программу</Link></div></div>}
           </article>
         </div>
 

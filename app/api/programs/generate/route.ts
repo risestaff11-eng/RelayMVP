@@ -1,8 +1,8 @@
-import { count, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
-import { getConfirmedCompanyProfile } from "../../../../db/profile";
+import { getConfirmedCompanyProfile, getLatestCompanyProfile } from "../../../../db/profile";
 import { companies, missions, programs } from "../../../../db/schema";
 import { generateStructuredJson } from "../../../../lib/ai";
 import { cleanString, sameOrigin } from "../../company/_utils";
@@ -10,7 +10,6 @@ import { cleanString, sameOrigin } from "../../company/_utils";
 const MISSION_TYPES = new Set(["LEAD", "DEAL", "IMAGE", "ENGAGEMENT"]);
 const GOALS = new Set(["LEADS", "DEALS", "BRAND", "ENGAGEMENT", "MIXED"]);
 const CURRENCIES = new Set(["KZT", "RUB", "USD", "EUR"]);
-const PLAN_LIMITS: Record<string, number> = { TRIAL: 1, STARTER: 3, GROWTH: 100 };
 
 type GeneratedMission = {
   type: string;
@@ -36,9 +35,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите в аккаунт" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
-  const profile = await getConfirmedCompanyProfile(company.id);
-  if (!profile) return Response.json({ error: "Сначала подтвердите AI-профиль компании" }, { status: 409 });
-  if (company.aiTokenBalance < 1500) return Response.json({ error: "Недостаточно AI-токенов для генерации миссий" }, { status: 402 });
+  const profile = await getConfirmedCompanyProfile(company.id) ?? await getLatestCompanyProfile(company.id);
 
   try {
     const payload = (await request.json()) as Record<string, unknown>;
@@ -52,10 +49,6 @@ export async function POST(request: Request) {
     if (selectedTypes.length < 1 || selectedTypes.length > 4 || selectedTypes.some((type) => !MISSION_TYPES.has(type))) throw new Error("Выберите от одного до четырёх типов миссий");
 
     const db = getDb();
-    const existing = await db.select({ value: count() }).from(programs).where(eq(programs.companyId, company.id));
-    const planLimit = PLAN_LIMITS[company.planCode] ?? 1;
-    if ((existing[0]?.value ?? 0) >= planLimit) throw new Error(`Лимит тарифа ${company.planCode}: ${planLimit} программ. Смените тариф в настройках.`);
-
     const schema = {
       type: "object",
       additionalProperties: false,
@@ -87,21 +80,22 @@ export async function POST(request: Request) {
     };
 
     const ai = await generateStructuredJson<GeneratedProgram>({
-      systemInstruction: "Ты проектируешь честные и выполнимые миссии для внешних B2B-партнёров. Используй только подтверждённый профиль компании. Не обещай гарантированный доход, не придумывай юридические условия и не проси партнёра спамить. Для LEAD результатом должен быть квалифицированный контакт; DEAL — подтверждённая продажа; IMAGE — проверяемая публикация или кейс; ENGAGEMENT — полезное обучающее или комьюнити-действие. Вознаграждение — лишь редактируемое предложение компании. Пиши по-русски, коротко и конкретно.",
+      systemInstruction: "Ты проектируешь честные и выполнимые миссии для внешних B2B-партнёров. Используй доступные данные компании; если профиль неполный или не подтверждён, не выдумывай факты и формулируй нейтральный редактируемый черновик. Не обещай гарантированный доход, не придумывай юридические условия и не проси партнёра спамить. Для LEAD результатом должен быть квалифицированный контакт; DEAL — подтверждённая продажа; IMAGE — проверяемая публикация или кейс; ENGAGEMENT — полезное обучающее или комьюнити-действие. Вознаграждение — лишь редактируемое предложение компании. Пиши по-русски, коротко и конкретно.",
       prompt: JSON.stringify({
         task: "Создай ровно по одной миссии каждого выбранного типа. Верни их в порядке missionTypes.",
         program: { name, goal, currency, missionTypes: selectedTypes },
         company: {
           name: company.name,
           industry: company.industry,
-          businessDescription: profile.businessDescription,
-          products: profile.products,
-          targetAudience: profile.targetAudience,
-          advantages: profile.advantages,
-          buyingTriggers: profile.buyingTriggers,
-          disqualifiers: profile.disqualifiers,
-          geographies: profile.geographies,
-          partnerPitch: profile.partnerPitch,
+          profileStatus: profile?.status ?? "MISSING",
+          businessDescription: profile?.businessDescription ?? "",
+          products: profile?.products ?? [],
+          targetAudience: profile?.targetAudience ?? "",
+          advantages: profile?.advantages ?? [],
+          buyingTriggers: profile?.buyingTriggers ?? [],
+          disqualifiers: profile?.disqualifiers ?? [],
+          geographies: profile?.geographies ?? [],
+          partnerPitch: profile?.partnerPitch ?? "",
         },
       }),
       schema,
@@ -135,7 +129,7 @@ export async function POST(request: Request) {
     });
 
     await db.batch([
-      db.insert(programs).values({ id: programId, companyId: company.id, profileVersionId: profile.id, name, slug, description: cleanString(ai.data.programDescription, 1800), goal, currency, status: "DRAFT", createdAt: now, updatedAt: now }),
+      db.insert(programs).values({ id: programId, companyId: company.id, profileVersionId: profile?.id ?? null, name, slug, description: cleanString(ai.data.programDescription, 1800), goal, currency, status: "DRAFT", createdAt: now, updatedAt: now }),
       db.insert(missions).values(missionRows),
       db.update(companies).set({ aiTokenBalance: Math.max(0, company.aiTokenBalance - ai.totalTokens), aiTokensUsed: company.aiTokensUsed + ai.totalTokens, onboardingStatus: "PROGRAM_DRAFT", updatedAt: now }).where(eq(companies.id, company.id)),
     ]);

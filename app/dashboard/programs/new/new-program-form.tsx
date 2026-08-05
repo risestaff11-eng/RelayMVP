@@ -11,7 +11,7 @@ const missionTypes = [
   { type: "ENGAGEMENT", title: "Вовлечение", icon: "✦", text: "Обучающие, комьюнити- и игровые задания без агрессивных продаж." },
 ];
 
-export function NewProgramForm({ companyName, tokenBalance, profileVersion }: { companyName: string; tokenBalance: number; profileVersion: number }) {
+export function NewProgramForm({ companyName, tokenBalance, profileVersion, profileStatus }: { companyName: string; tokenBalance: number; profileVersion: number | null; profileStatus: string }) {
   const router = useRouter();
   const [name, setName] = useState(`Партнёрская программа ${companyName}`);
   const [goal, setGoal] = useState("MIXED");
@@ -41,8 +41,8 @@ export function NewProgramForm({ companyName, tokenBalance, profileVersion }: { 
 
   return (
     <div className="dashboard-content module-content program-builder-page">
-      <div className="builder-back"><Link href="/dashboard/programs">← Все программы</Link><span>AI-профиль v{profileVersion} · {tokenBalance.toLocaleString("ru-RU")} токенов</span></div>
-      <div className="module-heading"><div><span className="module-kicker">НОВАЯ ПРОГРАММА · ШАГ 1 ИЗ 3</span><h1>Задайте рамки программы</h1><p>Gemini использует только подтверждённый профиль и создаст отдельный редактируемый черновик каждой выбранной миссии.</p></div></div>
+      <div className="builder-back"><Link href="/dashboard/programs">← Все программы</Link><span>{profileVersion ? `AI-профиль v${profileVersion}${profileStatus === "CONFIRMED" ? " · подтверждён" : " · черновик"}` : "AI-профиль не заполнен"} · {tokenBalance.toLocaleString("ru-RU")} токенов</span></div>
+      <div className="module-heading"><div><span className="module-kicker">НОВАЯ ПРОГРАММА · ШАГ 1 ИЗ 3</span><h1>Задайте рамки программы</h1><p>Gemini использует доступные данные компании и создаст редактируемый черновик каждой выбранной миссии. Подтверждение профиля не обязательно.</p></div></div>
       <div className="builder-stepper"><span className="active"><b>1</b>Основа</span><span><b>2</b>Миссии и награды</span><span><b>3</b>Правила и публикация</span></div>
 
       <form className="program-create-layout" onSubmit={generate}>

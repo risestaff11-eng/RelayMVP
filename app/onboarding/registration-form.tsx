@@ -34,7 +34,7 @@ export function CompanyRegistrationForm({ email }: { email: string }) {
     <form className="company-form" onSubmit={handleSubmit}>
       <div className="field field-wide">
         <label htmlFor="company-name">Название компании</label>
-        <input id="company-name" name="name" placeholder="Например, Northstar Studio" minLength={2} maxLength={80} required autoFocus />
+        <input id="company-name" name="name" placeholder="Например, Northstar Studio" minLength={2} maxLength={80} required />
       </div>
       <div className="field field-wide">
         <label htmlFor="website">Сайт компании</label>

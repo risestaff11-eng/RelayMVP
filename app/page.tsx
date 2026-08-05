@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { chatGPTSignInPath, getChatGPTUser } from "./chatgpt-auth";
 
 export const metadata: Metadata = {
@@ -17,10 +18,10 @@ export default async function Home() {
   return (
     <main className="landing-shell">
       <nav className="landing-nav" aria-label="Основная навигация">
-        <a className="brand" href="/" aria-label="Relay — главная">
+        <Link className="brand" href="/" aria-label="Relay — главная">
           <span className="brand-mark">R</span>
           <span>Relay</span>
-        </a>
+        </Link>
         <div className="landing-nav-links">
           <a href="#how">Как работает</a>
           <a href="#missions">Миссии</a>

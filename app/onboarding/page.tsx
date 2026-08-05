@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireChatGPTUser } from "../chatgpt-auth";
 import { getCompanyForUser } from "../../db/company";
@@ -15,7 +16,7 @@ export default async function OnboardingPage() {
   return (
     <main className="auth-page">
       <aside className="auth-aside">
-        <a className="brand" href="/"><span className="brand-mark">R</span><span>Relay</span></a>
+        <Link className="brand" href="/"><span className="brand-mark">R</span><span>Relay</span></Link>
         <div className="auth-message">
           <span className="auth-kicker">ШАГ 1 ИЗ 4</span>
           <h1>Начнём с вашей компании.</h1>
