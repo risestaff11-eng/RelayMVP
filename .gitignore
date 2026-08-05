@@ -40,3 +40,4 @@ dev-server.err.log
 /.wrangler/
 /outputs/
 /work/
+*.tsbuildinfo

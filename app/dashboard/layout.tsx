@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { chatGPTSignOutPath, requireChatGPTUser } from "../chatgpt-auth";
 import { getCompanyForUser } from "../../db/company";
 import { DashboardNav } from "./_components/dashboard-nav";
@@ -17,10 +18,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <main className="dashboard-shell">
       <aside className="sidebar">
-        <a className="brand" href="/"><span className="brand-mark">R</span><span>Relay</span></a>
+        <Link className="brand" href="/"><span className="brand-mark">R</span><span>Relay</span></Link>
         <div className="sidebar-context"><small>РАБОЧЕЕ ПРОСТРАНСТВО</small><strong>{company.name}</strong></div>
         <DashboardNav />
         <div className="sidebar-footer">
+          <Link className="sidebar-settings-link" href="/dashboard/settings"><span>⚙</span> Настройки профиля</Link>
           <div className="sidebar-user"><span className="sidebar-avatar">{initials(user.displayName)}</span><div><strong>{user.displayName}</strong><small>{user.email}</small></div></div>
         </div>
       </aside>
@@ -28,7 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <section className="dashboard-main">
         <header className="dashboard-topbar">
           <p>Компания зарегистрирована · следующий шаг — профиль бизнеса</p>
-          <div className="top-actions"><span className="icon-button" aria-label="Уведомления">○</span><a className="icon-button" href={chatGPTSignOutPath("/")} aria-label="Выйти">↪</a></div>
+          <div className="top-actions"><Link className="icon-button" href="/dashboard/settings" aria-label="Настройки профиля">⚙</Link><a className="icon-button" href={chatGPTSignOutPath("/")} aria-label="Выйти">↪</a></div>
         </header>
         {children}
       </section>

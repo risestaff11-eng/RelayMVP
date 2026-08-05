@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -18,6 +18,9 @@ export const companies = sqliteTable("companies", {
   teamSize: text("team_size").notNull(),
   primaryGoal: text("primary_goal").notNull(),
   onboardingStatus: text("onboarding_status").notNull().default("COMPANY_CREATED"),
+  planCode: text("plan_code").notNull().default("TRIAL"),
+  aiTokenBalance: integer("ai_token_balance").notNull().default(100000),
+  aiTokensUsed: integer("ai_tokens_used").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
@@ -47,4 +50,34 @@ export const programs = sqliteTable(
     updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [index("idx_programs_company_id").on(table.companyId)],
+);
+
+export const companyProfileVersions = sqliteTable(
+  "company_profile_versions",
+  {
+    id: text("id").primaryKey(),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    versionNumber: integer("version_number").notNull(),
+    sourceWebsite: text("source_website").notNull(),
+    status: text("status").notNull().default("DRAFT"),
+    businessDescription: text("business_description").notNull().default(""),
+    productsJson: text("products_json").notNull().default("[]"),
+    targetAudience: text("target_audience").notNull().default(""),
+    advantagesJson: text("advantages_json").notNull().default("[]"),
+    buyingTriggersJson: text("buying_triggers_json").notNull().default("[]"),
+    disqualifiersJson: text("disqualifiers_json").notNull().default("[]"),
+    geographiesJson: text("geographies_json").notNull().default("[]"),
+    partnerPitch: text("partner_pitch").notNull().default(""),
+    missingFieldsJson: text("missing_fields_json").notNull().default("[]"),
+    model: text("model").notNull(),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    confirmedAt: text("confirmed_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("idx_company_profile_versions_company_version").on(table.companyId, table.versionNumber),
+    index("idx_company_profile_versions_company_status").on(table.companyId, table.status),
+  ],
 );

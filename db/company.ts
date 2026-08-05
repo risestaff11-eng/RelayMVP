@@ -13,6 +13,9 @@ export async function getCompanyForUser(userId: string) {
       teamSize: companies.teamSize,
       primaryGoal: companies.primaryGoal,
       onboardingStatus: companies.onboardingStatus,
+      planCode: companies.planCode,
+      aiTokenBalance: companies.aiTokenBalance,
+      aiTokensUsed: companies.aiTokensUsed,
       role: companyMembers.role,
       createdAt: companies.createdAt,
     })
