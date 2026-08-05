@@ -18,7 +18,8 @@ test("renders the Relay landing page", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Relay/);
-  assert.match(html, /Превратите деловые связи в канал продаж/);
-  assert.match(html, /Партнёрские продажи по одной ссылке/);
+  assert.match(html, /Превратите рекомендации в управляемый канал продаж/);
+  assert.match(html, /ПЛАТФОРМА ПАРТНЁРСКИХ ПРОДАЖ/);
+  assert.match(html, /Вопросы до запуска/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
 });
