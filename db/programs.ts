@@ -11,6 +11,15 @@ function parseList(value: string) {
   }
 }
 
+function parsePartnerComment(value: string) {
+  try {
+    const parsed = JSON.parse(value) as { partnerComment?: unknown };
+    return typeof parsed.partnerComment === "string" ? parsed.partnerComment : "";
+  } catch {
+    return "";
+  }
+}
+
 export type MissionRecord = {
   id: string;
   type: string;
@@ -122,4 +131,26 @@ export async function getCompanyOperations(companyId: string) {
     approvedRewards: Number(approvedRewards[0]?.value ?? 0),
     paidRewards: Number(paidRewards[0]?.value ?? 0),
   };
+}
+
+export async function getSubmissionsForCompany(companyId: string) {
+  const db = getDb();
+  const rows = await db.select({ submission: submissions, partner: partners, mission: missions, program: programs })
+    .from(submissions)
+    .innerJoin(partners, eq(submissions.partnerId, partners.id))
+    .innerJoin(missions, eq(submissions.missionId, missions.id))
+    .innerJoin(programs, eq(submissions.programId, programs.id))
+    .where(eq(submissions.companyId, companyId))
+    .orderBy(desc(submissions.createdAt));
+  return rows.map((row) => ({
+    ...row.submission,
+    partnerName: row.partner.name,
+    partnerEmail: row.partner.email,
+    missionTitle: row.mission.title,
+    rewardValue: row.mission.rewardValue,
+    rewardLabel: row.mission.rewardLabel,
+    currency: row.program.currency,
+    programName: row.program.name,
+    partnerComment: parsePartnerComment(row.submission.payloadJson),
+  }));
 }

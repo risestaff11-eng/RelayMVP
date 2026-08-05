@@ -1,0 +1,7 @@
+import { notFound } from "next/navigation";
+import { getPartnerPortal } from "../../../../db/partner";
+import { SafeLink as Link } from "@/app/safe-link";
+import { AcceptMissionButton, OpportunityFilters } from "../../_components/partner-actions";
+import { typeNames } from "../../_lib";
+
+export default async function OpportunitiesPage({ params }: { params: Promise<{ token: string }> }) { const { token } = await params; const portal = await getPartnerPortal(token); if (!portal) notFound(); return <div className="partner-portal-content"><div className="partner-page-heading"><div><span>ЛЕНТА ВОЗМОЖНОСТЕЙ</span><h1>Миссии, где ваш контакт ценен</h1><p>Никаких очков за клики — только проверяемый результат, понятная награда и условия до старта.</p></div></div><OpportunityFilters companies={[portal.company.name]} currencies={[portal.program.currency]} /><section className="opportunity-grid">{portal.missions.map((mission) => <article className={`opportunity-card type-${mission.type.toLowerCase()}`} key={mission.id}><div><span>{typeNames[mission.type]}</span><small>● ДОСТУПНА</small></div><h2>{mission.title}</h2><p>{mission.description}</p><dl><div><dt>Награда</dt><dd>{mission.rewardLabel}</dd></div><div><dt>Проверка</dt><dd>{mission.verificationRules}</dd></div></dl><div className="opportunity-card-actions"><AcceptMissionButton token={token} missionId={mission.id} /><Link href={`/p/${portal.program.slug}/missions/${mission.id}/submit`}>Передать результат →</Link></div></article>)}</section></div>; }

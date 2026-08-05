@@ -134,6 +134,46 @@ export const partners = sqliteTable(
   ],
 );
 
+export const partnerAccessLinks = sqliteTable(
+  "partner_access_links",
+  {
+    id: text("id").primaryKey(),
+    partnerId: text("partner_id").notNull().references(() => partners.id),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: text("expires_at").notNull(),
+    lastUsedAt: text("last_used_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_partner_access_links_partner").on(table.partnerId)],
+);
+
+export const partnerProfiles = sqliteTable("partner_profiles", {
+  partnerId: text("partner_id").primaryKey().references(() => partners.id),
+  skillsJson: text("skills_json").notNull().default("[]"),
+  industriesJson: text("industries_json").notNull().default("[]"),
+  geographiesJson: text("geographies_json").notNull().default("[]"),
+  preferredTypesJson: text("preferred_types_json").notNull().default("[]"),
+  level: integer("level").notNull().default(1),
+  usefulActionStreak: integer("useful_action_streak").notNull().default(0),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const partnerMissionAcceptances = sqliteTable(
+  "partner_mission_acceptances",
+  {
+    id: text("id").primaryKey(),
+    partnerId: text("partner_id").notNull().references(() => partners.id),
+    missionId: text("mission_id").notNull().references(() => missions.id),
+    status: text("status").notNull().default("ACTIVE"),
+    acceptedAt: text("accepted_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    completedAt: text("completed_at"),
+  },
+  (table) => [
+    uniqueIndex("idx_partner_missions_unique").on(table.partnerId, table.missionId),
+    index("idx_partner_missions_partner_status").on(table.partnerId, table.status),
+  ],
+);
+
 export const submissions = sqliteTable(
   "submissions",
   {
@@ -159,6 +199,50 @@ export const submissions = sqliteTable(
   ],
 );
 
+export const submissionAttachments = sqliteTable(
+  "submission_attachments",
+  {
+    id: text("id").primaryKey(),
+    submissionId: text("submission_id").notNull().references(() => submissions.id),
+    objectKey: text("object_key"),
+    externalUrl: text("external_url"),
+    fileName: text("file_name").notNull(),
+    mimeType: text("mime_type").notNull().default("application/octet-stream"),
+    size: integer("size").notNull().default(0),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_submission_attachments_submission").on(table.submissionId)],
+);
+
+export const submissionStatusEvents = sqliteTable(
+  "submission_status_events",
+  {
+    id: text("id").primaryKey(),
+    submissionId: text("submission_id").notNull().references(() => submissions.id),
+    fromStatus: text("from_status"),
+    toStatus: text("to_status").notNull(),
+    actorType: text("actor_type").notNull(),
+    comment: text("comment").notNull().default(""),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_submission_events_submission_created").on(table.submissionId, table.createdAt)],
+);
+
+export const submissionDisputes = sqliteTable(
+  "submission_disputes",
+  {
+    id: text("id").primaryKey(),
+    submissionId: text("submission_id").notNull().references(() => submissions.id),
+    partnerId: text("partner_id").notNull().references(() => partners.id),
+    reason: text("reason").notNull(),
+    status: text("status").notNull().default("OPEN"),
+    resolution: text("resolution").notNull().default(""),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    resolvedAt: text("resolved_at"),
+  },
+  (table) => [index("idx_submission_disputes_submission_status").on(table.submissionId, table.status)],
+);
+
 export const rewards = sqliteTable(
   "rewards",
   {
@@ -171,6 +255,7 @@ export const rewards = sqliteTable(
     status: text("status").notNull().default("PENDING"),
     approvedAt: text("approved_at"),
     paidAt: text("paid_at"),
+    plannedAt: text("planned_at"),
     createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
     updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   },
