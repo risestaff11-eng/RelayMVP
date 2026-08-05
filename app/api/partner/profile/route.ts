@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       avatarObjectKey = nextKey;
     }
     const now = new Date().toISOString();
-    const profileValues = { firstName, lastName, middleName, instagram, avatarObjectKey, skillsJson: JSON.stringify(list(form.get("skills"))), industriesJson: JSON.stringify(list(form.get("industries"))), geographiesJson: JSON.stringify(list(form.get("geographies"))), preferredTypesJson: JSON.stringify(form.getAll("preferredTypes").map((item) => cleanString(item, 30)).filter(Boolean).slice(0, 4)), updatedAt: now };
+    const profileValues = { firstName, lastName, middleName, instagram, avatarObjectKey, skillsJson: JSON.stringify(list(form.get("skills"))), industriesJson: JSON.stringify(list(form.get("industries"))), geographiesJson: JSON.stringify(list(form.get("geographies"))), preferredTypesJson: JSON.stringify(form.getAll("preferredTypes").map((item) => cleanString(item, 30)).filter(Boolean).slice(0, 4)), ...(phone === portal.partner.phone ? {} : { whatsappVerifiedAt: null }), updatedAt: now };
     const existing = await db.select().from(partnerProfiles).where(eq(partnerProfiles.partnerId, portal.partner.id)).limit(1);
     await db.batch([
       db.update(partners).set({ name: [firstName, middleName, lastName].filter(Boolean).join(" "), email, phone, lastActiveAt: now }).where(eq(partners.id, portal.partner.id)),
@@ -47,4 +47,3 @@ export async function POST(request: Request) {
     return Response.json({ ok: true, avatarUrl: avatarObjectKey ? `/api/partner/avatar?token=${token}` : null });
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Не удалось сохранить профиль" }, { status: 400 }); }
 }
-

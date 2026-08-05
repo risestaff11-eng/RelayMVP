@@ -7,7 +7,20 @@ export const users = sqliteTable("users", {
   displayName: text("display_name").notNull(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [index("idx_users_email").on(table.email)]);
+
+export const userRoles = sqliteTable(
+  "user_roles",
+  {
+    userId: text("user_id").notNull().references(() => users.id),
+    role: text("role").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.role] }),
+    index("idx_user_roles_role").on(table.role),
+  ],
+);
 
 export const companies = sqliteTable("companies", {
   id: text("id").primaryKey(),
@@ -120,6 +133,7 @@ export const partners = sqliteTable(
   "partners",
   {
     id: text("id").primaryKey(),
+    userId: text("user_id").references(() => users.id),
     companyId: text("company_id").notNull().references(() => companies.id),
     programId: text("program_id").notNull().references(() => programs.id),
     name: text("name").notNull(),
@@ -132,7 +146,20 @@ export const partners = sqliteTable(
   (table) => [
     uniqueIndex("idx_partners_program_email").on(table.programId, table.email),
     index("idx_partners_company_status").on(table.companyId, table.status),
+    index("idx_partners_user_id").on(table.userId),
   ],
+);
+
+export const legalAcceptances = sqliteTable(
+  "legal_acceptances",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id),
+    programId: text("program_id").notNull().references(() => programs.id),
+    documentVersion: text("document_version").notNull(),
+    acceptedAt: text("accepted_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_legal_acceptances_user_program").on(table.userId, table.programId)],
 );
 
 export const partnerAccessLinks = sqliteTable(
@@ -161,8 +188,25 @@ export const partnerProfiles = sqliteTable("partner_profiles", {
   preferredTypesJson: text("preferred_types_json").notNull().default("[]"),
   level: integer("level").notNull().default(1),
   usefulActionStreak: integer("useful_action_streak").notNull().default(0),
+  emailVerifiedAt: text("email_verified_at"),
+  whatsappVerifiedAt: text("whatsapp_verified_at"),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const contactVerificationCodes = sqliteTable(
+  "contact_verification_codes",
+  {
+    id: text("id").primaryKey(),
+    partnerId: text("partner_id").notNull().references(() => partners.id),
+    channel: text("channel").notNull(),
+    destination: text("destination").notNull(),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    consumedAt: text("consumed_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_contact_verification_partner_channel").on(table.partnerId, table.channel, table.createdAt)],
+);
 
 export const partnerMissionAcceptances = sqliteTable(
   "partner_mission_acceptances",

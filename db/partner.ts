@@ -105,6 +105,8 @@ export async function getPartnerPortal(token: string) {
       preferredTypes: parseList(profile?.preferredTypesJson),
       level: profile?.level ?? 1,
       usefulActionStreak: profile?.usefulActionStreak ?? 0,
+      emailVerifiedAt: profile?.emailVerifiedAt ?? null,
+      whatsappVerifiedAt: profile?.whatsappVerifiedAt ?? null,
     },
   };
 }
