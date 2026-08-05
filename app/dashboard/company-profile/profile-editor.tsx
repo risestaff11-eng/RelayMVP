@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { SafeLink as Link } from "@/app/safe-link";
 import type { CompanyProfile } from "../../../db/profile";
 
 type FormState = {

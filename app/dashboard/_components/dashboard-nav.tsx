@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { SafeLink as Link } from "@/app/safe-link";
 
 const items = [
   { href: "/dashboard", label: "Обзор", icon: "⌂", exact: true },

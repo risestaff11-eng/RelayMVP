@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { SafeLink as Link } from "@/app/safe-link";
 import { useState } from "react";
 import type { MissionRecord, ProgramRecord } from "../../../../db/programs";
 

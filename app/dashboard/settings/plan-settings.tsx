@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { SafeLink as Link } from "@/app/safe-link";
 
 const plans = [
   { code: "TRIAL", name: "Пробный", price: "0 $", tokens: 100000, description: "Для первого AI-профиля и проверки сценария.", features: ["1 компания", "Без лимита программ в бете", "100 000 AI-токенов"] },

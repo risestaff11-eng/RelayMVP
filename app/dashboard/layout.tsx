@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { SafeLink as Link } from "@/app/safe-link";
 import { chatGPTSignOutPath, requireChatGPTUser } from "../chatgpt-auth";
 import { getCompanyForUser } from "../../db/company";
 import { DashboardNav } from "./_components/dashboard-nav";

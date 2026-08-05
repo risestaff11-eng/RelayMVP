@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { eq } from "drizzle-orm";
-import Link from "next/link";
+import { SafeLink as Link } from "@/app/safe-link";
 import { notFound } from "next/navigation";
 import { getDb } from "../../../db";
 import { getPublicProgramBySlug } from "../../../db/programs";
