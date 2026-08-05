@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getDb } from ".";
 import { companyProfileVersions } from "./schema";
 
@@ -60,6 +60,16 @@ export async function getLatestCompanyProfile(companyId: string) {
     .select()
     .from(companyProfileVersions)
     .where(eq(companyProfileVersions.companyId, companyId))
+    .orderBy(desc(companyProfileVersions.versionNumber))
+    .limit(1);
+  return rows[0] ? serializeProfile(rows[0]) : null;
+}
+
+export async function getConfirmedCompanyProfile(companyId: string) {
+  const rows = await getDb()
+    .select()
+    .from(companyProfileVersions)
+    .where(and(eq(companyProfileVersions.companyId, companyId), eq(companyProfileVersions.status, "CONFIRMED")))
     .orderBy(desc(companyProfileVersions.versionNumber))
     .limit(1);
   return rows[0] ? serializeProfile(rows[0]) : null;
