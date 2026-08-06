@@ -50,6 +50,13 @@
       "when": 1785980867355,
       "tag": "0006_cleanup_company_shadow",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1785981200000,
+      "tag": "0007_cleanup_company_shadow_retry",
+      "breakpoints": true
     }
   ]
 }
