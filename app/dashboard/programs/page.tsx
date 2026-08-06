@@ -6,7 +6,7 @@ import { getCompanyForUser } from "../../../db/company";
 import { getConfirmedCompanyProfile, getLatestCompanyProfile } from "../../../db/profile";
 import { getProgramsForCompany } from "../../../db/programs";
 
-export const metadata: Metadata = { title: "Партнёрские программы" };
+export const metadata: Metadata = { title: "Агентские кампании" };
 export const dynamic = "force-dynamic";
 
 const typeNames: Record<string, string> = { LEAD: "Лиды", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
@@ -22,26 +22,26 @@ export default async function ProgramsPage() {
   return (
     <div className="dashboard-content module-content programs-page">
       <div className="module-heading">
-        <div><span className="module-kicker">ПАРТНЁРСКИЕ ПРОГРАММЫ</span><h1>Программы и миссии</h1><p>Соберите понятное предложение для внешних продавцов, партнёров и амбассадоров — от первого действия до выплаты.</p></div>
-        <Link className="button button-primary compact-button" href="/dashboard/programs/new">Создать программу<span>＋</span></Link>
+        <div><span className="module-kicker">АГЕНТСКИЕ КАМПАНИИ</span><h1>Кампании и задания</h1><p>Соберите понятное предложение для внешних продавцов, агентов и амбассадоров — от первого действия до выплаты.</p></div>
+        <Link className="button button-primary compact-button" href="/dashboard/programs/new">Создать кампанию<span>＋</span></Link>
       </div>
 
-      {!confirmedProfile && <div className="inline-notice">Создание доступно без ограничений. Gemini использует {profile ? "последний черновик профиля" : "данные регистрации"}; подтвердить профиль можно позже для более точных миссий.</div>}
+      {!confirmedProfile && <div className="inline-notice">Создание доступно без ограничений. Gemini использует {profile ? "последний черновик профиля" : "данные регистрации"}; подтвердить профиль можно позже для более точных заданий.</div>}
 
       <section className="program-summary-strip">
         <div><small>ВСЕГО</small><strong>{programList.length}</strong></div>
         <div><small>ОПУБЛИКОВАНО</small><strong>{programList.filter((program) => program.status === "ACTIVE").length}</strong></div>
-        <div><small>МИССИЙ</small><strong>{programList.reduce((total, program) => total + program.missions.length, 0)}</strong></div>
+        <div><small>ЗАДАНИЙ</small><strong>{programList.reduce((total, program) => total + program.missions.length, 0)}</strong></div>
         <div><small>AI-ПРОФИЛЬ</small><strong>{confirmedProfile ? `v${confirmedProfile.versionNumber} подтверждён` : profile ? `v${profile.versionNumber} · черновик` : "Можно создать без него"}</strong></div>
       </section>
 
       {programList.length === 0 ? (
         <section className="panel program-zero-state">
-          <div className="program-zero-copy"><span className="module-kicker">ПЕРВЫЙ ЗАПУСК</span><h2>Создайте программу из четырёх типов миссий</h2><p>Выберите лиды, сделки, имидж или вовлечение. Gemini подготовит редактируемые карточки, а вы установите вознаграждение, проверку и сроки выплаты.</p><Link className="button button-primary" href="/dashboard/programs/new">Начать создание<span>→</span></Link></div>
+          <div className="program-zero-copy"><span className="module-kicker">ПЕРВЫЙ ЗАПУСК</span><h2>Создайте кампанию из четырёх типов заданий</h2><p>Выберите лиды, сделки, имидж или вовлечение. Gemini подготовит редактируемые карточки, а вы установите вознаграждение, проверку и сроки выплаты.</p><Link className="button button-primary" href="/dashboard/programs/new">Начать создание<span>→</span></Link></div>
           <div className="mission-type-preview">{Object.entries(typeNames).map(([type, label], index) => <div className={`type-preview type-${type.toLowerCase()}`} key={type}><span>0{index + 1}</span><strong>{label}</strong><small>{type === "LEAD" ? "Квалифицированный контакт" : type === "DEAL" ? "Подтверждённая продажа" : type === "IMAGE" ? "Публикация или кейс" : "Обучение и комьюнити"}</small></div>)}</div>
         </section>
       ) : (
-        <section className="program-list-grid">{programList.map((program) => <article className="panel program-list-card" key={program.id}><div className="program-card-top"><span className={`program-status status-${program.status.toLowerCase()}`}>● {statusNames[program.status] ?? program.status}</span><span className="program-date">{new Date(program.updatedAt).toLocaleDateString("ru-RU")}</span></div><h2>{program.name}</h2><p>{program.description || "Описание появится после AI-генерации."}</p><div className="program-mission-tags">{program.missions.map((mission) => <span className={`type-${mission.type.toLowerCase()}`} key={mission.id}>{typeNames[mission.type] ?? mission.type}</span>)}</div><div className="program-card-footer"><small>{program.missions.length} миссий · {program.currency}</small><Link href={`/dashboard/programs/${program.id}`}>{program.status === "ACTIVE" ? "Управлять" : "Продолжить настройку"} →</Link></div></article>)}</section>
+        <section className="program-list-grid compact-campaign-grid">{programList.map((program) => <article className="panel program-list-card" key={program.id}><div className="program-card-top"><span className={`program-status status-${program.status.toLowerCase()}`}>● {statusNames[program.status] ?? program.status}</span><span className="program-date">{new Date(program.updatedAt).toLocaleDateString("ru-RU")}</span></div><h2>{program.name}</h2><p>{program.description || "Описание появится после AI-генерации."}</p><div className="campaign-thesis-row"><span><b>{program.missions.length}</b> заданий</span><span><b>{program.agentCount}</b> агентов</span><span><b>{program.resultCount}</b> результатов</span></div><div className="program-card-footer"><small>{program.status === "ACTIVE" ? "Ссылка доступна агентам" : "Ещё не опубликована"}</small><Link href={`/dashboard/programs/${program.id}`}>{program.status === "ACTIVE" ? "Управлять" : "Продолжить"} →</Link></div></article>)}</section>
       )}
     </div>
   );

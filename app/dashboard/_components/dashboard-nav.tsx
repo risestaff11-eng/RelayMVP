@@ -4,11 +4,11 @@ import { usePathname } from "next/navigation";
 import { SafeLink as Link } from "@/app/safe-link";
 
 const items = [
-  { href: "/dashboard", label: "Обзор", icon: "⌂", exact: true },
-  { href: "/dashboard/programs", label: "Программы", icon: "◇" },
+  { href: "/dashboard", label: "Рабочий стол", icon: "⌂", exact: true },
+  { href: "/dashboard/programs", label: "Кампании", icon: "◇" },
   { href: "/dashboard/submissions", label: "Результаты", icon: "↗" },
-  { href: "/dashboard/partners", label: "Партнёры", icon: "○" },
-  { href: "/dashboard/rewards", label: "Вознаграждения", icon: "₸" },
+  { href: "/dashboard/partners", label: "Агенты", icon: "○" },
+  { href: "/dashboard/rewards", label: "Выплаты", icon: "₸" },
   { href: "/dashboard/analytics", label: "Аналитика", icon: "⌁" },
 ];
 

@@ -6,7 +6,6 @@ import { companies } from "../../../../db/schema";
 import { normalizeWebsite, sameOrigin } from "../_utils";
 
 const PLANS = new Set(["TRIAL", "STARTER", "GROWTH"]);
-const PLAN_MINIMUM_BALANCE: Record<string, number> = { TRIAL: 100000, STARTER: 500000, GROWTH: 2000000 };
 
 export async function PATCH(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -21,16 +20,13 @@ export async function PATCH(request: Request) {
     const planCode = typeof payload.planCode === "string" ? payload.planCode : null;
     if (!websiteValue && !planCode) throw new Error("Нет данных для сохранения");
     if (planCode && !PLANS.has(planCode)) throw new Error("Неизвестный тариф");
+    if (planCode) throw new Error("Автоматическая смена тарифа пока не подключена");
 
     const now = new Date().toISOString();
     const changes: Partial<typeof companies.$inferInsert> = { updatedAt: now };
     if (websiteValue) {
       changes.website = websiteValue;
       if (websiteValue !== company.website) changes.onboardingStatus = "WEBSITE_UPDATED";
-    }
-    if (planCode) {
-      changes.planCode = planCode;
-      changes.aiTokenBalance = Math.max(company.aiTokenBalance, PLAN_MINIMUM_BALANCE[planCode]);
     }
 
     await getDb().update(companies).set(changes).where(eq(companies.id, company.id));

@@ -21,13 +21,21 @@ export function CsvExportButton({ filename, headers, label = "Экспорт CSV
 
 export function StatusFilters({ labels }: { labels: string[] }) {
   const [active, setActive] = useState(labels[0]);
-  return <div><div className="status-filter-row" role="group" aria-label="Фильтр по статусу">{labels.map((label) => <button className={active === label ? "active" : ""} type="button" onClick={() => setActive(label)} aria-pressed={active === label} key={label}>{label}</button>)}</div><small className="control-feedback" aria-live="polite">Выбран фильтр: {active} · записей 0</small></div>;
+  function filter(label: string) {
+    setActive(label);
+    const expected = label.split(" · ")[0];
+    document.querySelectorAll<HTMLElement>(".company-review-list > article").forEach((row) => {
+      const current = row.querySelector(".company-review-head > strong")?.textContent?.trim();
+      row.hidden = expected !== "Все" && current !== expected;
+    });
+  }
+  return <div><div className="status-filter-row" role="group" aria-label="Фильтр по статусу">{labels.map((label) => <button className={active === label ? "active" : ""} type="button" onClick={() => filter(label)} aria-pressed={active === label} key={label}>{label}</button>)}</div><small className="control-feedback" aria-live="polite">Показаны: {active}</small></div>;
 }
 
 export function PartnerTableTools() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("Все статусы");
-  return <div className="partner-table-controls"><div className="table-tools"><input aria-label="Поиск партнёра" placeholder="Поиск по имени или email" value={query} onChange={(event) => setQuery(event.target.value)} /><select aria-label="Статус партнёра" value={status} onChange={(event) => setStatus(event.target.value)}><option>Все статусы</option><option>Активные</option><option>Неактивные</option></select></div><small className="control-feedback" aria-live="polite">{query ? `По запросу «${query}» ничего не найдено` : `${status} · партнёров пока 0`}</small></div>;
+  return <div className="partner-table-controls"><div className="table-tools"><input aria-label="Поиск агента" placeholder="Поиск по имени или email" value={query} onChange={(event) => setQuery(event.target.value)} /><select aria-label="Статус агента" value={status} onChange={(event) => setStatus(event.target.value)}><option>Все статусы</option><option>Активные</option><option>Неактивные</option></select></div><small className="control-feedback" aria-live="polite">{query ? `По запросу «${query}» ничего не найдено` : `${status} · агентов пока 0`}</small></div>;
 }
 
 export function DateRangeControl() {

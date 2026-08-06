@@ -10,8 +10,8 @@ export function PublicMissionAction({ token, missionId, programSlug, accepted }:
     setState("pending"); setError("");
     const response = await fetch("/api/partner/actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, action: "ACCEPT_MISSION", missionId }) });
     const data = await response.json() as { error?: string };
-    if (!response.ok) { setState("idle"); setError(data.error || "Не удалось взять миссию"); return; }
+    if (!response.ok) { setState("idle"); setError(data.error || "Не удалось взять задание"); return; }
     setState("accepted");
   }
-  return <div className="public-mission-action">{state === "accepted" ? <Link className="partner-mission-cta" href={`/p/${programSlug}/missions/${missionId}/submit?access=${token}`}>Передать результат <span>→</span></Link> : <button className="partner-mission-cta" type="button" disabled={state === "pending"} onClick={accept}>{state === "pending" ? "Добавляем миссию…" : "Взять миссию"}<span>＋</span></button>}<small aria-live="polite">{error}</small></div>;
+  return <div className="public-mission-action">{state === "accepted" ? <Link className="partner-mission-cta" href={`/p/${programSlug}/missions/${missionId}/submit?access=${token}`}>Передать результат <span>→</span></Link> : <button className="partner-mission-cta" type="button" disabled={state === "pending"} onClick={accept}>{state === "pending" ? "Добавляем задание…" : "Взять задание"}<span>＋</span></button>}<small aria-live="polite">{error}</small></div>;
 }

@@ -143,7 +143,7 @@ export function CompanyProfileEditor({
       const data = await response.json() as { profile?: CompanyProfile; error?: string };
       if (!response.ok || !data.profile) throw new Error(messageFromResponse(data, "Не удалось подтвердить профиль"));
       setProfile(data.profile);
-      setNotice({ type: "success", text: `Версия ${data.profile.versionNumber} подтверждена. Теперь её можно использовать для генерации миссий.` });
+      setNotice({ type: "success", text: `Версия ${data.profile.versionNumber} подтверждена. Теперь её можно использовать для генерации заданий.` });
     } catch (error) {
       setNotice({ type: "error", text: error instanceof Error ? error.message : "Не удалось подтвердить профиль" });
     } finally {
@@ -201,10 +201,10 @@ export function CompanyProfileEditor({
             <label className="profile-field"><span>Триггеры покупки</span><textarea rows={6} value={form.buyingTriggers} onChange={(event) => updateField("buyingTriggers", event.target.value)} readOnly={!editable} /></label>
             <label className="profile-field"><span>Неподходящие клиенты</span><textarea rows={5} value={form.disqualifiers} onChange={(event) => updateField("disqualifiers", event.target.value)} readOnly={!editable} /></label>
             <label className="profile-field"><span>География продаж</span><textarea rows={5} value={form.geographies} onChange={(event) => updateField("geographies", event.target.value)} readOnly={!editable} /></label>
-            <label className="profile-field full"><span>Партнёрский питч <i>обязательно</i></span><textarea rows={4} value={form.partnerPitch} onChange={(event) => updateField("partnerPitch", event.target.value)} readOnly={!editable} /></label>
+            <label className="profile-field full"><span>Питч для агента <i>обязательно</i></span><textarea rows={4} value={form.partnerPitch} onChange={(event) => updateField("partnerPitch", event.target.value)} readOnly={!editable} /></label>
           </div>
 
-          {editable ? <div className="profile-confirm-bar"><div><strong>AI ничего не публикует сам</strong><p>Подтверждение фиксирует именно эту версию. Следующий анализ снова потребует вашего решения.</p></div><div><button className="button button-ghost" type="button" onClick={() => persistProfile("save")} disabled={pending !== null}>{pending === "save" ? "Сохраняем…" : "Сохранить черновик"}</button><button className="button button-primary" type="button" onClick={confirmProfile} disabled={pending !== null}>{pending === "confirm" ? "Подтверждаем…" : "Подтвердить профиль"}<span>✓</span></button></div></div> : <div className="profile-confirm-bar confirmed"><div><strong>Версия подтверждена</strong><p>Можно переходить к созданию программы и генерации миссий.</p></div><Link className="button button-primary" href="/dashboard/programs">Перейти к миссиям <span>→</span></Link></div>}
+          {editable ? <div className="profile-confirm-bar"><div><strong>AI ничего не публикует сам</strong><p>Подтверждение фиксирует именно эту версию. Следующий анализ снова потребует вашего решения.</p></div><div><button className="button button-ghost" type="button" onClick={() => persistProfile("save")} disabled={pending !== null}>{pending === "save" ? "Сохраняем…" : "Сохранить черновик"}</button><button className="button button-primary" type="button" onClick={confirmProfile} disabled={pending !== null}>{pending === "confirm" ? "Подтверждаем…" : "Подтвердить профиль"}<span>✓</span></button></div></div> : <div className="profile-confirm-bar confirmed"><div><strong>Версия подтверждена</strong><p>Можно переходить к созданию кампании и генерации заданий.</p></div><Link className="button button-primary" href="/dashboard/programs">Перейти к заданиям <span>→</span></Link></div>}
         </section>
       )}
     </div>

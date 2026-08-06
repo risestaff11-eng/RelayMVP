@@ -13,7 +13,7 @@ export function AcceptMissionButton({ token, missionId, accepted = false, result
   const [state, setState] = useState<"idle" | "pending" | "done">(accepted ? "done" : "idle");
   const [error, setError] = useState("");
   async function accept() { setState("pending"); setError(""); try { await partnerAction({ token, action: "ACCEPT_MISSION", missionId }); setState("done"); } catch (reason) { setState("idle"); setError(reason instanceof Error ? reason.message : "Ошибка"); } }
-  return <div className="partner-inline-action">{state === "done" && resultHref ? <Link className="accepted-result-link" href={resultHref}>Передать результат →</Link> : <button type="button" onClick={accept} disabled={state !== "idle"}>{state === "pending" ? "Добавляем…" : state === "done" ? "Миссия добавлена ✓" : "Взять миссию"}</button>}<small aria-live="polite">{error}</small></div>;
+  return <div className="partner-inline-action">{state === "done" && resultHref ? <Link className="accepted-result-link" href={resultHref}>Передать результат →</Link> : <button type="button" onClick={accept} disabled={state !== "idle"}>{state === "pending" ? "Добавляем…" : state === "done" ? "Задание добавлено ✓" : "Взять задание"}</button>}<small aria-live="polite">{error}</small></div>;
 }
 
 export function OpportunityFilters({ companies, currencies }: { companies: string[]; currencies: string[] }) {
@@ -69,7 +69,7 @@ export function PartnerProfileForm({ token, partner, profile }: { token: string;
       const data = await response.json() as { avatarUrl?: string | null; error?: string };
       if (!response.ok) throw new Error(data.error || "Не удалось сохранить профиль");
       if (data.avatarUrl) setAvatarUrl(`${data.avatarUrl}&v=${Date.now()}`);
-      setNotice("Профиль сохранён. Подбор миссий обновлён.");
+      setNotice("Профиль сохранён. Подбор заданий обновлён.");
     } catch (error) { setNotice(error instanceof Error ? error.message : "Ошибка"); }
   }
   const types = [["LEAD", "Лиды"], ["DEAL", "Сделки"], ["IMAGE", "Имидж"], ["ENGAGEMENT", "Вовлечение"]];

@@ -130,7 +130,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите в аккаунт" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
-  if (company.aiTokenBalance < 1000) return Response.json({ error: "Недостаточно AI-токенов. Смените тариф в настройках профиля." }, { status: 402 });
+  if (company.aiTokenBalance < 1000) return Response.json({ error: "AI-токены заканчиваются. Нажмите значок WhatsApp в кабинете, чтобы пополнить баланс." }, { status: 402 });
 
   try {
     const websiteText = await collectWebsiteText(company.website);

@@ -5,7 +5,7 @@ import { getCompanyForUser } from "../../../../db/company";
 import { getConfirmedCompanyProfile, getLatestCompanyProfile } from "../../../../db/profile";
 import { NewProgramForm } from "./new-program-form";
 
-export const metadata: Metadata = { title: "Новая программа" };
+export const metadata: Metadata = { title: "Новая кампания" };
 export const dynamic = "force-dynamic";
 
 export default async function NewProgramPage() {
