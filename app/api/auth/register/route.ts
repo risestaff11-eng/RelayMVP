@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Укажите корректный email");
     if (displayName.length < 2) throw new Error("Укажите имя");
     if (phone.length < 6) throw new Error("Укажите телефон");
-    if (password.length < 8 || password.length > 128) throw new Error("Пароль должен содержать от 8 до 128 символов");
+    if (!/^(?=.*[A-Za-z])[\x20-\x7E]{8,}$/.test(password)) throw new Error("Пароль должен содержать минимум 8 символов и хотя бы одну латинскую букву");
     if (payload.acceptedTerms !== true || payload.acceptedPrivacy !== true) throw new Error("Необходимо принять условия и согласие на обработку данных");
 
     const db = getDb();
