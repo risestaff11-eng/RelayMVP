@@ -47,8 +47,8 @@
     {
       "idx": 6,
       "version": "6",
-      "when": 1785980867355,
-      "tag": "0006_cleanup_company_shadow",
+      "when": 1785980053086,
+      "tag": "0006_fat_lady_deathstrike",
       "breakpoints": true
     },
     {
@@ -56,6 +56,20 @@
       "version": "6",
       "when": 1785981200000,
       "tag": "0007_cleanup_company_shadow_retry",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1785982500000,
+      "tag": "0008_reset_test_data",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1785981820185,
+      "tag": "0009_luxuriant_power_pack",
       "breakpoints": true
     }
   ]
