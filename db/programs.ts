@@ -217,7 +217,8 @@ export async function getCompanyAnalytics(companyId: string, days: number | null
   const within = (date: string | null) => !days || (date ? new Date(date).getTime() >= since : false);
   const selectedPrograms = programRows.filter((program) => !programId || program.id === programId);
   const selectedIds = new Set(selectedPrograms.map((program) => program.id));
-  const agents = agentRows.filter((agent) => selectedIds.has(agent.programId) && within(agent.joinedAt));
+  const agents = agentRows.filter((agent) => selectedIds.has(agent.programId));
+  const newAgents = agents.filter((agent) => within(agent.joinedAt));
   const results = resultRows.filter((result) => selectedIds.has(result.programId) && within(result.createdAt));
   const resultIds = new Set(results.map((result) => result.id));
   const rewardItems = rewardRows.filter((reward) => resultIds.has(reward.submissionId));
@@ -233,5 +234,32 @@ export async function getCompanyAnalytics(companyId: string, days: number | null
       paid: rewardItems.filter((reward) => reward.status === "PAID" && programResults.some((result) => result.id === reward.submissionId)).reduce((total, reward) => total + reward.amount, 0),
     };
   });
-  return { programs: selectedPrograms, agents, results, rewards: rewardItems, byProgram, calculatedAt };
+  const programNames = new Map(selectedPrograms.map((program) => [program.id, program.name]));
+  const byAgent = agents.map((agent) => {
+    const agentResults = results.filter((result) => result.partnerId === agent.id);
+    const agentResultIds = new Set(agentResults.map((result) => result.id));
+    const agentRewards = rewardItems.filter((reward) => agentResultIds.has(reward.submissionId));
+    const accepted = agentResults.filter((result) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(result.status)).length;
+    const deals = agentResults.filter((result) => result.status === "DEAL").length;
+    const activityDates = [agent.lastActiveAt, ...agentResults.map((result) => result.updatedAt || result.createdAt)].filter(Boolean).map((date) => new Date(date as string).getTime());
+    return {
+      id: agent.id,
+      name: agent.name,
+      email: agent.email,
+      phone: agent.phone,
+      programId: agent.programId,
+      programName: programNames.get(agent.programId) ?? "Кампания",
+      joinedAt: agent.joinedAt,
+      lastActivity: new Date(Math.max(...activityDates, new Date(agent.joinedAt).getTime())).toISOString(),
+      results: agentResults.length,
+      accepted,
+      deals,
+      acceptanceRate: agentResults.length ? Math.round(accepted / agentResults.length * 100) : 0,
+      dealRate: agentResults.length ? Math.round(deals / agentResults.length * 100) : 0,
+      due: agentRewards.filter((reward) => reward.status === "APPROVED").reduce((total, reward) => total + reward.amount, 0),
+      paid: agentRewards.filter((reward) => reward.status === "PAID").reduce((total, reward) => total + reward.amount, 0),
+      score: deals * 100 + accepted * 20 + agentResults.length * 5,
+    };
+  }).sort((left, right) => right.score - left.score || new Date(right.lastActivity).getTime() - new Date(left.lastActivity).getTime());
+  return { programs: selectedPrograms, agents, newAgents, results, rewards: rewardItems, byProgram, byAgent, calculatedAt };
 }

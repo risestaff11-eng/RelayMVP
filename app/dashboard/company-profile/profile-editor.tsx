@@ -101,12 +101,12 @@ export function CompanyProfileEditor({
     setNotice(null);
     try {
       const response = await fetch("/api/company/profile/analyze", { method: "POST" });
-      const data = await response.json() as { profile?: CompanyProfile; aiTokenBalance?: number; error?: string };
+      const data = await response.json() as { profile?: CompanyProfile; aiTokenBalance?: number; warning?: string | null; error?: string };
       if (!response.ok || !data.profile) throw new Error(messageFromResponse(data, "AI-анализ не выполнен"));
       setProfile(data.profile);
       setForm(formFromProfile(data.profile));
       if (typeof data.aiTokenBalance === "number") setTokenBalance(data.aiTokenBalance);
-      setNotice({ type: "success", text: `Черновик версии ${data.profile.versionNumber} готов. Проверьте каждое поле и обязательно подтвердите профиль.` });
+      setNotice({ type: "success", text: data.warning ? `Черновик версии ${data.profile.versionNumber} готов. ${data.warning}` : `Черновик версии ${data.profile.versionNumber} готов. Проверьте каждое поле и обязательно подтвердите профиль.` });
     } catch (error) {
       setNotice({ type: "error", text: error instanceof Error ? error.message : "AI-анализ не выполнен" });
     } finally {
