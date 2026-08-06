@@ -43,6 +43,13 @@
       "when": 1785970625605,
       "tag": "0005_romantic_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1785980867355,
+      "tag": "0006_cleanup_company_shadow",
+      "breakpoints": true
     }
   ]
 }
