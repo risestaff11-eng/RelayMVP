@@ -32,7 +32,7 @@ export const companies = sqliteTable("companies", {
   primaryGoal: text("primary_goal").notNull(),
   onboardingStatus: text("onboarding_status").notNull().default("COMPANY_CREATED"),
   planCode: text("plan_code").notNull().default("TRIAL"),
-  aiTokenBalance: integer("ai_token_balance").notNull().default(5000),
+  aiTokenBalance: integer("ai_token_balance").notNull().default(100000),
   aiTokensUsed: integer("ai_tokens_used").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),

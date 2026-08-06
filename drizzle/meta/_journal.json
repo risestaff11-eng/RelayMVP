@@ -43,13 +43,6 @@
       "when": 1785970625605,
       "tag": "0005_romantic_hulk",
       "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1785980053086,
-      "tag": "0007_safe_token_balance",
-      "breakpoints": true
     }
   ]
 }
