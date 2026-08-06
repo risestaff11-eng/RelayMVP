@@ -54,7 +54,6 @@ export async function generateStructuredJson<T>({
         responseMimeType: "application/json",
         responseJsonSchema: schema,
         maxOutputTokens,
-        temperature: 0.2,
       },
     }),
   });

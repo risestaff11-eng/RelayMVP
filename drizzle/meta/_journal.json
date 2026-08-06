@@ -71,6 +71,13 @@
       "when": 1785981820185,
       "tag": "0009_luxuriant_power_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1785983259239,
+      "tag": "0010_gifted_whiplash",
+      "breakpoints": true
     }
   ]
 }

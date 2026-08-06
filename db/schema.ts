@@ -5,9 +5,20 @@ export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull(),
   displayName: text("display_name").notNull(),
+  phone: text("phone").notNull().default(""),
+  companyName: text("company_name").notNull().default(""),
+  passwordHash: text("password_hash"),
+  status: text("status").notNull().default("pending"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("idx_users_email").on(table.email)]);
+
+export const authSessions = sqliteTable("auth_sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("idx_auth_sessions_user").on(table.userId)]);
 
 export const userRoles = sqliteTable(
   "user_roles",
