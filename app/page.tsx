@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SafeLink as Link } from "@/app/safe-link";
 import { chatGPTSignInPath, getChatGPTUser } from "./chatgpt-auth";
+import { MarketingLogo } from "./marketing-logo";
 
 export const metadata: Metadata = {
   title: "Relay — запустите партнёрский канал продаж",
@@ -8,10 +9,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
-
-function RelayLogo() {
-  return <span className="relay-logo" aria-hidden="true"><i /><i /><i /><i /></span>;
-}
 
 const missionCards = [
   { index: "01", type: "ЛИДЫ", title: "Найдите компанию для внедрения CRM", reward: "30 000 ₸ за встречу", icon: "↗", tone: "lime" },
@@ -34,12 +31,13 @@ export default async function Home() {
   const user = await getChatGPTUser();
   const dashboardHref = user ? "/dashboard" : chatGPTSignInPath("/onboarding");
   const loginHref = user ? "/dashboard" : chatGPTSignInPath("/dashboard");
+  const whatsappHref = "https://wa.me/77765086000?text=%D0%A0%D1%83%D1%81%20%D0%A1%D0%B0%D0%BB%D0%B5%D0%BC%20%D0%B4%D0%B0%D0%B2%D0%B0%D0%B9%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D0%BC%20Relay";
 
   return <main className="lp-shell">
     <header className="lp-header">
-      <Link className="lp-brand" href="/" aria-label="Relay — главная"><RelayLogo /><span>Relay</span></Link>
-      <nav className="lp-nav" aria-label="Основная навигация"><a href="#product">Продукт</a><a href="#how">Как работает</a><a href="#partners">Для партнёра</a><a href="#faq">FAQ</a></nav>
-      <div className="lp-header-actions"><a className="lp-login" href={loginHref}>{user ? "Кабинет" : "Войти"}</a><a className="lp-nav-cta" href={dashboardHref}>{user ? "Продолжить" : "Запустить программу"}<span>↗</span></a></div>
+      <Link className="lp-brand" href="/" aria-label="Relay — главная"><MarketingLogo /><span>Relay</span></Link>
+      <nav className="lp-nav" aria-label="Основная навигация"><a href="#product">Продукт</a><a href="#how">Как работает</a><Link href="/pricing">Тарифы</Link><Link href="/integrators">Стать интегратором</Link><a href="#faq">FAQ</a></nav>
+      <div className="lp-header-actions"><a className="lp-login" href={loginHref}>{user ? "Кабинет" : "Войти"}</a><a className="lp-nav-cta" href={whatsappHref} target="_blank" rel="noreferrer">Оставить заявку<span>↗</span></a></div>
     </header>
 
     <section className="lp-hero">
@@ -53,16 +51,16 @@ export default async function Home() {
       </div>
 
       <div className="lp-demo" aria-label="Пример страницы миссий Relay">
-        <div className="lp-demo-top"><div><RelayLogo /><b>Relay</b></div><span>ПРОГРАММА АКТИВНА <i>●</i></span></div>
+        <div className="lp-demo-top"><div><MarketingLogo /><b>Relay</b></div><span>ПРОГРАММА АКТИВНА <i>●</i></span></div>
         <div className="lp-demo-heading"><div><small>ПАРТНЁРСКАЯ ПРОГРАММА</small><h2>Выберите миссию</h2></div><span>Northstar CRM</span></div>
         <div className="lp-mission-grid">{missionCards.map((card) => <article className={`lp-mission lp-${card.tone}`} key={card.index}><div><small>{card.index}</small><b>{card.icon}</b></div><span>{card.type}</span><h3>{card.title}</h3><p>{card.reward}</p></article>)}</div>
         <div className="lp-demo-event"><i>✓</i><div><strong>Новый лид закреплён за партнёром</strong><span>Статус и история доступны обеим сторонам</span></div><b>сейчас</b></div>
       </div>
     </section>
 
-    <section className="lp-trust-line" aria-label="Ключевые свойства"><div><span>01</span>Понятные условия</div><div><span>02</span>Защита владельца лида</div><div><span>03</span>Прозрачные выплаты</div><div><span>04</span>Быстрый запуск</div></section>
+    <section className="lp-trust-line" aria-label="Ключевые свойства"><div className="lp-marquee-track">{[0, 1].map((copy) => <div className="lp-marquee-set" aria-hidden={copy === 1} key={copy}><span><b>01</b>Понятные условия</span><span><b>02</b>Защита владельца лида</span><span><b>03</b>Прозрачные выплаты</span><span><b>04</b>Быстрый запуск</span></div>)}</div></section>
 
-    <section className="lp-problem lp-section">
+    <section className="lp-problem lp-section"><i className="lp-motion-orbit orbit-black" aria-hidden="true" />
       <div className="lp-section-intro"><span>БЫЛО → СТАЛО</span><h2>Сарафанное радио работает. Но им невозможно управлять.</h2><p>Знакомые могут рекомендовать вас уже сегодня. Проблема начинается, когда нужно объяснить предложение, закрепить лид, проверить результат и честно рассчитать вознаграждение.</p></div>
       <div className="lp-compare"><article className="lp-before"><small>БЕЗ RELAY</small><h3>Рекомендации теряются в переписках</h3><ul><li>Условия каждый понимает по-своему</li><li>Лиды приходят в чат, почту и таблицы</li><li>Партнёр не знает, что стало со сделкой</li><li>Выплаты приходится сверять вручную</li></ul><strong>Итог: канал не масштабируется</strong></article><article className="lp-after"><small>С RELAY</small><h3>У каждого результата есть правила и владелец</h3><ul><li>Миссия объясняет, кого искать и что передать</li><li>Одна ссылка собирает партнёров и лиды</li><li>Статусы и комментарии видны в кабинете</li><li>Начисления связаны с конкретным результатом</li></ul><strong>Итог: рекомендации становятся процессом</strong></article></div>
     </section>
@@ -72,29 +70,31 @@ export default async function Home() {
       <div className="lp-steps"><article><b>01</b><small>НЕСКОЛЬКО МИНУТ</small><h3>Создайте программу</h3><p>Опишите продукт, целевого клиента и результат, за который готовы платить.</p></article><article><b>02</b><small>ПРАВИЛА ЗАФИКСИРОВАНЫ</small><h3>Соберите миссии</h3><p>Добавьте награду, срок, критерии проверки и материалы для знакомства.</p></article><article><b>03</b><small>ОДНА ВНЕШНЯЯ ССЫЛКА</small><h3>Пригласите партнёров</h3><p>Партнёр входит по email, выбирает миссию и передаёт подходящий результат.</p></article><article><b>04</b><small>ПРОЗРАЧНАЯ ВОРОНКА</small><h3>Проверяйте и платите</h3><p>Меняйте статусы, объясняйте решения и фиксируйте начисления без ручной сверки.</p></article></div>
     </section>
 
-    <section className="lp-product lp-section" id="product">
+    <section className="lp-product lp-section" id="product"><i className="lp-motion-orbit orbit-blue" aria-hidden="true" />
       <div className="lp-section-intro"><span>ОДИН ПРОДУКТ · ДВЕ СТОРОНЫ</span><h2>Компания управляет каналом. Партнёр понимает, как заработать.</h2></div>
       <div className="lp-bento"><article className="lp-bento-wide"><small>КАБИНЕТ КОМПАНИИ</small><h3>Все рекомендации — в одной воронке</h3><p>От нового лида до сделки и вознаграждения. Владелец, дата, доказательства, комментарии и история статусов не теряются.</p><div className="lp-pipeline"><span className="done">Отправлен</span><span className="done">Проверяется</span><span className="active">Принят</span><span>В работе</span><span>Сделка</span><span>Выплата</span></div></article><article className="lp-bento-link"><small>ПУБЛИЧНАЯ ССЫЛКА</small><h3>Без сложной регистрации</h3><p>Партнёр открывает программу, видит условия и сразу выбирает миссию.</p><div>relay.app/p/<b>northstar</b><span>↗</span></div></article><article className="lp-bento-wallet"><small>КАБИНЕТ ПАРТНЁРА</small><h3>Деньги и прогресс на виду</h3><div><span>Ожидается</span><strong>75 000 ₸</strong></div><ul><li><i /> Лид принят компанией</li><li><i /> Выплата запланирована</li></ul></article><article className="lp-bento-trust"><small>ДОВЕРИЕ</small><h3>Никаких «мы не помним, чей это контакт»</h3><p>Проверка дубля до раскрытия контакта, журнал изменений, причина отказа и возможность открыть спор.</p><strong>Каждый лид закреплён</strong></article></div>
     </section>
 
-    <section className="lp-ai lp-section">
+    <section className="lp-ai lp-section"><i className="lp-motion-orbit orbit-gray" aria-hidden="true" />
       <div className="lp-ai-visual"><div className="lp-scan-line" /><div className="lp-ai-url"><span>САЙТ КОМПАНИИ</span><strong>northstar.kz</strong><i>✓ проанализирован</i></div><div className="lp-ai-output"><span>ГОТОВ ЧЕРНОВИК</span><p>Продукты · ЦА · преимущества · триггеры</p><b>4 миссии предложены</b></div></div>
       <div className="lp-ai-copy"><span>УМНЫЙ СТАРТ</span><h2>Не начинайте с пустого экрана.</h2><p>Вспомогательный ИИ анализирует открытые страницы сайта, собирает профиль компании и предлагает миссии для партнёров. Вы редактируете результат и только после подтверждения публикуете программу.</p><ul><li>Выделяет продукты и целевых клиентов</li><li>Предлагает задания и критерии проверки</li><li>Готовит основу сообщений и материалов</li></ul><small>ИИ помогает настроить программу, но не принимает бизнес-решения за компанию.</small></div>
     </section>
 
-    <section className="lp-partner lp-section" id="partners">
+    <section className="lp-partner lp-section" id="partners"><i className="lp-motion-orbit orbit-lime" aria-hidden="true" />
       <div className="lp-partner-copy"><span>ПОЧЕМУ ПАРТНЁР ВЕРНЁТСЯ</span><h2>Не из-за баллов. Потому что понимает, сколько ему должны.</h2><p>Игровой прогресс поддерживает полезные действия: подтверждённые контакты, качественные лиды и выполненные миссии открывают новый уровень и более выгодные предложения.</p><div className="lp-level"><div><b>1</b><span>НАВИГАТОР</span></div><i><em /></i><div><b>2</b><span>ПРОВЕРЕННЫЙ</span></div></div></div>
       <div className="lp-partner-card"><div><small>ДО СЛЕДУЮЩЕГО УРОВНЯ</small><strong>2 из 3 условий</strong></div><ul><li className="done">✓ Email подтверждён</li><li className="done">✓ WhatsApp подтверждён</li><li>○ Первый принятый лид</li></ul><footer><span>Откроется после уровня 2</span><b>Повышенная комиссия · Быстрая проверка</b></footer></div>
     </section>
 
     <section className="lp-audience lp-section"><div className="lp-section-intro"><span>КОМУ ПОДХОДИТ</span><h2>Тем, у кого покупают через доверие и рекомендации.</h2></div><div className="lp-audience-grid"><article><b>01</b><h3>Руководителю продаж</h3><p>Подключить внешних продавцов и видеть вклад каждого без новой CRM.</p></article><article><b>02</b><h3>Руководителю маркетинга</h3><p>Запустить амбассадорские и имиджевые задания с понятной проверкой.</p></article><article><b>03</b><h3>Основателю B2B-компании</h3><p>Превратить сеть знакомых, клиентов и экспертов в повторяемый канал.</p></article></div></section>
 
+    <section className="lp-plans-preview lp-section"><div className="lp-section-intro"><span>ТАРИФЫ БЕЗ СЮРПРИЗОВ</span><h2>Начните с нужного масштаба.</h2><p>Стоимость обсудим после короткой встречи — сначала определим количество программ, партнёров и необходимый уровень сопровождения.</p></div><div className="lp-plan-teasers"><article><span>СТАРТ</span><h3>Проверить канал</h3><p>Для первой программы и ручного управления результатами.</p></article><article><span>РОСТ</span><h3>Масштабировать партнёров</h3><p>Для нескольких программ и регулярного потока рекомендаций.</p></article><article><span>СЕТЬ</span><h3>Построить экосистему</h3><p>Для компаний с интеграторами, агентами и сложной мотивацией.</p></article></div><Link className="lp-plan-link" href="/pricing">Смотреть варианты подключения <span>→</span></Link></section>
+
     <section className="lp-access lp-section"><div><span>РАННИЙ ДОСТУП</span><h2>Запускайте столько программ, сколько нужно.</h2><p>Сейчас создание программ не ограничено. Проверьте канал на одном продукте, соберите первые рекомендации и только потом усложняйте механику.</p></div><a className="lp-primary inverse" href={dashboardHref}>{user ? "Перейти к программам" : "Запустить первую программу"}<span>↗</span></a></section>
 
     <section className="lp-faq lp-section" id="faq"><div className="lp-section-intro"><span>FAQ</span><h2>Вопросы до запуска.</h2></div><div className="lp-faq-list">{faqs.map(([question, answer], index) => <details key={question}><summary><span>{String(index + 1).padStart(2, "0")}</span><strong>{question}</strong><i>+</i></summary><p>{answer}</p></details>)}</div></section>
 
-    <section className="lp-final"><div className="lp-final-tiles" aria-hidden="true">{missionCards.map((card) => <i className={`lp-${card.tone}`} key={card.index}>{card.icon}</i>)}</div><span>ПЕРВАЯ ПРОГРАММА НАЧИНАЕТСЯ С ОДНОЙ ССЫЛКИ</span><h2>Дайте партнёрам понятный повод рекомендовать вас.</h2><p>А себе — прозрачный способ принять результат, довести его до сделки и не потерять доверие.</p><a className="lp-primary" href={dashboardHref}>{user ? "Открыть Relay" : "Создать программу"}<span>↗</span></a></section>
+    <section className="lp-final"><div className="lp-final-tiles" aria-hidden="true">{missionCards.map((card) => <i className={`lp-${card.tone}`} key={card.index}>{card.icon}</i>)}</div><span>ПЕРВАЯ ПРОГРАММА НАЧИНАЕТСЯ С ОДНОЙ ССЫЛКИ</span><h2>Дайте партнёрам понятный повод рекомендовать вас.</h2><p>А себе — прозрачный способ принять результат, довести его до сделки и не потерять доверие.</p><a className="lp-primary" href={dashboardHref}>Начать бесплатно<span>↗</span></a></section>
 
-    <footer className="lp-footer"><div><Link className="lp-brand" href="/"><RelayLogo /><span>Relay</span></Link><p>Партнёрские продажи по одной ссылке.</p></div><nav><a href="#product">Продукт</a><a href="#how">Как работает</a><a href="#faq">FAQ</a><Link href="/legal/privacy">Конфиденциальность</Link><Link href="/legal/license">Соглашение</Link></nav><span>© 2026 Relay</span></footer>
+    <footer className="lp-footer"><div><Link className="lp-brand" href="/"><MarketingLogo /><span>Relay</span></Link><p>Партнёрские продажи по одной ссылке.</p></div><nav><a href="#product">Продукт</a><Link href="/pricing">Тарифы</Link><Link href="/integrators">Интеграторам</Link><a href="#faq">FAQ</a><Link href="/legal/privacy">Конфиденциальность</Link><Link href="/legal/license">Соглашение</Link></nav><span>© 2026 Relay</span></footer>
   </main>;
 }

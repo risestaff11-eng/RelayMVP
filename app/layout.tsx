@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./landing.css";
 import "./landing-extra.css";
+import "./landing-refine.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
