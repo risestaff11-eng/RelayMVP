@@ -38,16 +38,17 @@ export default async function Home() {
     <header className="lp-header">
       <Link className="lp-brand" href="/" aria-label="Relay — главная"><MarketingLogo /><span>Relay</span></Link>
       <nav className="lp-nav" aria-label="Основная навигация"><a href="#product">Продукт</a><a href="#how">Как работает</a><Link href="/pricing">Тарифы</Link><Link href="/integrators">Стать интегратором</Link><a href="#faq">FAQ</a></nav>
-      <div className="lp-header-actions"><a className="lp-login" href={loginHref}>{user ? "Кабинет" : "Войти"}</a><a className="lp-nav-cta" href={whatsappHref} target="_blank" rel="noreferrer">Оставить заявку<span>↗</span></a></div>
+      <div className="lp-header-actions"><a className="lp-login" href={loginHref}>{user ? "Кабинет" : "Войти"}</a><a className="lp-nav-cta" href={whatsappHref} target="_blank" rel="noreferrer">Обсудить Relay<span>↗</span></a></div>
     </header>
 
     <section className="lp-hero">
       <div className="lp-orbit lp-orbit-one" aria-hidden="true" /><div className="lp-orbit lp-orbit-two" aria-hidden="true" />
       <div className="lp-hero-copy">
-        <div className="lp-kicker"><span>●</span> ПЛАТФОРМА ПАРТНЁРСКИХ ПРОДАЖ</div>
-        <h1>Превратите <span className="lp-color-word">рекомендации</span> в управляемый канал продаж.</h1>
-        <p>Запустите программу по одной ссылке. Агенты увидят, кого искать и сколько заработают, а вы — кто привёл лида и что с ним происходит.</p>
-        <div className="lp-hero-actions"><a className="lp-primary" href={dashboardHref}>{user ? "Открыть кабинет" : "Создать программу"}<span>↗</span></a><a className="lp-secondary" href="#how">Посмотреть сценарий <span>↓</span></a></div>
+        <div className="lp-kicker"><span>●</span> ПЛАТФОРМА ПАРТНЁРСКИХ ПРОДАЖ ДЛЯ B2B-КОМПАНИЙ</div>
+        <h1>Получайте <span className="lp-color-word">B2B-лиды</span> от внешних агентов — без потерь в чатах и таблицах.</h1>
+        <p>Relay помогает запустить агентский канал по одной ссылке: вы задаёте, кого искать и сколько заплатите, а затем видите автора лида, статус сделки и сумму выплаты.</p>
+        <div className="lp-mobile-audience" aria-label="Для кого и какую задачу решает Relay"><span><b>ДЛЯ КОГО</b>Владельцы и руководители продаж B2B</span><span><b>ВМЕСТО ЧЕГО</b>Чаты, таблицы и ручная сверка рекомендаций</span></div>
+        <div className="lp-hero-actions"><a className="lp-primary" href={dashboardHref}>{user ? "Открыть кабинет" : "Запустить агентский канал"}<span>↗</span></a><a className="lp-secondary" href="#how">Как это работает <span>↓</span></a></div>
         <div className="lp-hero-facts"><span><b>4</b> типа заданий</span><span><b>1</b> ссылка для агентов</span><span><b>0</b> таблиц для сверки</span></div>
       </div>
 
