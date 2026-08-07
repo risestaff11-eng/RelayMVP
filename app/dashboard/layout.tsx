@@ -28,6 +28,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <section className="dashboard-main">
         <header className="dashboard-topbar">
+          <div className="mobile-company-identity"><span className="mobile-relay-mark">R</span><div><small>RELAY · КОМПАНИЯ</small><strong>{company.name}</strong></div></div>
           <p>{company.onboardingStatus === "PROGRAM_PUBLISHED" ? "Кампания опубликована · отслеживайте агентов и результаты" : company.onboardingStatus === "PROFILE_CONFIRMED" || company.onboardingStatus === "PROGRAM_DRAFT" ? "Профиль подтверждён · создайте и опубликуйте кампанию" : "Следующий шаг — подтвердить профиль бизнеса"}</p>
           <div className="top-actions"><DashboardTour /><AccountMenu name={user.displayName} email={user.email} initials={initials(user.displayName)} signOutHref={chatGPTSignOutPath("/")} /></div>
         </header>
