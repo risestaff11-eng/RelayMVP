@@ -7,6 +7,7 @@ import "./landing-extra.css";
 import "./landing-refine.css";
 import "./mobile-role-ux.css";
 import "./landing-mobile.css";
+import "./agent-mobile-simple.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
