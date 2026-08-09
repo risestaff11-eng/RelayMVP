@@ -32,9 +32,12 @@ export function PartnerEarningStrip({ token, activeCount, bestReward }: { token:
 
   return (
     <div className="partner-earning-strip">
-      <Link href={`/partner/${token}/opportunities`}><span>МОЖНО ЗАРАБОТАТЬ</span><b>{activeCount} {taskWord}{bestReward ? ` · до ${bestReward}` : ""}</b></Link>
-      {needed > 0 && <Link className="partner-goal-strip" href={`/partner/${token}/payouts`}><span>МОЯ ЦЕЛЬ</span><b>{goal?.target.toLocaleString("ru-RU")} ₸ · нужно {needed} {unit}</b></Link>}
-      <button type="button" aria-label="Скрыть сводку" onClick={() => setVisible(false)}>×</button>
+      <Link href={`/partner/${token}/opportunities`}><span>Заработок:</span> <b>{activeCount} {taskWord}{bestReward ? ` · до ${bestReward}` : ""}</b></Link>
+      <i aria-hidden="true">·</i>
+      <Link className="partner-goal-strip" href={`/partner/${token}/payouts`}>
+        {needed > 0 ? <><span>Цель:</span> <b>{goal?.target.toLocaleString("ru-RU")} ₸ · {needed} {unit}</b></> : <b>Установить цель →</b>}
+      </Link>
+      <button type="button" aria-label="Скрыть подсказку" onClick={() => setVisible(false)}>×</button>
     </div>
   );
 }
