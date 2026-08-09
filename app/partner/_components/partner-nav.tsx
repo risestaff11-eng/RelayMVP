@@ -42,7 +42,7 @@ export function PartnerNav({ token }: { token: string }) {
         {items.map(([suffix, label, hint, icon]) => <Link key={suffix} className={isActive(suffix) ? "active" : undefined} href={hrefFor(suffix)} aria-current={isActive(suffix) ? "page" : undefined} onClick={() => setOpen(false)}><i>{icon}</i><span><strong>{label}</strong><small>{hint}</small></span><b>→</b></Link>)}
       </nav>
       <section className="mobile-drawer-trust"><i>✓</i><div><strong>Ваши рекомендации защищены</strong><p>Relay сохраняет владельца, дату и историю каждого результата.</p></div></section>
-      <footer><Link href={hrefFor("/profile")}>Открыть профиль <span>→</span></Link></footer>
+      <footer className="mobile-telegram-footer"><a href="https://t.me/relayagents" target="_blank" rel="noreferrer"><i>↗</i><span><strong>Relay Agents</strong><small>Telegram-канал для всех агентов</small></span><b>Открыть</b></a></footer>
     </aside>
   </>;
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `rewards` ADD `partner_confirmed_at` text;

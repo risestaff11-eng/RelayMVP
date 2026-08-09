@@ -4,6 +4,27 @@
 .mobile-agent-roadmap,
 .relay-install-prompt { display: none; }
 
+.partner-avatar-upload { position: relative; width: 76px; height: 76px; padding: 0; overflow: hidden; display: grid; place-items: center; border: 0; border-radius: 22px; color: var(--ink); background: var(--lime); font: inherit; font-size: 20px; font-weight: 950; cursor: pointer; }
+.partner-avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
+.partner-avatar-upload i { position: absolute; right: 4px; bottom: 4px; width: 24px; height: 24px; display: grid; place-items: center; border: 2px solid white; border-radius: 50%; color: white; background: var(--blue); font-size: 14px; font-style: normal; }
+.partner-avatar-editor > div { width: auto; height: auto; overflow: visible; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; border-radius: 0; color: var(--ink); background: transparent; font-size: inherit; }
+.partner-avatar-editor > div small { color: #4d5048; }
+.opportunity-reward-value { font-size: 1.18em !important; color: #12130f; }
+.reward-receipt-confirmation { margin-top: 8px; display: grid; gap: 6px; }
+.reward-receipt-confirmation label { display: flex; align-items: center; gap: 7px; font-weight: 850; }
+.reward-receipt-confirmation input { width: 18px; height: 18px; accent-color: #86b20f; }
+.reward-receipt-confirmation a { color: #167d47; font-size: 11px; font-weight: 850; text-decoration: underline; text-underline-offset: 2px; }
+.reward-receipt-confirmation small { min-height: 1em; color: #3f423b; }
+.payout-hero-summary { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.payout-hero-summary b { padding: 8px 10px; border: 1px solid rgba(255,255,255,.24); border-radius: 10px; font-size: 11px; }
+.payout-table-confirmation .brand-table-head,.payout-table-confirmation .brand-table-row { min-width: 1080px; grid-template-columns: 1.05fr 1.3fr .9fr .7fr .85fr .78fr .9fr; }
+.agent-receipt-cell b { color: #315f19; }
+.mobile-telegram-footer a { gap: 10px; justify-content: flex-start !important; color: white !important; background: #229ed9 !important; }
+.mobile-telegram-footer a > i { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: #229ed9; background: white; font-style: normal; }
+.mobile-telegram-footer a > span { min-width: 0; flex: 1; }
+.mobile-telegram-footer a strong,.mobile-telegram-footer a small { display: block; }
+.mobile-telegram-footer a small { margin-top: 2px; color: rgba(255,255,255,.82); font-size: 10px; }
+
 @media (max-width: 760px) {
   :root { --mobile-appbar: 72px; }
   body.mobile-drawer-open { overflow: hidden; }
@@ -169,4 +190,54 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-side-drawer { transition: none; }
+}
+
+@media (max-width: 760px) {
+  html,body { max-width: 100%; overflow-x: hidden; }
+  .dashboard-content,.partner-portal-content,.dashboard-main,.partner-portal-main { min-width: 0; }
+  .mobile-company-identity small { font-size: 10px; }
+  .mobile-company-identity strong,.partner-top-identity strong { font-size: 15px !important; }
+  .mobile-side-drawer > nav strong { font-size: 16px; }
+  .mobile-side-drawer > nav small { margin-top: 4px; color: #c3c5bd; font-size: 12px; line-height: 1.3; }
+  .mobile-drawer-trust strong { font-size: 14px; }
+  .mobile-drawer-trust p { color: #c3c5bd; font-size: 12px; line-height: 1.4; }
+  .mobile-agent-roadmap > header small { color: #42453e; font-size: 11px; }
+  .mobile-agent-roadmap > header p { color: #3f423b; font-size: 16px; font-weight: 550; line-height: 1.45; }
+  .mobile-roadmap-top small { font-size: 10px; }
+  .mobile-agent-roadmap article > p { color: inherit; font-size: 16px; font-weight: 550; line-height: 1.5; opacity: .88; }
+  .mobile-roadmap-reward { align-self: flex-start; padding: 9px 11px; border-radius: 10px; color: var(--ink); background: var(--lime); font-size: 16px; }
+  .mobile-agent-roadmap article > a { min-height: 54px; padding: 0 15px; font-size: 16px; }
+  .mobile-agent-roadmap article.ahead > a { color: #fff; background: var(--blue); }
+  .relay-install-prompt strong { font-size: 15px; }
+  .relay-install-prompt p { color: #d5d7cf; font-size: 13px; }
+  .relay-install-action { min-height: 44px; font-size: 15px; }
+  .partner-page-heading p,.partner-welcome p,.partner-section-title p,.opportunity-card p,.partner-large-empty p,.manual-payment-note p,.partner-feed-card p,.level-progress-card p,.next-reward-card p,.new-offers-card small,.partner-profile-stack p { color: #3f423b; font-size: 15px; font-weight: 550; line-height: 1.45; }
+  .partner-page-heading h1 { font-size: clamp(30px,9vw,40px); }
+  .partner-page-heading > div > span,.partner-section-title span { color: #363932; font-size: 10px; }
+  .opportunity-filters { padding: 10px; }
+  .opportunity-filters label > span { color: #33362f; font-size: 13px; }
+  .opportunity-filters select { min-height: 46px; padding: 0 11px; font-size: 16px; }
+  .opportunity-filters > small { display: block; color: #41443d; font-size: 13px; }
+  .opportunity-card { padding: 18px; }
+  .opportunity-card h2 { font-size: 25px; }
+  .opportunity-card dt,.opportunity-card dd { font-size: 13px; }
+  .opportunity-card-actions button,.accepted-result-link { min-height: 50px; font-size: 15px; }
+  .partner-payout-table > article { grid-template-columns: 1fr; }
+  .partner-payout-table strong,.partner-payout-table b { font-size: 16px; }
+  .partner-payout-table small,.partner-payout-table span,.partner-payout-table em { color: #343730; font-size: 14px; }
+  .reward-receipt-confirmation a,.reward-receipt-confirmation small { font-size: 13px; }
+  .partner-profile-form,.partner-verification-panel,.partner-profile-level { padding: 16px; }
+  .partner-avatar-editor { grid-template-columns: 76px minmax(0,1fr); }
+  .partner-avatar-editor strong { font-size: 14px; }
+  .partner-avatar-editor small { font-size: 12px; }
+  .partner-profile-form > label > span,.partner-profile-form legend,.partner-profile-fields label > span { color: #242620; font-size: 14px; }
+  .partner-profile-form textarea,.partner-profile-form > label input,.partner-profile-fields input { min-width: 0; min-height: 48px; padding: 11px 12px; font-size: 16px; }
+  .partner-profile-form fieldset label { font-size: 14px; }
+  .relay-auth-card { padding: 24px 18px; }
+  .relay-auth-copy p,.relay-auth-success p { color: #3d4039; font-size: 15px; }
+  .relay-auth-card label > span { font-size: 14px; }
+  .relay-auth-card label small,.relay-auth-check span { color: #3f423b; font-size: 13px !important; }
+  .relay-auth-card input:not([type="checkbox"]) { height: 50px; padding: 0 13px; font-size: 16px; }
+  .relay-auth-card form > button,.relay-auth-success button { min-height: 50px; font-size: 16px; }
+  .module-heading p,.panel-header p,.dashboard-content p,.setup-step p,.activity p { color: #3f423b; font-size: 14px; font-weight: 550; line-height: 1.45; }
 }

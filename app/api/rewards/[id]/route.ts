@@ -17,6 +17,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const payload = await request.json() as { paid?: boolean };
   const paid = payload.paid === true;
   const now = new Date().toISOString();
-  await getDb().update(rewards).set({ status: paid ? "PAID" : "APPROVED", paidAt: paid ? now : null, updatedAt: now }).where(eq(rewards.id, id));
-  return Response.json({ ok: true, status: paid ? "PAID" : "APPROVED", paidAt: paid ? now : null });
+  await getDb().update(rewards).set({ status: paid ? "PAID" : "APPROVED", paidAt: paid ? now : null, partnerConfirmedAt: paid ? row.partnerConfirmedAt : null, updatedAt: now }).where(eq(rewards.id, id));
+  return Response.json({ ok: true, status: paid ? "PAID" : "APPROVED", paidAt: paid ? now : null, partnerConfirmedAt: paid ? row.partnerConfirmedAt : null });
 }

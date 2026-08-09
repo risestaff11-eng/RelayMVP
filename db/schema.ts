@@ -316,6 +316,7 @@ export const rewards = sqliteTable(
     status: text("status").notNull().default("PENDING"),
     approvedAt: text("approved_at"),
     paidAt: text("paid_at"),
+    partnerConfirmedAt: text("partner_confirmed_at"),
     plannedAt: text("planned_at"),
     createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
     updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),

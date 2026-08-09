@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray, sum } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNotNull, sum } from "drizzle-orm";
 import { getDb } from ".";
 import { missions, partners, programs, rewards, submissionAttachments, submissions } from "./schema";
 
@@ -128,7 +128,7 @@ export async function getCompanyOperations(companyId: string) {
     db.select({ value: count() }).from(submissions).where(eq(submissions.companyId, companyId)),
     db.select({ value: count() }).from(submissions).where(and(eq(submissions.companyId, companyId), eq(submissions.status, "SUBMITTED"))),
     db.select({ value: sum(rewards.amount) }).from(rewards).where(and(eq(rewards.companyId, companyId), eq(rewards.status, "APPROVED"))),
-    db.select({ value: sum(rewards.amount) }).from(rewards).where(and(eq(rewards.companyId, companyId), eq(rewards.status, "PAID"))),
+    db.select({ value: sum(rewards.amount) }).from(rewards).where(and(eq(rewards.companyId, companyId), eq(rewards.status, "PAID"), isNotNull(rewards.partnerConfirmedAt))),
   ]);
   return {
     programs: programCount[0]?.value ?? 0,
@@ -177,7 +177,7 @@ export async function getAgentsForCompany(companyId: string) {
   const ids = rows.map((row) => row.agent.id);
   const [resultRows, rewardRows] = ids.length ? await Promise.all([
     db.select({ id: submissions.id, partnerId: submissions.partnerId, status: submissions.status }).from(submissions).where(inArray(submissions.partnerId, ids)),
-    db.select({ partnerId: rewards.partnerId, amount: rewards.amount, status: rewards.status }).from(rewards).where(inArray(rewards.partnerId, ids)),
+    db.select({ partnerId: rewards.partnerId, amount: rewards.amount, status: rewards.status, partnerConfirmedAt: rewards.partnerConfirmedAt }).from(rewards).where(inArray(rewards.partnerId, ids)),
   ]) : [[], []];
   return rows.map(({ agent, program }) => {
     const agentRewards = rewardRows.filter((reward) => reward.partnerId === agent.id);
@@ -188,7 +188,7 @@ export async function getAgentsForCompany(companyId: string) {
       resultCount: resultRows.filter((result) => result.partnerId === agent.id).length,
       dealCount: resultRows.filter((result) => result.partnerId === agent.id && result.status === "DEAL").length,
       dueAmount: agentRewards.filter((reward) => reward.status === "APPROVED").reduce((total, reward) => total + reward.amount, 0),
-      paidAmount: agentRewards.filter((reward) => reward.status === "PAID").reduce((total, reward) => total + reward.amount, 0),
+      paidAmount: agentRewards.filter((reward) => reward.status === "PAID" && reward.partnerConfirmedAt).reduce((total, reward) => total + reward.amount, 0),
     };
   });
 }
@@ -231,7 +231,7 @@ export async function getCompanyAnalytics(companyId: string, days: number | null
       results: programResults.length,
       accepted: programResults.filter((result) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(result.status)).length,
       deals: programResults.filter((result) => result.status === "DEAL").length,
-      paid: rewardItems.filter((reward) => reward.status === "PAID" && programResults.some((result) => result.id === reward.submissionId)).reduce((total, reward) => total + reward.amount, 0),
+      paid: rewardItems.filter((reward) => reward.status === "PAID" && reward.partnerConfirmedAt && programResults.some((result) => result.id === reward.submissionId)).reduce((total, reward) => total + reward.amount, 0),
     };
   });
   const programNames = new Map(selectedPrograms.map((program) => [program.id, program.name]));
@@ -257,7 +257,7 @@ export async function getCompanyAnalytics(companyId: string, days: number | null
       acceptanceRate: agentResults.length ? Math.round(accepted / agentResults.length * 100) : 0,
       dealRate: agentResults.length ? Math.round(deals / agentResults.length * 100) : 0,
       due: agentRewards.filter((reward) => reward.status === "APPROVED").reduce((total, reward) => total + reward.amount, 0),
-      paid: agentRewards.filter((reward) => reward.status === "PAID").reduce((total, reward) => total + reward.amount, 0),
+      paid: agentRewards.filter((reward) => reward.status === "PAID" && reward.partnerConfirmedAt).reduce((total, reward) => total + reward.amount, 0),
       score: deals * 100 + accepted * 20 + agentResults.length * 5,
     };
   }).sort((left, right) => right.score - left.score || new Date(right.lastActivity).getTime() - new Date(left.lastActivity).getTime());

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const phone = cleanString(form.get("phone"), 40);
     const email = cleanString(form.get("email"), 180).toLowerCase();
     const instagram = cleanString(form.get("instagram"), 100).replace(/^@/, "");
-    if (firstName.length < 2 || lastName.length < 2) throw new Error("Укажите имя и фамилию");
+    if (firstName.length < 2) throw new Error("Укажите имя");
     if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Проверьте email");
     if (phone.length < 7) throw new Error("Проверьте телефон");
     const db = getDb();

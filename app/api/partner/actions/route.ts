@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { getPartnerPortal } from "../../../../db/partner";
-import { partnerMissionAcceptances, partnerProfiles, submissionDisputes } from "../../../../db/schema";
+import { partnerMissionAcceptances, partnerProfiles, rewards, submissionDisputes } from "../../../../db/schema";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
 
 export async function POST(request: Request) {
@@ -33,6 +33,16 @@ export async function POST(request: Request) {
       if (existing.length) throw new Error("По этой рекомендации уже открыт спор");
       await db.insert(submissionDisputes).values({ id: crypto.randomUUID(), submissionId, partnerId: portal.partner.id, reason, status: "OPEN", createdAt: now });
       return Response.json({ ok: true });
+    }
+
+    if (action === "CONFIRM_REWARD") {
+      const rewardId = cleanString(payload.rewardId, 80);
+      const confirmed = payload.confirmed === true;
+      const reward = (await db.select().from(rewards).where(and(eq(rewards.id, rewardId), eq(rewards.partnerId, portal.partner.id))).limit(1))[0];
+      if (!reward) throw new Error("Начисление не найдено");
+      if (reward.status !== "PAID") throw new Error("Компания ещё не отметила выплату");
+      await db.update(rewards).set({ partnerConfirmedAt: confirmed ? now : null, updatedAt: now }).where(eq(rewards.id, rewardId));
+      return Response.json({ ok: true, partnerConfirmedAt: confirmed ? now : null });
     }
 
     if (action === "UPDATE_PROFILE") {

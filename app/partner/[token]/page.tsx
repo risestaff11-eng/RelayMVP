@@ -13,7 +13,7 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
 
   const available = portal.rewards.filter((item) => item.status === "APPROVED").reduce((sum, item) => sum + item.amount, 0);
   const expected = portal.rewards.filter((item) => item.status === "PENDING").reduce((sum, item) => sum + item.amount, 0);
-  const earned = portal.rewards.filter((item) => item.status === "PAID").reduce((sum, item) => sum + item.amount, 0);
+  const earned = portal.rewards.filter((item) => item.status === "PAID" && item.partnerConfirmedAt).reduce((sum, item) => sum + item.amount, 0);
   const acceptedCount = portal.submissions.filter((item) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(item.status)).length;
   const verifiedCount = Number(Boolean(portal.profile.emailVerifiedAt)) + Number(Boolean(portal.profile.whatsappVerifiedAt));
   const progress = Math.round(((verifiedCount + Number(acceptedCount > 0)) / 3) * 100);
@@ -24,16 +24,16 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
   const activeAcceptance = portal.acceptances.find((item) => item.status === "ACTIVE");
   const acceptedMission = activeAcceptance ? portal.missions.find((mission) => mission.id === activeAcceptance.missionId) : null;
   const acceptedMissionResult = acceptedMission ? portal.submissions.find((submission) => submission.missionId === acceptedMission.id) : null;
-  const contactsVerified = Boolean(portal.profile.emailVerifiedAt && portal.profile.whatsappVerifiedAt);
-  const guide = !contactsVerified
-    ? { step: 1, eyebrow: "ШАГ 1 ИЗ 4", title: "Подтвердите контакты", text: "Это нужно для защиты аккаунта и перехода на следующий уровень.", action: "Перейти в профиль", href: `/partner/${token}/profile` }
+  const basicProfileReady = portal.profile.firstName.trim().length >= 2 && portal.partner.phone.trim().length >= 7;
+  const guide = !basicProfileReady
+    ? { step: 1, eyebrow: "ШАГ 1 ИЗ 4", title: "Добавьте имя и WhatsApp", text: "Этого достаточно, чтобы начать. Остальные поля можно заполнить позже.", action: "Перейти в профиль", href: `/partner/${token}/profile` }
     : !acceptedMission && portal.submissions.length === 0
       ? { step: 2, eyebrow: "ШАГ 2 ИЗ 4", title: "Выберите первое задание", text: "Посмотрите условия, награду и возьмите одно понятное задание.", action: "Выбрать задание", href: `/partner/${token}/opportunities` }
       : acceptedMission && !acceptedMissionResult
         ? { step: 3, eyebrow: "ШАГ 3 ИЗ 4", title: "Передайте результат", text: `${acceptedMission.title}. Всё необходимое заполняется за два коротких шага.`, action: "Передать результат", href: `/p/${portal.program.slug}/missions/${acceptedMission.id}/submit?access=${token}` }
         : { step: 4, eyebrow: "ШАГ 4 ИЗ 4", title: "Следите за результатом", text: "Компания проверяет данные. Все изменения статуса и комментарии появятся в одном месте.", action: "Открыть результат", href: `/partner/${token}/submissions` };
   const journey = [
-    { title: "Подтвердите контакты", text: "Защитите аккаунт и подготовьте профиль к следующему уровню.", href: `/partner/${token}/profile`, action: "Открыть профиль" },
+    { title: "Добавьте имя и WhatsApp", text: "Два обязательных поля — и можно сразу переходить к заработку.", href: `/partner/${token}/profile`, action: "Открыть профиль" },
     { title: "Выберите задание", text: "Сравните условия и возьмите одно понятное задание в работу.", href: `/partner/${token}/opportunities`, action: "Выбрать задание" },
     { title: "Передайте результат", text: acceptedMission ? acceptedMission.title : "Добавьте контакт и контекст, чтобы компания могла быстро всё проверить.", href: acceptedMission ? `/p/${portal.program.slug}/missions/${acceptedMission.id}/submit?access=${token}` : `/partner/${token}/missions`, action: "Передать результат" },
     { title: "Следите за статусом", text: "Решение компании, комментарии и начисление сохраняются в одной истории.", href: `/partner/${token}/submissions`, action: "Открыть результаты" },
@@ -42,13 +42,13 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
   return (
     <div className="partner-portal-content partner-home-page">
       <div className="partner-welcome">
-        <div><span>ДОБРО ПОЖАЛОВАТЬ</span><h1>{portal.profile.firstName || "Агент"}, ваш путь к первой выплате</h1><p>Здесь только действия, которые помогают заработать и сохранить прозрачность каждой рекомендации.</p></div>
+        <div><span>ЗАРАБАТЫВАЙТЕ НА РЕКОМЕНДАЦИЯХ</span><h1>{portal.profile.firstName || "Агент"}, знакомьте компании с нужными людьми и получайте вознаграждения</h1><p>Выберите понятное задание, порекомендуйте подходящего клиента и отслеживайте заработок до фактического получения денег.</p></div>
         <Link className="button button-primary" href={`/p/${portal.program.slug}?access=${token}`}>Передать новый результат <span>↗</span></Link>
       </div>
 
       <section className="mobile-agent-roadmap" aria-label="Путь к первой выплате">
-        <header><small>ВАШ МАРШРУТ</small><h2>Четыре шага к первой выплате</h2><p>Relay показывает только то, что нужно сделать дальше.</p></header>
-        <div>{journey.map((item, index) => { const step = index + 1; const state = step < guide.step ? "done" : step === guide.step ? "current" : "ahead"; return <article className={state} key={item.title}><div className="mobile-roadmap-top"><span>{step < guide.step ? "✓" : `0${step}`}</span><small>{state === "done" ? "ВЫПОЛНЕНО" : state === "current" ? "СЛЕДУЮЩИЙ ШАГ" : "ДАЛЬШЕ"}</small></div><h3>{item.title}</h3><p>{item.text}</p>{step === 3 && acceptedMission && <strong className="mobile-roadmap-reward">Награда: {acceptedMission.rewardLabel}</strong>}{state !== "ahead" ? <Link href={item.href}>{state === "current" ? item.action : "Посмотреть"}<span>→</span></Link> : <span className="mobile-roadmap-locked">Откроется после предыдущего шага</span>}</article>; })}</div>
+        <header><small>ВАШ МАРШРУТ</small><h2>Четыре шага к первой выплате</h2><p>Все шаги доступны сразу. Начните с подсвеченного, либо откройте любой другой.</p></header>
+        <div>{journey.map((item, index) => { const step = index + 1; const state = step < guide.step ? "done" : step === guide.step ? "current" : "ahead"; return <article className={state} key={item.title}><div className="mobile-roadmap-top"><span>{step < guide.step ? "✓" : `0${step}`}</span><small>{state === "done" ? "ВЫПОЛНЕНО" : state === "current" ? "СЛЕДУЮЩИЙ ШАГ" : "МОЖНО ОТКРЫТЬ"}</small></div><h3>{item.title}</h3><p>{item.text}</p>{step === 3 && acceptedMission && <strong className="mobile-roadmap-reward">Ваш заработок: {acceptedMission.rewardLabel}</strong>}<Link href={item.href}>{state === "current" ? item.action : state === "done" ? "Посмотреть" : "Перейти к шагу"}<span>→</span></Link></article>; })}</div>
       </section>
 
       <section className="mobile-agent-balance">

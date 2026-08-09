@@ -17,22 +17,22 @@ export function InstallRelayPrompt() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/sw.js");
-    if (!inCabinet || window.matchMedia("(display-mode: standalone)").matches || localStorage.getItem("relay-install-offered")) return;
+    if (!inCabinet || window.matchMedia("(display-mode: standalone)").matches || localStorage.getItem("relay-install-offered-v2")) return;
 
     const offer = (installEvent?: InstallEvent) => {
       if (installEvent) { setEvent(installEvent); setManual(false); }
       else setManual(true);
-      localStorage.setItem("relay-install-offered", "1");
+      localStorage.setItem("relay-install-offered-v2", "1");
       setVisible(true);
     };
     const onPrompt = (nativeEvent: Event) => {
       nativeEvent.preventDefault();
-      window.clearTimeout(fallback);
       window.setTimeout(() => offer(nativeEvent as InstallEvent), 900);
     };
     window.addEventListener("beforeinstallprompt", onPrompt);
-    const fallback = window.setTimeout(() => offer(), 2400);
-    return () => { window.removeEventListener("beforeinstallprompt", onPrompt); window.clearTimeout(fallback); };
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const iosFallback = isIos ? window.setTimeout(() => offer(), 1800) : undefined;
+    return () => { window.removeEventListener("beforeinstallprompt", onPrompt); if (iosFallback) window.clearTimeout(iosFallback); };
   }, [inCabinet]);
 
   if (!inCabinet || !visible) return null;
@@ -46,7 +46,7 @@ export function InstallRelayPrompt() {
 
   return <aside className="relay-install-prompt" role="dialog" aria-label="Установить Relay на устройство">
     <div className="relay-install-icon">R</div>
-    <div><strong>Relay всегда под рукой</strong><p>{manual ? "В меню браузера выберите «Добавить на главный экран»." : "Установите Relay на главный экран и открывайте кабинет как приложение."}</p></div>
+    <div><strong>Установить Relay на главный экран</strong><p>{manual ? "На iPhone нажмите «Поделиться», затем «На экран Домой»." : "Нажмите кнопку — браузер добавит ярлык Relay и будет открывать кабинет как приложение."}</p></div>
     <button className="relay-install-action" type="button" onClick={install}>{manual ? "Понятно" : "Установить"}</button>
     <button className="relay-install-close" type="button" aria-label="Закрыть" onClick={() => setVisible(false)}>×</button>
   </aside>;

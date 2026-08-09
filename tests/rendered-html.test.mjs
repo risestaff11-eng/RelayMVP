@@ -5,7 +5,6 @@ async function render(pathname = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
-
   return worker.fetch(
     new Request(`http://localhost${pathname}`, { headers: { accept: "text/html" } }),
     { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
@@ -23,7 +22,7 @@ test("renders the Relay landing page", async () => {
   assert.match(html, /4 ЗАДАНИЯ/);
   assert.doesNotMatch(html, /Northstar CRM/);
   assert.match(html, /Потому что знает, сколько ему должны/);
-  assert.match(html, /ПЛАТФОРМА ПАРТНЁРСКИХ ПРОДАЖ/);
+  assert.match(html, /ПЛАТФОРМА АГЕНТСКИХ ПРОДАЖ/);
   assert.match(html, /Вопросы до запуска/);
   assert.match(html, /wa\.me\/77765086000/);
   assert.match(html, /Стать интегратором/);
@@ -43,7 +42,7 @@ test("renders the integrator one-screen offer", async () => {
   const response = await render("/integrators");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Станьте интегратором партнёрских продаж/);
+  assert.match(html, /Станьте интегратором агентских продаж/);
   assert.match(html, /Зарабатывайте на запуске/);
   assert.match(html, /Получайте повторные проекты/);
 });
