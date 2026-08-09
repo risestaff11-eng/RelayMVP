@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPartnerPortal } from "../../../db/partner";
 import { SafeLink as Link } from "@/app/safe-link";
 import { PartnerNav } from "../_components/partner-nav";
+import { PartnerEarningStrip } from "../_components/partner-earning-strip";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false }, referrer: "no-referrer", title: "Кабинет агента" };
@@ -14,5 +15,25 @@ export default async function PartnerLayout({ children, params }: { children: Re
   const initials = `${portal.profile.firstName[0] || ""}${portal.profile.lastName[0] || ""}`.toUpperCase() || "A";
   const activeMissions = portal.missions.filter((mission) => mission.status === "ACTIVE");
   const bestReward = [...activeMissions].sort((left, right) => right.rewardValue - left.rewardValue)[0];
-  return <main className="partner-portal-shell"><aside className="partner-portal-sidebar"><Link className="brand partner-brand" href={`/partner/${token}`}><span className="brand-mark">R</span><span>Relay</span></Link><div className="partner-company-chip"><small>КОМПАНИЯ</small><strong>{portal.company.name}</strong><span>● Задания доступны</span></div><PartnerNav token={token} /><div className="partner-trust-note"><i>✓</i><div><strong>Результаты зафиксированы</strong><p>Дата, автор и история статусов сохраняются.</p></div></div></aside><section className="partner-portal-main"><header className="partner-portal-topbar"><div className="partner-top-identity"><div className="partner-mini-avatar">{portal.profile.avatarObjectKey ? <img src={`/api/partner/avatar?token=${token}`} alt="Аватар агента" /> : <span>{initials}</span>}</div><div><small>АГЕНТ</small><strong>{portal.profile.firstName || portal.partner.email}</strong></div></div><Link className="partner-earning-pill" href={`/partner/${token}/opportunities`}><span>МОЖНО ЗАРАБОТАТЬ</span><b>{activeMissions.length} {activeMissions.length === 1 ? "задание" : "задания"}{bestReward ? ` · до ${bestReward.rewardLabel}` : ""}</b></Link></header>{children}</section></main>;
+
+  return (
+    <main className="partner-portal-shell">
+      <aside className="partner-portal-sidebar">
+        <Link className="brand partner-brand" href={`/partner/${token}`}><span className="brand-mark">R</span><span>Relay</span></Link>
+        <div className="partner-company-chip"><small>КОМПАНИЯ</small><strong>{portal.company.name}</strong><span>● Задания доступны</span></div>
+        <PartnerNav token={token} />
+        <div className="partner-trust-note"><i>✓</i><div><strong>Результаты зафиксированы</strong><p>Дата, автор и история статусов сохраняются.</p></div></div>
+      </aside>
+      <section className="partner-portal-main">
+        <header className="partner-portal-topbar">
+          <div className="partner-top-identity">
+            <div className="partner-mini-avatar">{portal.profile.avatarObjectKey ? <img src={`/api/partner/avatar?token=${token}`} alt="Аватар агента" /> : <span>{initials}</span>}</div>
+            <div><small>АГЕНТ</small><strong>{portal.profile.firstName || portal.partner.email}</strong></div>
+          </div>
+          <PartnerEarningStrip token={token} activeCount={activeMissions.length} bestReward={bestReward?.rewardLabel} />
+        </header>
+        {children}
+      </section>
+    </main>
+  );
 }

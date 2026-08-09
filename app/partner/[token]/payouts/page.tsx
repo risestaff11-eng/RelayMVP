@@ -2,11 +2,13 @@ import { notFound } from "next/navigation";
 import { getPartnerPortal } from "../../../../db/partner";
 import { money, shortDate } from "../../_lib";
 import { RewardReceiptConfirmation } from "../../_components/partner-actions";
+import { EarningsGoalCalculator } from "../../_components/earnings-goal-calculator";
 
 export default async function PartnerPayoutsPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const portal = await getPartnerPortal(token);
   if (!portal) notFound();
+
   const approved = portal.rewards.filter((item) => item.status === "APPROVED").reduce((sum, item) => sum + item.amount, 0);
   const received = portal.rewards.filter((item) => item.status === "PAID" && item.partnerConfirmedAt).reduce((sum, item) => sum + item.amount, 0);
   const markedByCompany = portal.rewards.filter((item) => item.status === "PAID" && !item.partnerConfirmedAt).reduce((sum, item) => sum + item.amount, 0);
@@ -14,5 +16,40 @@ export default async function PartnerPayoutsPage({ params }: { params: Promise<{
   const supportText = `Здравствуйте! Помогите получить вознаграждение от компании «${portal.company.name}». Компания отметила выплату в Relay, но деньги пока не получены. Агент: ${agentName}.`;
   const supportHref = `https://wa.me/77765086000?text=${encodeURIComponent(supportText)}`;
 
-  return <div className="partner-portal-content"><div className="partner-page-heading"><div><span>ВАШ ЗАРАБОТОК</span><h1>Все вознаграждения под контролем</h1><p>Вы видите, сколько заработали на рекомендациях, что уже оплачено компанией и какие деньги подтвердили лично.</p></div></div><section className="payout-hero"><small>ДОСТУПНО К ВЫПЛАТЕ</small><strong>{money(approved, portal.program.currency)}</strong><span>Компания переводит деньги самостоятельно</span><div className="payout-hero-summary"><b>Получено: {money(received, portal.program.currency)}</b>{markedByCompany > 0 && <b>Компания отметила оплату: {money(markedByCompany, portal.program.currency)}</b>}</div></section>{portal.rewards.length ? <section className="partner-payout-table"><div><span>ОСНОВАНИЕ</span><span>КОМПАНИЯ</span><span>СУММА</span><span>ПЛАНОВАЯ ДАТА</span><span>СТАТУС</span></div>{portal.rewards.map((reward) => { const submission = portal.submissions.find((item) => item.id === reward.submissionId); const complete = reward.status === "PAID" && Boolean(reward.partnerConfirmedAt); const status = complete ? "Получено" : reward.status === "PAID" ? "Компания отметила оплату" : reward.status === "APPROVED" ? "К выплате" : reward.status === "PENDING" ? "Ожидается" : "Отменено"; return <article key={reward.id}><div><strong>{submission?.mission?.title || "Вознаграждение"}</strong><small>{submission?.contactCompany}</small></div><span>{portal.company.name}</span><b>{money(reward.amount, reward.currency)}</b><span>{shortDate(reward.plannedAt)}</span><div><em className={`reward-status-${complete ? "received" : reward.status.toLowerCase()}`}>{status}</em>{reward.status === "PAID" && <RewardReceiptConfirmation token={token} rewardId={reward.id} confirmed={Boolean(reward.partnerConfirmedAt)} supportHref={supportHref} />}</div></article>; })}</section> : <section className="partner-large-empty"><span>₸</span><h2>Начислений пока нет</h2><p>Выберите задание, передайте подходящую рекомендацию и выполните условие — здесь появится ваш заработок.</p></section>}<div className="manual-payment-note"><span>!</span><div><strong>Статистика обновляется после двух подтверждений</strong><p>Сначала компания отмечает перевод, затем вы подтверждаете получение. Если компания поставила отметку, а деньги не пришли, откройте WhatsApp поддержки прямо из строки выплаты.</p></div></div></div>;
+  return (
+    <div className="partner-portal-content">
+      <div className="partner-page-heading"><div><span>ВАШ ЗАРАБОТОК</span><h1>Все вознаграждения под контролем</h1><p>Смотрите начисления, подтверждайте получение и планируйте следующую цель.</p></div></div>
+
+      <section className="payout-hero">
+        <small>ДОСТУПНО К ВЫПЛАТЕ</small>
+        <strong>{money(approved, portal.program.currency)}</strong>
+        <span>Компания переводит деньги самостоятельно</span>
+        <div className="payout-hero-summary"><b>Получено: {money(received, portal.program.currency)}</b>{markedByCompany > 0 && <b>Компания отметила оплату: {money(markedByCompany, portal.program.currency)}</b>}</div>
+      </section>
+
+      {portal.rewards.length ? (
+        <section className="partner-payout-table">
+          <div><span>ОСНОВАНИЕ</span><span>КОМПАНИЯ</span><span>СУММА</span><span>ПЛАНОВАЯ ДАТА</span><span>СТАТУС</span></div>
+          {portal.rewards.map((reward) => {
+            const submission = portal.submissions.find((item) => item.id === reward.submissionId);
+            const complete = reward.status === "PAID" && Boolean(reward.partnerConfirmedAt);
+            const status = complete ? "Получено" : reward.status === "PAID" ? "Компания отметила оплату" : reward.status === "APPROVED" ? "К выплате" : reward.status === "PENDING" ? "Ожидается" : "Отменено";
+            return (
+              <article key={reward.id}>
+                <div><strong>{submission?.mission?.title || "Вознаграждение"}</strong><small>{submission?.contactCompany}</small></div>
+                <span>{portal.company.name}</span>
+                <b>{money(reward.amount, reward.currency)}</b>
+                <span>{shortDate(reward.plannedAt)}</span>
+                <div><em className={`reward-status-${complete ? "received" : reward.status.toLowerCase()}`}>{status}</em>{reward.status === "PAID" && <RewardReceiptConfirmation token={token} rewardId={reward.id} confirmed={Boolean(reward.partnerConfirmedAt)} supportHref={supportHref} />}</div>
+              </article>
+            );
+          })}
+        </section>
+      ) : (
+        <section className="partner-large-empty"><span>₸</span><h2>Начислений пока нет</h2><p>Выберите задание, передайте подходящую рекомендацию и выполните условие — здесь появится ваш заработок.</p></section>
+      )}
+
+      <EarningsGoalCalculator />
+    </div>
+  );
 }

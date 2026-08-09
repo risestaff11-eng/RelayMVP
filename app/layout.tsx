@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./landing.css";
@@ -34,7 +35,11 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s · Relay",
     },
     description,
-    icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+    icons: {
+      icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+      shortcut: "/favicon.svg",
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
     manifest: "/manifest.webmanifest",
     appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Relay" },
     openGraph: {
@@ -59,6 +64,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
+      <head><Script src="/install-bootstrap.js" strategy="beforeInteractive" /></head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
