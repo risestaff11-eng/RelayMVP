@@ -4,7 +4,7 @@ import { getPartnerPortal } from "../../../db/partner";
 import { SafeLink as Link } from "@/app/safe-link";
 import { money, shortDate, statusNames, typeNames } from "../_lib";
 
-export const metadata: Metadata = { title: "Кабинет партнёра" };
+export const metadata: Metadata = { title: "Кабинет агента" };
 
 export default async function PartnerHome({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -36,7 +36,7 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
   return (
     <div className="partner-portal-content partner-home-page">
       <div className="partner-welcome">
-        <div><span>ДОБРО ПОЖАЛОВАТЬ</span><h1>{portal.profile.firstName || "Партнёр"}, ваш путь к первой выплате</h1><p>Здесь только действия, которые помогают заработать и сохранить прозрачность каждой рекомендации.</p></div>
+        <div><span>ДОБРО ПОЖАЛОВАТЬ</span><h1>{portal.profile.firstName || "Агент"}, ваш путь к первой выплате</h1><p>Здесь только действия, которые помогают заработать и сохранить прозрачность каждой рекомендации.</p></div>
         <Link className="button button-primary" href={`/p/${portal.program.slug}?access=${token}`}>Передать новый результат <span>↗</span></Link>
       </div>
 
@@ -64,10 +64,10 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
       <section className="partner-home-grid">
         <div className="partner-home-primary">
           {recommended && <article className={`partner-featured-mission type-${recommended.type.toLowerCase()}`}>
-            <div className="featured-mission-top"><span>РЕКОМЕНДУЕМАЯ МИССИЯ</span><b>{typeNames[recommended.type]}</b></div>
+            <div className="featured-mission-top"><span>РЕКОМЕНДУЕМОЕ ЗАДАНИЕ</span><b>{typeNames[recommended.type]}</b></div>
             <h2>{recommended.title}</h2><p>{recommended.description}</p>
             <div className="featured-reward"><small>НАГРАДА</small><strong>{recommended.rewardLabel}</strong></div>
-            <Link href={`/p/${portal.program.slug}?access=${token}#missions`}>Открыть миссию <span>→</span></Link>
+            <Link href={`/p/${portal.program.slug}?access=${token}#missions`}>Открыть задание <span>→</span></Link>
           </article>}
           <section className="partner-feed-card">
             <div className="partner-section-title"><div><span>ЖИВАЯ ИСТОРИЯ</span><h2>Последние изменения</h2></div><Link href={`/partner/${token}/submissions`}>Вся воронка →</Link></div>
@@ -75,8 +75,8 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
           </section>
         </div>
         <aside className="partner-home-side">
-          <section className="level-progress-card"><span>СЛЕДУЮЩИЙ УРОВЕНЬ</span><h2>Проверенный партнёр</h2><p>Подтвердите email и WhatsApp, затем получите первый принятый лид.</p><div><i style={{ width: `${progress}%` }} /></div><small>{verifiedCount + Number(acceptedCount > 0)}/3 условий выполнено</small><ul><li>{portal.profile.emailVerifiedAt ? "✓" : "○"} Email подтверждён</li><li>{portal.profile.whatsappVerifiedAt ? "✓" : "○"} WhatsApp подтверждён</li><li>{acceptedCount ? "✓" : "○"} Первый принятый лид</li></ul><Link className="level-profile-link" href={`/partner/${token}/profile`}>Подтвердить контакты →</Link></section>
-          <section className="next-reward-card"><span>БЛИЖАЙШАЯ НАГРАДА</span>{portal.submissions[0] ? <><strong>{portal.submissions[0].mission?.rewardLabel || "После принятия"}</strong><p>{portal.submissions[0].contactCompany} · {statusNames[portal.submissions[0].status]}</p></> : <><strong>Первая выплата</strong><p>Выберите миссию и передайте подходящий контакт.</p></>}<Link href={`/partner/${token}/payouts`}>Открыть выплаты →</Link></section>
+          <section className="level-progress-card"><span>СЛЕДУЮЩИЙ УРОВЕНЬ</span><h2>Проверенный агент</h2><p>Подтвердите email и WhatsApp, затем получите первый принятый лид.</p><div><i style={{ width: `${progress}%` }} /></div><small>{verifiedCount + Number(acceptedCount > 0)}/3 условий выполнено</small><ul><li>{portal.profile.emailVerifiedAt ? "✓" : "○"} Email подтверждён</li><li>{portal.profile.whatsappVerifiedAt ? "✓" : "○"} WhatsApp подтверждён</li><li>{acceptedCount ? "✓" : "○"} Первый принятый лид</li></ul><Link className="level-profile-link" href={`/partner/${token}/profile`}>Подтвердить контакты →</Link></section>
+          <section className="next-reward-card"><span>БЛИЖАЙШАЯ НАГРАДА</span>{portal.submissions[0] ? <><strong>{portal.submissions[0].mission?.rewardLabel || "После принятия"}</strong><p>{portal.submissions[0].contactCompany} · {statusNames[portal.submissions[0].status]}</p></> : <><strong>Первая выплата</strong><p>Выберите задание и передайте подходящий контакт.</p></>}<Link href={`/partner/${token}/payouts`}>Открыть выплаты →</Link></section>
           <section className="new-offers-card"><div><span>НОВЫЕ ПРЕДЛОЖЕНИЯ</span><b>{portal.missions.length}</b></div>{portal.missions.slice(0, 3).map((mission) => <Link href={`/p/${portal.program.slug}?access=${token}#missions`} key={mission.id}><i className={`type-dot-${mission.type.toLowerCase()}`} /><span className="offer-title"><strong>{mission.title}</strong><small>Дедлайн: {deadline}</small></span><span>→</span></Link>)}</section>
         </aside>
       </section>

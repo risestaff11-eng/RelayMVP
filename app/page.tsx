@@ -5,7 +5,7 @@ import { MarketingLogo } from "./marketing-logo";
 import { TypedReasons } from "./typed-reasons";
 
 export const metadata: Metadata = {
-  title: "Relay — запустите партнёрский канал продаж",
+  title: "Relay — запустите агентский канал продаж",
   description: "Создайте программу, выдайте агентам понятные задания и прозрачно ведите каждый лид от рекомендации до выплаты.",
 };
 
@@ -19,7 +19,7 @@ const missionCards = [
 ];
 
 const faqs = [
-  ["Relay — это партнёрская или реферальная программа?", "И то и другое. Компания сама определяет результат: квалифицированный лид, встреча, сделка, имиджевая публикация или полезное действие. Relay фиксирует правила и ведёт результат до выплаты."],
+  ["Relay — это агентская или реферальная программа?", "И то и другое. Компания сама определяет результат: квалифицированный лид, встреча, сделка, имиджевая публикация или полезное действие. Relay фиксирует правила и ведёт результат до выплаты."],
   ["Нужно ли агенту устанавливать приложение?", "Нет. Он открывает публичную ссылку, указывает email, выбирает задание и передаёт результат в браузере. Отдельное приложение не требуется."],
   ["Как компания защищается от нецелевых лидов?", "В каждом задании заранее задаются критерии подходящего клиента, подтверждения результата, срок проверки и причины отказа. Компания принимает только то, что соответствует правилам."],
   ["Как агент понимает, что его лид не присвоили?", "Relay фиксирует владельца и дату передачи, предупреждает о дублях и сохраняет историю статусов и комментариев. Агент видит путь рекомендации до начисления и выплаты."],
@@ -44,7 +44,7 @@ export default async function Home() {
     <section className="lp-hero">
       <div className="lp-orbit lp-orbit-one" aria-hidden="true" /><div className="lp-orbit lp-orbit-two" aria-hidden="true" />
       <div className="lp-hero-copy">
-        <div className="lp-kicker"><span>●</span> ПЛАТФОРМА ПАРТНЁРСКИХ ПРОДАЖ ДЛЯ B2B-КОМПАНИЙ</div>
+        <div className="lp-kicker"><span>●</span> ПЛАТФОРМА АГЕНТСКИХ ПРОДАЖ ДЛЯ B2B-КОМПАНИЙ</div>
         <h1>Получайте <span className="lp-color-word">B2B-лиды</span> от внешних агентов — без потерь в чатах и таблицах.</h1>
         <p>Relay помогает запустить агентский канал по одной ссылке: вы задаёте, кого искать и сколько заплатите, а затем видите автора лида, статус сделки и сумму выплаты.</p>
         <div className="lp-mobile-audience" aria-label="Для кого и какую задачу решает Relay"><span><b>ДЛЯ КОГО</b>Владельцы и руководители продаж B2B</span><span><b>ВМЕСТО ЧЕГО</b>Чаты, таблицы и ручная сверка рекомендаций</span></div>
@@ -97,6 +97,6 @@ export default async function Home() {
 
     <section className="lp-final"><div className="lp-final-tiles" aria-hidden="true">{missionCards.map((card) => <i className={`lp-${card.tone}`} key={card.index}>{card.icon}</i>)}</div><span>ПЕРВАЯ ПРОГРАММА НАЧИНАЕТСЯ С ОДНОЙ ССЫЛКИ</span><h2>Дайте агентам понятный повод рекомендовать вас.</h2><p>А себе — прозрачный способ принять результат, довести его до сделки и не потерять доверие.</p><a className="lp-primary" href={dashboardHref}>Начать бесплатно<span>↗</span></a></section>
 
-    <footer className="lp-footer"><div><Link className="lp-brand" href="/"><MarketingLogo /><span>Relay</span></Link><p>Партнёрские продажи по одной ссылке.</p></div><nav><a href="#product">Продукт</a><Link href="/pricing">Тарифы</Link><Link href="/integrators">Интеграторам</Link><a href="#faq">FAQ</a><Link href="/legal/privacy">Конфиденциальность</Link><Link href="/legal/license">Соглашение</Link></nav><span>© 2026 Relay</span></footer>
+    <footer className="lp-footer"><div><Link className="lp-brand" href="/"><MarketingLogo /><span>Relay</span></Link><p>Агентские продажи по одной ссылке.</p></div><nav><a href="#product">Продукт</a><Link href="/pricing">Тарифы</Link><Link href="/integrators">Интеграторам</Link><a href="#faq">FAQ</a><Link href="/legal/privacy">Конфиденциальность</Link><Link href="/legal/license">Соглашение</Link></nav><span>© 2026 Relay</span></footer>
   </main>;
 }

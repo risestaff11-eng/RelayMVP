@@ -67,7 +67,7 @@ export function CompanyRegistrationForm({ email }: { email: string }) {
         <label htmlFor="goal">Главная цель</label>
         <select id="goal" name="primaryGoal" defaultValue="LEADS" required>
           <option value="LEADS">Получать больше квалифицированных лидов</option>
-          <option value="DEALS">Увеличить продажи через партнёров</option>
+          <option value="DEALS">Увеличить продажи через агентов</option>
           <option value="AMBASSADORS">Развивать сеть амбассадоров</option>
           <option value="MIXED">Все перечисленное</option>
         </select>

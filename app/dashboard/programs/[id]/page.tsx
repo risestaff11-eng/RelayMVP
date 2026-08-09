@@ -5,7 +5,7 @@ import { getCompanyForUser } from "../../../../db/company";
 import { getProgramForCompany } from "../../../../db/programs";
 import { ProgramEditor } from "./program-editor";
 
-export const metadata: Metadata = { title: "Настройка кампании" };
+export const metadata: Metadata = { title: "Настройка программы" };
 export const dynamic = "force-dynamic";
 
 export default async function ProgramPage({ params }: { params: Promise<{ id: string }> }) {

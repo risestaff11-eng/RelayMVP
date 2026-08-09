@@ -30,12 +30,12 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
         body: JSON.stringify({ ...program, publish: action === "publish", pause: action === "pause", missions: program.missions }),
       });
       const data = await response.json() as { status?: string; publicUrl?: string | null; error?: string };
-      if (!response.ok || !data.status) throw new Error(data.error || "Не удалось сохранить кампанию");
+      if (!response.ok || !data.status) throw new Error(data.error || "Не удалось сохранить программу");
       setProgram((current) => ({ ...current, status: data.status! }));
       setPublicUrl(data.publicUrl ?? null);
-      setNotice({ type: "success", text: action === "publish" ? "Кампания опубликована. Ссылка готова для агентов." : action === "pause" ? "Кампания поставлена на паузу." : "Черновик кампании сохранён." });
+      setNotice({ type: "success", text: action === "publish" ? "Программа опубликована. Ссылка готова для агентов." : action === "pause" ? "Программа поставлена на паузу." : "Черновик программы сохранён." });
     } catch (reason) {
-      setNotice({ type: "error", text: reason instanceof Error ? reason.message : "Не удалось сохранить кампанию" });
+      setNotice({ type: "error", text: reason instanceof Error ? reason.message : "Не удалось сохранить программу" });
     } finally {
       setPending(null);
     }
@@ -49,13 +49,13 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
 
   return (
     <div className="dashboard-content module-content program-builder-page">
-      <div className="builder-back"><Link href="/dashboard/programs">← Все кампании</Link><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : program.status === "PAUSED" ? "На паузе" : "Черновик"}</span></div>
+      <div className="builder-back"><Link href="/dashboard/programs">← Все программы</Link><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : program.status === "PAUSED" ? "На паузе" : "Черновик"}</span></div>
       <div className="module-heading"><div><span className="module-kicker">НАСТРОЙКА ПРОГРАММЫ</span><h1>{program.name}</h1><p>Проверьте AI-черновики, зафиксируйте правила проверки и только затем публикуйте внешнюю ссылку.</p></div>{publicUrl && <div className="published-link-actions"><Link className="button button-ghost compact-button" href={publicUrl} target="_blank">Открыть страницу ↗</Link><button className="button button-primary compact-button" type="button" onClick={copyLink}>Копировать ссылку</button></div>}</div>
       <div className="builder-stepper"><span className="done"><b>✓</b>Основа</span><span className="active"><b>2</b>Задания и награды</span><span className={program.status === "ACTIVE" ? "done" : ""}><b>{program.status === "ACTIVE" ? "✓" : "3"}</b>Правила и публикация</span></div>
       {notice && <div className={`inline-notice ${notice.type}`} role="status">{notice.text}</div>}
 
       <section className="panel program-general-card">
-        <div className="panel-header"><div><h2>Описание кампании</h2><p>Коротко объясните агенту, что он может рекомендовать и какой результат ожидается.</p></div></div>
+        <div className="panel-header"><div><h2>Описание программы</h2><p>Коротко объясните агенту, что он может рекомендовать и какой результат ожидается.</p></div></div>
         <label className="builder-field"><span>Название</span><input value={program.name} onChange={(event) => updateProgram("name", event.target.value)} /></label>
         <label className="builder-field"><span>Описание</span><textarea rows={4} value={program.description} onChange={(event) => updateProgram("description", event.target.value)} /></label>
         <div className="builder-field-row"><label className="builder-field"><span>Цель</span><select value={program.goal} onChange={(event) => updateProgram("goal", event.target.value)}><option value="MIXED">Смешанная</option><option value="LEADS">Лиды</option><option value="DEALS">Сделки</option><option value="BRAND">Имидж</option><option value="ENGAGEMENT">Вовлечение</option></select></label><label className="builder-field"><span>Валюта</span><select value={program.currency} onChange={(event) => updateProgram("currency", event.target.value)}><option>KZT</option><option>RUB</option><option>USD</option><option>EUR</option></select></label></div>
@@ -69,7 +69,7 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
         <div className="publication-grid"><label className="builder-field"><span>Когда и как выплачивается награда</span><textarea rows={5} value={program.payoutTerms} onChange={(event) => updateProgram("payoutTerms", event.target.value)} placeholder="Например: в течение 10 рабочих дней после оплаты сделки клиентом." /></label><label className="builder-field"><span>Юридические и этические ограничения</span><textarea rows={5} value={program.legalTerms} onChange={(event) => updateProgram("legalTerms", event.target.value)} placeholder="Запрет спама, самостоятельных обещаний цены и представления сотрудником компании." /></label></div><label className="builder-field publication-date"><span>Дата завершения · необязательно</span><input type="date" value={program.expiresAt?.slice(0, 10) ?? ""} onChange={(event) => updateProgram("expiresAt", event.target.value)} /></label>
       </section>
 
-      <div className="program-publish-bar"><div><strong>{program.status === "ACTIVE" ? "Кампания уже доступна агентам" : "Публикация создаст внешнюю ссылку"}</strong><p>После публикации задания можно редактировать, но существенные изменения лучше сообщать действующим агентам отдельно.</p></div><div><button className="button button-ghost" type="button" onClick={() => persist("save")} disabled={pending !== null}>{pending === "save" ? "Сохраняем…" : "Сохранить черновик"}</button>{program.status === "ACTIVE" ? <button className="button button-ghost" type="button" onClick={() => persist("pause")} disabled={pending !== null}>{pending === "pause" ? "Ставим на паузу…" : "Поставить на паузу"}</button> : <button className="button button-primary" type="button" onClick={() => persist("publish")} disabled={pending !== null}>{pending === "publish" ? "Публикуем…" : "Опубликовать кампанию"}<span>→</span></button>}</div></div>
+      <div className="program-publish-bar"><div><strong>{program.status === "ACTIVE" ? "Программа уже доступна агентам" : "Публикация создаст внешнюю ссылку"}</strong><p>После публикации задания можно редактировать, но существенные изменения лучше сообщать действующим агентам отдельно.</p></div><div><button className="button button-ghost" type="button" onClick={() => persist("save")} disabled={pending !== null}>{pending === "save" ? "Сохраняем…" : "Сохранить черновик"}</button>{program.status === "ACTIVE" ? <button className="button button-ghost" type="button" onClick={() => persist("pause")} disabled={pending !== null}>{pending === "pause" ? "Ставим на паузу…" : "Поставить на паузу"}</button> : <button className="button button-primary" type="button" onClick={() => persist("publish")} disabled={pending !== null}>{pending === "publish" ? "Публикуем…" : "Опубликовать программу"}<span>→</span></button>}</div></div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { SafeLink as Link } from "@/app/safe-link";
 
 const items = [
   { href: "/dashboard", label: "Рабочий стол", shortLabel: "Главная", icon: "⌂", exact: true },
-  { href: "/dashboard/programs", label: "Кампании", shortLabel: "Кампании", icon: "◇" },
+  { href: "/dashboard/programs", label: "Программы", shortLabel: "Программы", icon: "◇" },
   { href: "/dashboard/submissions", label: "Результаты", shortLabel: "Результаты", icon: "↗" },
   { href: "/dashboard/partners", label: "Агенты", shortLabel: "Агенты", icon: "○" },
   { href: "/dashboard/rewards", label: "Выплаты", shortLabel: "Выплаты", icon: "₸" },

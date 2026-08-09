@@ -6,7 +6,7 @@ import { getCompanyForUser } from "../../../db/company";
 import { getConfirmedCompanyProfile, getLatestCompanyProfile } from "../../../db/profile";
 import { getProgramsForCompany } from "../../../db/programs";
 
-export const metadata: Metadata = { title: "Агентские кампании" };
+export const metadata: Metadata = { title: "Агентские программы" };
 export const dynamic = "force-dynamic";
 
 const typeNames: Record<string, string> = { LEAD: "Лиды", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
@@ -22,8 +22,8 @@ export default async function ProgramsPage() {
   return (
     <div className="dashboard-content module-content programs-page">
       <div className="module-heading">
-        <div><span className="module-kicker">АГЕНТСКИЕ КАМПАНИИ</span><h1>Кампании и задания</h1><p>Соберите понятное предложение для внешних продавцов, агентов и амбассадоров — от первого действия до выплаты.</p></div>
-        <Link className="button button-primary compact-button" href="/dashboard/programs/new">Создать кампанию<span>＋</span></Link>
+        <div><span className="module-kicker">АГЕНТСКИЕ ПРОГРАММЫ</span><h1>Программы и задания</h1><p>Соберите понятное предложение для внешних продавцов, агентов и амбассадоров — от первого действия до выплаты.</p></div>
+        <Link className="button button-primary compact-button" href="/dashboard/programs/new">Создать программу<span>＋</span></Link>
       </div>
 
       {!confirmedProfile && <div className="inline-notice">Создание доступно без ограничений. Gemini использует {profile ? "последний черновик профиля" : "данные регистрации"}; подтвердить профиль можно позже для более точных заданий.</div>}
@@ -37,7 +37,7 @@ export default async function ProgramsPage() {
 
       {programList.length === 0 ? (
         <section className="panel program-zero-state">
-          <div className="program-zero-copy"><span className="module-kicker">ПЕРВЫЙ ЗАПУСК</span><h2>Создайте кампанию из четырёх типов заданий</h2><p>Выберите лиды, сделки, имидж или вовлечение. Gemini подготовит редактируемые карточки, а вы установите вознаграждение, проверку и сроки выплаты.</p><Link className="button button-primary" href="/dashboard/programs/new">Начать создание<span>→</span></Link></div>
+          <div className="program-zero-copy"><span className="module-kicker">ПЕРВЫЙ ЗАПУСК</span><h2>Создайте программу из четырёх типов заданий</h2><p>Выберите лиды, сделки, имидж или вовлечение. Gemini подготовит редактируемые карточки, а вы установите вознаграждение, проверку и сроки выплаты.</p><Link className="button button-primary" href="/dashboard/programs/new">Начать создание<span>→</span></Link></div>
           <div className="mission-type-preview">{Object.entries(typeNames).map(([type, label], index) => <div className={`type-preview type-${type.toLowerCase()}`} key={type}><span>0{index + 1}</span><strong>{label}</strong><small>{type === "LEAD" ? "Квалифицированный контакт" : type === "DEAL" ? "Подтверждённая продажа" : type === "IMAGE" ? "Публикация или кейс" : "Обучение и комьюнити"}</small></div>)}</div>
         </section>
       ) : (

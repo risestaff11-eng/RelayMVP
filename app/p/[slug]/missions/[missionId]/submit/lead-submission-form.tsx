@@ -18,7 +18,7 @@ export function LeadSubmissionForm({ programSlug, missionId, token }: { programS
     try {
       const response = await fetch("/api/public/submissions/duplicate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ programSlug, contactEmail: values.get("contactEmail"), contactPhone: values.get("contactPhone") }) });
       const data = await response.json() as { duplicate?: boolean };
-      if (data.duplicate) { setDuplicate(true); setError("Такой контакт уже закреплён в программе. Данные другого партнёра не раскрываются."); return; }
+      if (data.duplicate) { setDuplicate(true); setError("Такой контакт уже закреплён в программе. Данные другого агента не раскрываются."); return; }
       setDuplicate(false); setStep(2); window.scrollTo({ top: 0, behavior: "smooth" });
     } finally { setPending(false); }
   }

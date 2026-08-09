@@ -20,7 +20,7 @@ export default async function OnboardingPage() {
         <div className="auth-message">
           <span className="auth-kicker">ШАГ 1 ИЗ 4</span>
           <h1>Начнём с вашей компании.</h1>
-          <p>Дальше Relay изучит сайт, подготовит профиль бизнеса и предложит четыре партнёрские миссии.</p>
+          <p>Дальше Relay изучит сайт, подготовит профиль бизнеса и предложит четыре агентские задания.</p>
         </div>
         <div className="auth-steps" aria-label="Прогресс настройки"><span /><span /><span /><span /></div>
       </aside>
@@ -29,7 +29,7 @@ export default async function OnboardingPage() {
         <div className="auth-card">
           <div className="auth-user"><span>Вы вошли как <strong>{user.displayName}</strong></span><span>Защищённый вход ✓</span></div>
           <h2>Создайте рабочее пространство</h2>
-          <p>Эти данные станут основой будущей партнёрской программы. Всё можно изменить позже.</p>
+          <p>Эти данные станут основой будущей агентской программы. Всё можно изменить позже.</p>
           <CompanyRegistrationForm email={user.email} />
         </div>
       </section>

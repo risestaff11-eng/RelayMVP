@@ -18,21 +18,21 @@ export default async function DashboardPage() {
   const hasPublished = programs.some((program) => program.status === "ACTIVE");
   const progress = hasPublished ? 100 : hasProgram ? 75 : profile ? 50 : 25;
   const nextHref = !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
-  const nextLabel = !hasProgram ? "Создать кампанию" : hasPublished ? "Управлять кампанией" : "Продолжить настройку";
+  const nextLabel = !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
   const latestProgram = programs[0];
   const latestResult = submissions[0];
   const activities = latestResult ? [
     { mark: "↗", title: "Получен новый результат", text: `${latestResult.contactName} · ${latestResult.programName}`, date: latestResult.createdAt, href: "/dashboard/submissions", action: "Проверить результат" },
-    { mark: "◇", title: latestProgram?.status === "ACTIVE" ? "Кампания опубликована" : "Кампания обновлена", text: latestProgram?.name ?? company.name, date: latestProgram?.updatedAt ?? company.createdAt, href: latestProgram ? `/dashboard/programs/${latestProgram.id}` : "/dashboard/programs", action: "Открыть кампанию" },
+    { mark: "◇", title: latestProgram?.status === "ACTIVE" ? "Программа опубликована" : "Программа обновлена", text: latestProgram?.name ?? company.name, date: latestProgram?.updatedAt ?? company.createdAt, href: latestProgram ? `/dashboard/programs/${latestProgram.id}` : "/dashboard/programs", action: "Открыть программу" },
     { mark: "○", title: "Агенты подключаются по ссылке", text: `${stats.partners} зарегистрировано`, date: latestResult.createdAt, href: "/dashboard/partners", action: "Посмотреть агентов" },
   ] : latestProgram ? [
-    { mark: "◇", title: latestProgram.status === "ACTIVE" ? "Кампания опубликована" : "Черновик кампании сохранён", text: latestProgram.name, date: latestProgram.updatedAt, href: `/dashboard/programs/${latestProgram.id}`, action: latestProgram.status === "ACTIVE" ? "Скопировать ссылку" : "Продолжить настройку" },
+    { mark: "◇", title: latestProgram.status === "ACTIVE" ? "Программа опубликована" : "Черновик программы сохранён", text: latestProgram.name, date: latestProgram.updatedAt, href: `/dashboard/programs/${latestProgram.id}`, action: latestProgram.status === "ACTIVE" ? "Скопировать ссылку" : "Продолжить настройку" },
     { mark: profile ? "✓" : "◎", title: profile ? "AI-профиль подтверждён" : "AI-профиль ждёт подтверждения", text: profile ? "Данные готовы для генерации заданий" : "Проверьте данные компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
     { mark: "○", title: "Следующий шаг", text: latestProgram.status === "ACTIVE" ? "Пригласите первых агентов" : "Опубликуйте внешнюю ссылку", date: latestProgram.updatedAt, href: latestProgram.status === "ACTIVE" ? "/dashboard/partners" : `/dashboard/programs/${latestProgram.id}`, action: latestProgram.status === "ACTIVE" ? "Перейти к агентам" : "Опубликовать" },
   ] : [
     { mark: "✓", title: "Компания создана", text: `${company.name} добавлена в Relay`, date: company.createdAt, href: "/dashboard/settings", action: "Проверить данные" },
     { mark: profile ? "✓" : "◎", title: profile ? "AI-профиль подтверждён" : "Следующий шаг — AI-профиль", text: profile ? "Основа для заданий готова" : "Relay изучит сайт компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
-    { mark: "＋", title: "Создайте первую кампанию", text: "Соберите задания и условия выплат", date: company.createdAt, href: "/dashboard/programs/new", action: "Создать кампанию" },
+    { mark: "＋", title: "Создайте первую программу", text: "Соберите задания и условия выплат", date: company.createdAt, href: "/dashboard/programs/new", action: "Создать программу" },
   ];
 
   return (
@@ -43,7 +43,7 @@ export default async function DashboardPage() {
       </div>
 
       <section className="metrics" aria-label="Основные показатели">
-        <article className="metric"><div className="metric-top"><span>АКТИВНЫЕ КАМПАНИИ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>Из {stats.programs} созданных</small></article>
+        <article className="metric"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>Из {stats.programs} созданных</small></article>
         <article className="metric"><div className="metric-top"><span>АГЕНТЫ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{stats.activePartners} активных</small></article>
         <article className="metric"><div className="metric-top"><span>ПОЛУЧЕНО РЕЗУЛЬТАТОВ</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{stats.awaitingReview} ждут проверки</small></article>
         <article className="metric"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">₸</span></div><strong>{stats.approvedRewards.toLocaleString("ru-RU")} ₸</strong><small>Подтверждённые вознаграждения</small></article>
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
       <section className="dashboard-grid">
         <div>
           <article className="setup-card">
-            <div className="setup-card-top"><div><h3>Запуск кампании</h3><p>{hasPublished ? "Кампания опубликована. Следующий цикл — привлечение агентов, проверка результатов и прозрачные выплаты." : "Relay ведёт от профиля компании до внешней ссылки с понятными заданиями и наградами."}</p></div><span className="progress-badge">{progress}%</span></div>
+            <div className="setup-card-top"><div><h3>Запуск программы</h3><p>{hasPublished ? "Программа опубликована. Следующий цикл — привлечение агентов, проверка результатов и прозрачные выплаты." : "Relay ведёт от профиля компании до внешней ссылки с понятными заданиями и наградами."}</p></div><span className="progress-badge">{progress}%</span></div>
             <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
             <div className="setup-steps">
               <Link className="setup-step done" href="/dashboard/settings"><strong>✓ Компания →</strong>Основные данные сохранены</Link>
@@ -63,8 +63,8 @@ export default async function DashboardPage() {
           </article>
 
           <article className="panel" style={{ marginTop: 14 }}>
-            <div className="panel-header"><h2>Агентские кампании</h2><Link href="/dashboard/programs">Все кампании →</Link></div>
-            {programs.length ? <div className="dashboard-campaign-mini-grid">{programs.slice(0, 3).map((program) => <Link href={`/dashboard/programs/${program.id}`} key={program.id}><div><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : "Черновик"}</span><b>↗</b></div><h3>{program.name}</h3><p>{program.missions.length} заданий · {program.agentCount} агентов · {program.resultCount} результатов</p></Link>)}</div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая кампания</h3><p>Создайте её сразу — AI-профиль можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать кампанию</Link></div></div>}
+            <div className="panel-header"><h2>Агентские программы</h2><Link href="/dashboard/programs">Все программы →</Link></div>
+            {programs.length ? <div className="dashboard-campaign-mini-grid">{programs.slice(0, 3).map((program) => <Link href={`/dashboard/programs/${program.id}`} key={program.id}><div><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : "Черновик"}</span><b>↗</b></div><h3>{program.name}</h3><p>{program.missions.length} заданий · {program.agentCount} агентов · {program.resultCount} результатов</p></Link>)}</div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Создайте её сразу — AI-профиль можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать программу</Link></div></div>}
           </article>
         </div>
 

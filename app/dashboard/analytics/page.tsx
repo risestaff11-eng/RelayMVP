@@ -44,7 +44,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       </div>
 
       <section className="operations-metrics brand-metrics">
-        <article><small>ВСЕГО АГЕНТОВ</small><strong>{analytics.agents.length}</strong><span>В выбранных кампаниях</span></article>
+        <article><small>ВСЕГО АГЕНТОВ</small><strong>{analytics.agents.length}</strong><span>В выбранных программах</span></article>
         <article><small>АКТИВНЫЕ АГЕНТЫ</small><strong>{activeAgentIds.size}</strong><span>Передали результат {periodLabel}</span></article>
         <article><small>РЕЗУЛЬТАТОВ НА АГЕНТА</small><strong>{averageResults}</strong><span>Среднее среди активных</span></article>
         <article><small>ВЫПЛАЧЕНО АГЕНТАМ</small><strong>{paid.toLocaleString("ru-RU")} ₸</strong><span>По результатам периода</span></article>
@@ -87,7 +87,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
       <section className="panel workflow-panel analytics-table-panel">
         <div className="panel-header">
-          <div><h2>Рейтинг и сравнение агентов</h2><p>Все показатели собраны по каждому агенту. Фильтры сверху меняют расчёт за период и кампанию.</p></div>
+          <div><h2>Рейтинг и сравнение агентов</h2><p>Все показатели собраны по каждому агенту. Фильтры сверху меняют расчёт за период и программу.</p></div>
         </div>
         <div className="brand-table agent-analytics-table">
           <div className="brand-table-head"><span>АГЕНТ</span><span>РЕЗУЛЬТАТЫ</span><span>ПРИНЯТО</span><span>СДЕЛКИ</span><span>КОНВЕРСИЯ</span><span>К ВЫПЛАТЕ</span><span>ВЫПЛАЧЕНО</span><span>АКТИВНОСТЬ</span></div>
@@ -103,7 +103,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
               <div><b>{formatDate(agent.lastActivity)}</b><small>{agent.results ? "Есть активность" : "Нет результатов за период"}</small></div>
             </div>
           ))}
-          {!analytics.byAgent.length && <div className="table-empty">Нет агентов для сравнения. Опубликуйте кампанию и поделитесь ссылкой.</div>}
+          {!analytics.byAgent.length && <div className="table-empty">Нет агентов для сравнения. Опубликуйте программу и поделитесь ссылкой.</div>}
         </div>
       </section>
     </div>
