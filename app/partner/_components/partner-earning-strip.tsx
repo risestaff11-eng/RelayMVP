@@ -12,7 +12,6 @@ function noun(count: number, words: [string, string, string]) {
 }
 
 export function PartnerEarningStrip({ token, activeCount, bestReward }: { token: string; activeCount: number; bestReward?: string }) {
-  const [visible, setVisible] = useState(true);
   const [goal, setGoal] = useState<GoalData | null>(null);
 
   useEffect(() => {
@@ -25,19 +24,16 @@ export function PartnerEarningStrip({ token, activeCount, bestReward }: { token:
     return () => { window.clearTimeout(timer); window.removeEventListener("relayearningsgoal", onGoal); };
   }, []);
 
-  if (!visible) return null;
   const needed = goal?.target && goal.commission ? Math.ceil(goal.target / goal.commission) : 0;
   const unit = noun(needed, goal?.resultType === "lead" ? ["лид", "лида", "лидов"] : ["сделка", "сделки", "сделок"]);
   const taskWord = noun(activeCount, ["задание", "задания", "заданий"]);
 
   return (
     <div className="partner-earning-strip">
-      <Link href={`/partner/${token}/opportunities`}><span>Заработок:</span> <b>{activeCount} {taskWord}{bestReward ? ` · до ${bestReward}` : ""}</b></Link>
-      <i aria-hidden="true">·</i>
+      <Link href={`/partner/${token}/opportunities`}><span>Можно заработать</span><b>{activeCount} {taskWord}{bestReward ? ` · до ${bestReward}` : ""}</b></Link>
       <Link className="partner-goal-strip" href={`/partner/${token}/payouts`}>
-        {needed > 0 ? <><span>Цель:</span> <b>{goal?.target.toLocaleString("ru-RU")} ₸ · {needed} {unit}</b></> : <b>Установить цель →</b>}
+        <span>Моя цель</span>{needed > 0 ? <b>{goal?.target.toLocaleString("ru-RU")} ₸ · {needed} {unit}</b> : <b>Установить цель →</b>}
       </Link>
-      <button type="button" aria-label="Скрыть подсказку" onClick={() => setVisible(false)}>×</button>
     </div>
   );
 }

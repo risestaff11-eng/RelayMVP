@@ -42,7 +42,7 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
   return (
     <div className="partner-portal-content partner-home-page">
       <div className="partner-welcome">
-        <div><span>ЗАРАБАТЫВАЙТЕ НА РЕКОМЕНДАЦИЯХ</span><h1>{portal.profile.firstName || "Агент"}, знакомьте компании с нужными людьми и получайте вознаграждения</h1><p>Выберите понятное задание, порекомендуйте подходящего клиента и отслеживайте заработок до фактического получения денег.</p></div>
+        <div><span>ЗАРАБАТЫВАЙТЕ НА РЕКОМЕНДАЦИЯХ</span><h1>{portal.profile.firstName || "Агент"}, знакомьте {portal.company.name} с нужными людьми и получайте вознаграждения</h1><p>Выберите понятное задание, порекомендуйте подходящего клиента и отслеживайте заработок до фактического получения денег.</p></div>
         <Link className="button button-primary" href={`/p/${portal.program.slug}?access=${token}`}>Передать новый результат <span>↗</span></Link>
       </div>
 

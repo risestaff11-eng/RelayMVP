@@ -28,9 +28,8 @@ export default async function PartnerLayout({ children, params }: { children: Re
         <header className="partner-portal-topbar">
           <div className="partner-top-identity">
             <div className="partner-mini-avatar">{portal.profile.avatarObjectKey ? <img src={`/api/partner/avatar?token=${token}`} alt="Аватар агента" /> : <span>{initials}</span>}</div>
-            <div><small>АГЕНТ</small><strong>{portal.profile.firstName || portal.partner.email}</strong></div>
+            <div className="partner-top-copy"><small>АГЕНТ</small><strong>{portal.profile.firstName || portal.partner.email}</strong><PartnerEarningStrip token={token} activeCount={activeMissions.length} bestReward={bestReward?.rewardLabel} /></div>
           </div>
-          <PartnerEarningStrip token={token} activeCount={activeMissions.length} bestReward={bestReward?.rewardLabel} />
         </header>
         {children}
       </section>

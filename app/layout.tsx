@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./landing.css";
@@ -10,7 +9,6 @@ import "./mobile-role-ux.css";
 import "./landing-mobile.css";
 import "./agent-mobile-simple.css";
 import "./mobile-drawer-ux.css";
-import { InstallRelayPrompt } from "./install-relay-prompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,12 +62,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <head><Script src="/install-bootstrap.js" strategy="beforeInteractive" /></head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
-        <InstallRelayPrompt />
       </body>
     </html>
   );
