@@ -1,5 +1,5 @@
-const CACHE = "relay-shell-v1";
-const SHELL = ["/", "/favicon.svg", "/manifest.webmanifest"];
+const CACHE = "relay-shell-v2";
+const SHELL = ["/", "/favicon.svg", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
