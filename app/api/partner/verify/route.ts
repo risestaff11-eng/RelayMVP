@@ -1,7 +1,6 @@
 import { env } from "cloudflare:workers";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { syncPartnerLevel } from "../../../../db/partner-level";
 import { getPartnerPortal } from "../../../../db/partner";
 import { contactVerificationCodes, partnerProfiles } from "../../../../db/schema";
 import { createVerificationCode, hashVerificationCode } from "../../../../lib/verification-code";
@@ -69,8 +68,7 @@ export async function POST(request: Request) {
         db.update(contactVerificationCodes).set({ consumedAt: now }).where(eq(contactVerificationCodes.id, verification.id)),
         db.update(partnerProfiles).set(channel === "EMAIL" ? { emailVerifiedAt: now, updatedAt: now } : { whatsappVerifiedAt: now, updatedAt: now }).where(eq(partnerProfiles.partnerId, portal.partner.id)),
       ]);
-      const level = await syncPartnerLevel(portal.partner.id);
-      return Response.json({ ok: true, level });
+      return Response.json({ ok: true });
     }
     throw new Error("Неизвестное действие");
   } catch (error) {

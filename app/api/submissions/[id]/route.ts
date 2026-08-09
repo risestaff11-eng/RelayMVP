@@ -2,7 +2,6 @@ import { eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
-import { syncPartnerLevel } from "../../../../db/partner-level";
 import { rewards, submissionStatusEvents, submissions } from "../../../../db/schema";
 import { cleanString, sameOrigin } from "../../company/_utils";
 
@@ -38,7 +37,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       else statements.push(db.insert(rewards).values({ id: crypto.randomUUID(), companyId: company.id, submissionId: id, partnerId: submission.partnerId, amount, currency: cleanString(payload.currency, 5) || "KZT", status: status === "REWARDED" ? "APPROVED" : "PENDING", approvedAt: status === "REWARDED" ? now : null, plannedAt, createdAt: now, updatedAt: now }));
     }
     await db.batch(statements as [typeof statements[number], ...Array<typeof statements[number]>]);
-    await syncPartnerLevel(submission.partnerId);
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось обновить результат" }, { status: 400 });

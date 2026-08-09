@@ -12,42 +12,44 @@ export function InstallRelayPrompt() {
   const pathname = usePathname();
   const [event, setEvent] = useState<InstallEvent | null>(null);
   const [visible, setVisible] = useState(false);
-  const [manual, setManual] = useState(false);
-  const inCabinet = pathname.startsWith("/dashboard") || pathname.startsWith("/partner/");
+  const [manualText, setManualText] = useState("");
+  const agentCabinet = pathname.startsWith("/partner/");
 
   useEffect(() => {
     if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/sw.js");
-    if (!inCabinet || window.matchMedia("(display-mode: standalone)").matches || localStorage.getItem("relay-install-offered-v2")) return;
+    const installed = window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+    const mobile = window.matchMedia("(max-width: 760px)").matches;
+    if (!agentCabinet || installed || !mobile) return;
 
-    const offer = (installEvent?: InstallEvent) => {
-      if (installEvent) { setEvent(installEvent); setManual(false); }
-      else setManual(true);
-      localStorage.setItem("relay-install-offered-v2", "1");
-      setVisible(true);
-    };
+    let nativePrompt: InstallEvent | null = null;
     const onPrompt = (nativeEvent: Event) => {
       nativeEvent.preventDefault();
-      window.setTimeout(() => offer(nativeEvent as InstallEvent), 900);
+      nativePrompt = nativeEvent as InstallEvent;
+      setEvent(nativePrompt);
+      setManualText("");
+      setVisible(true);
     };
+    const onInstalled = () => setVisible(false);
     window.addEventListener("beforeinstallprompt", onPrompt);
-    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    const iosFallback = isIos ? window.setTimeout(() => offer(), 1800) : undefined;
-    return () => { window.removeEventListener("beforeinstallprompt", onPrompt); if (iosFallback) window.clearTimeout(iosFallback); };
-  }, [inCabinet]);
+    window.addEventListener("appinstalled", onInstalled);
+    const fallback = window.setTimeout(() => {
+      if (nativePrompt) return;
+      const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      setManualText(isIos ? "Нажмите «Поделиться», затем «На экран Домой»." : "Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный экран»." );
+      setVisible(true);
+    }, 1800);
+    return () => { window.removeEventListener("beforeinstallprompt", onPrompt); window.removeEventListener("appinstalled", onInstalled); window.clearTimeout(fallback); };
+  }, [agentCabinet]);
 
-  if (!inCabinet || !visible) return null;
+  if (!agentCabinet || !visible) return null;
 
   const install = async () => {
     if (!event) { setVisible(false); return; }
     await event.prompt();
-    await event.userChoice;
-    setVisible(false);
+    const choice = await event.userChoice;
+    if (choice.outcome === "accepted") setVisible(false);
+    setEvent(null);
   };
 
-  return <aside className="relay-install-prompt" role="dialog" aria-label="Установить Relay на устройство">
-    <div className="relay-install-icon">R</div>
-    <div><strong>Установить Relay на главный экран</strong><p>{manual ? "На iPhone нажмите «Поделиться», затем «На экран Домой»." : "Нажмите кнопку — браузер добавит ярлык Relay и будет открывать кабинет как приложение."}</p></div>
-    <button className="relay-install-action" type="button" onClick={install}>{manual ? "Понятно" : "Установить"}</button>
-    <button className="relay-install-close" type="button" aria-label="Закрыть" onClick={() => setVisible(false)}>×</button>
-  </aside>;
+  return <aside className="relay-install-prompt" role="dialog" aria-label="Установить Relay на устройство"><div className="relay-install-icon">R</div><div><strong>Добавьте Relay на главный экран</strong><p>{manualText || "Нажмите кнопку — Android установит Relay и будет открывать кабинет как приложение."}</p></div><button className="relay-install-action" type="button" onClick={install}>{event ? "Установить Relay" : "Понятно"}</button><button className="relay-install-close" type="button" aria-label="Закрыть" onClick={() => setVisible(false)}>×</button></aside>;
 }

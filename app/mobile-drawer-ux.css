@@ -24,6 +24,90 @@
 .mobile-telegram-footer a > span { min-width: 0; flex: 1; }
 .mobile-telegram-footer a strong,.mobile-telegram-footer a small { display: block; }
 .mobile-telegram-footer a small { margin-top: 2px; color: rgba(255,255,255,.82); font-size: 10px; }
+.partner-earning-pill { min-width: 220px; padding: 9px 13px; display: flex; flex-direction: column; gap: 3px; border: 1px solid #d8d9d1; border-radius: 12px; color: var(--ink); background: #efffd0; text-decoration: none; }
+.partner-earning-pill span { font-size: 8px; font-weight: 950; letter-spacing: .08em; }
+.partner-earning-pill b { font-size: 11px; }
+.wallet-card.earning-potential { color: white; background: var(--blue); }
+.wallet-card.earning-potential small,.wallet-card.earning-potential span { color: rgba(255,255,255,.82); }
+.earning-opportunity-card { padding: 22px; border: 1px solid #c9ef65; border-radius: 18px; background: #efffd0; }
+.earning-opportunity-card > span { font-size: 8px; font-weight: 950; letter-spacing: .1em; }
+.earning-opportunity-card h2 { margin: 13px 0 0; font-size: 24px; line-height: 1.05; }
+.earning-opportunity-card p { color: #45483f; font-size: 11px; line-height: 1.5; }
+.earning-opportunity-card dl { margin: 17px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.earning-opportunity-card dl div { padding: 11px; border-radius: 11px; background: white; }
+.earning-opportunity-card dt { font-size: 8px; font-weight: 850; }
+.earning-opportunity-card dd { margin: 5px 0 0; font-size: 14px; font-weight: 950; }
+.earning-opportunity-card a { margin-top: 15px; display: inline-block; color: var(--ink); font-size: 10px; font-weight: 950; }
+.profile-earnings-summary { margin: 24px 0 14px; padding: 22px; border: 1px solid #d8d9d1; border-radius: 18px; background: #fff; }
+.profile-earnings-summary > div:first-child > span { font-size: 8px; font-weight: 950; letter-spacing: .1em; }
+.profile-earnings-summary h2 { margin: 8px 0 0; font-size: 25px; }
+.profile-earnings-summary p { margin: 7px 0 0; color: #45483f; font-size: 10px; }
+.profile-earning-filters { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.profile-earning-filters label { display: grid; gap: 6px; }
+.profile-earning-filters label span { font-size: 9px; font-weight: 850; }
+.profile-earning-filters select { min-height: 42px; padding: 0 11px; border: 1px solid #d8d9d1; border-radius: 10px; background: #f7f7f2; font: inherit; font-size: 11px; }
+.profile-earning-metrics { margin-top: 12px; display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.profile-earning-metrics article { min-height: 105px; padding: 14px; display: flex; flex-direction: column; justify-content: flex-end; border-radius: 13px; background: #eeece4; }
+.profile-earning-metrics article.accent { background: var(--lime); }
+.profile-earning-metrics small { font-size: 8px; font-weight: 900; }
+.profile-earning-metrics strong { margin-top: 8px; font-size: 16px; }
+.profile-earning-metrics span { margin-top: 4px; font-size: 8px; }
+.partner-exit-button { min-height: 44px; padding: 0 16px; border: 1px solid #e0b8af; border-radius: 11px; color: #873b32; background: #fff4f1; font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
+.company-contact-settings { margin-top: 18px; }
+.company-contact-settings form { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+.company-contact-settings label { display: grid; gap: 6px; }
+.company-contact-settings label span { font-size: 9px; font-weight: 850; }
+.company-contact-settings input { min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid #d8d9d1; border-radius: 10px; font: inherit; font-size: 12px; }
+.company-contact-settings button { min-height: 44px; padding: 0 15px; border: 0; border-radius: 10px; color: white; background: var(--blue); font-weight: 900; }
+.agent-company-overview { margin-top: 24px; padding: 25px; display: grid; grid-template-columns: 1fr auto; gap: 30px; border-radius: 19px; color: white; background: var(--ink); }
+.agent-company-overview small { color: var(--lime); font-size: 8px; font-weight: 950; }
+.agent-company-overview h2 { margin: 10px 0 0; font-size: 31px; }
+.agent-company-overview p { max-width: 650px; color: #d1d3cb; font-size: 12px; line-height: 1.55; }
+.agent-company-overview nav { min-width: 245px; display: grid; align-content: center; gap: 7px; }
+.agent-company-overview nav a,.agent-company-overview nav > span { min-height: 42px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; border-radius: 10px; color: var(--ink); background: white; font-size: 10px; font-weight: 850; text-decoration: none; }
+.agent-company-overview nav > span { color: #73766d; background: #2d2f28; }
+.knowledge-company-facts { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.knowledge-company-facts article { padding: 20px; border: 1px solid #d8d9d1; border-radius: 15px; background: white; }
+.knowledge-company-facts small { font-size: 8px; font-weight: 950; }
+.knowledge-company-facts p { margin: 9px 0 0; color: #45483f; font-size: 11px; line-height: 1.55; }
+.knowledge-reward { border-color: transparent !important; border-radius: 11px; background: var(--lime); }
+.knowledge-reward small,.knowledge-reward strong { display: block; }
+.knowledge-reward small { font-size: 8px; }
+.knowledge-reward strong { margin-top: 5px; font-size: 17px !important; }
+.submission-company-link { color: var(--ink); text-decoration: none; }
+.submission-company-link small { margin-left: 7px; color: var(--blue); font-size: 9px; white-space: nowrap; }
+.read-only-result-link { margin-top: 14px; display: inline-flex; color: var(--blue); font-size: 10px; font-weight: 900; }
+.read-only-summary { margin-top: 24px; display: grid; grid-template-columns: repeat(4,1fr); overflow: hidden; border: 1px solid #d8d9d1; border-radius: 15px; background: white; }
+.read-only-summary div { min-height: 100px; padding: 16px; display: flex; flex-direction: column; justify-content: flex-end; border-right: 1px solid #e4e5de; }
+.read-only-summary div:last-child { border: 0; }
+.read-only-summary small { color: #65685f; font-size: 8px; font-weight: 900; }
+.read-only-summary strong { margin-top: 8px; font-size: 14px; }
+.read-only-data { margin-top: 12px; padding: 22px; border: 1px solid #d8d9d1; border-radius: 16px; background: white; }
+.read-only-data h2,.read-only-history h2 { margin: 0 0 16px; font-size: 20px; }
+.read-only-data dl { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #dedfd8; }
+.read-only-data dl div { padding: 14px; background: #f8f8f4; }
+.read-only-data dt { color: #65685f; font-size: 8px; font-weight: 900; }
+.read-only-data dd { margin: 6px 0 0; font-size: 12px; font-weight: 800; }
+.read-only-links { margin-top: 18px; display: grid; gap: 7px; }
+.read-only-links h3 { margin: 0; font-size: 13px; }
+.read-only-links a { color: var(--blue); font-size: 10px; }
+.read-only-history { padding: 22px; border: 1px solid #d8d9d1; border-radius: 16px; background: white; }
+.lp-earning-summary { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lp-earning-summary > div { padding: 16px; border: 1px solid #d8d9d1; border-radius: 13px; background: white; }
+.lp-earning-summary b,.lp-earning-summary span { display: block; }
+.lp-earning-summary b { font-size: 22px; }
+.lp-earning-summary span { margin-top: 5px; font-size: 8px; font-weight: 900; }
+
+/* Opportunities use intentionally large, high-contrast type on every screen. */
+.opportunity-card > div:first-child { font-size: 11px; }
+.opportunity-card > div:first-child small { opacity: 1; }
+.opportunity-card h2 { font-size: 29px; line-height: 1.04; }
+.opportunity-card > p { color: inherit; font-size: 15px; font-weight: 550; line-height: 1.5; opacity: .9; }
+.opportunity-card dt { font-size: 11px; }
+.opportunity-card dd { font-size: 14px; }
+.opportunity-card-actions a,.partner-inline-action button,.accepted-result-link { font-size: 14px; }
+.opportunity-card.type-deal p,.opportunity-card.type-deal dt,.opportunity-card.type-deal dd { color: white; }
+.opportunity-card.type-deal .opportunity-reward-value { color: var(--lime); }
 
 @media (max-width: 760px) {
   :root { --mobile-appbar: 72px; }
@@ -240,4 +324,54 @@
   .relay-auth-card input:not([type="checkbox"]) { height: 50px; padding: 0 13px; font-size: 16px; }
   .relay-auth-card form > button,.relay-auth-success button { min-height: 50px; font-size: 16px; }
   .module-heading p,.panel-header p,.dashboard-content p,.setup-step p,.activity p { color: #3f423b; font-size: 14px; font-weight: 550; line-height: 1.45; }
+  .partner-earning-pill { min-width: 0; max-width: 190px; padding: 7px 9px; }
+  .partner-earning-pill span { font-size: 8px; }
+  .partner-earning-pill b { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+  .earning-opportunity-card { padding: 18px; }
+  .earning-opportunity-card h2 { font-size: 25px; }
+  .earning-opportunity-card p { font-size: 15px; }
+  .earning-opportunity-card dt { font-size: 11px; }
+  .earning-opportunity-card dd { font-size: 15px; }
+  .earning-opportunity-card a { min-height: 48px; display: flex; align-items: center; font-size: 14px; }
+  .profile-earnings-summary { padding: 16px; }
+  .profile-earnings-summary h2 { font-size: 26px; }
+  .profile-earnings-summary p { font-size: 14px; }
+  .profile-earning-filters { grid-template-columns: 1fr; }
+  .profile-earning-filters label span { font-size: 13px; }
+  .profile-earning-filters select { min-height: 48px; font-size: 16px; }
+  .profile-earning-metrics { grid-template-columns: 1fr 1fr; }
+  .profile-earning-metrics article { min-height: 118px; }
+  .profile-earning-metrics small { font-size: 10px; }
+  .profile-earning-metrics strong { font-size: 18px; }
+  .profile-earning-metrics span { font-size: 11px; }
+  .partner-exit-button { width: 100%; margin-top: 14px; font-size: 15px; }
+  .agent-company-overview { padding: 19px; grid-template-columns: 1fr; gap: 18px; }
+  .agent-company-overview small { font-size: 10px; }
+  .agent-company-overview h2 { font-size: 29px; }
+  .agent-company-overview p { font-size: 15px; }
+  .agent-company-overview nav { min-width: 0; }
+  .agent-company-overview nav a,.agent-company-overview nav > span { min-height: 48px; font-size: 14px; }
+  .knowledge-company-facts { grid-template-columns: 1fr; }
+  .knowledge-company-facts small { font-size: 10px; }
+  .knowledge-company-facts p { font-size: 15px; }
+  .materials-grid article > span { color: #343730; font-size: 10px; }
+  .materials-grid h2 { font-size: 25px; }
+  .materials-grid blockquote { font-size: 15px; }
+  .materials-grid article > div strong { font-size: 14px; }
+  .materials-grid article > div p,.materials-grid article > div li { color: #343730; font-size: 14px; }
+  .submission-company-link { display: flex; flex-direction: column; gap: 5px; }
+  .submission-company-link small { margin: 0; font-size: 12px; }
+  .read-only-result-link { min-height: 48px; align-items: center; font-size: 14px; }
+  .read-only-summary { grid-template-columns: 1fr 1fr; }
+  .read-only-summary div:nth-child(2) { border-right: 0; }
+  .read-only-summary div { min-height: 110px; border-bottom: 1px solid #e4e5de; }
+  .read-only-summary small { font-size: 10px; }
+  .read-only-summary strong { font-size: 15px; }
+  .read-only-data { padding: 16px; }
+  .read-only-data dl { grid-template-columns: 1fr; }
+  .read-only-data dt { font-size: 11px; }
+  .read-only-data dd { font-size: 15px; }
+  .company-contact-settings form { grid-template-columns: 1fr; }
+  .company-contact-settings label span { font-size: 13px; }
+  .company-contact-settings input,.company-contact-settings button { min-height: 48px; font-size: 15px; }
 }

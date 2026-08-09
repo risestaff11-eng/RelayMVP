@@ -1,11 +1,14 @@
 import { notFound } from "next/navigation";
 import { getPartnerPortal } from "../../../../db/partner";
 import { PartnerProfileForm } from "../../_components/partner-actions";
+import { PartnerExitButton, ProfileEarningsSummary } from "../../_components/profile-earnings-summary";
 
 export default async function PartnerProfilePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const portal = await getPartnerPortal(token);
   if (!portal) notFound();
-  const acceptedLead = portal.submissions.some((item) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(item.status));
-  return <div className="partner-portal-content"><div className="partner-page-heading"><div><span>ПЕРСОНАЛЬНЫЕ РЕКОМЕНДАЦИИ</span><h1>Профиль агента</h1><p>Заполните данные и подтвердите контакты. Без подтверждённых email и WhatsApp второй уровень не откроется.</p></div></div><div className="partner-profile-layout"><section className="partner-profile-level"><span>ТЕКУЩИЙ УРОВЕНЬ</span><div><b>{portal.profile.level}</b><h2>{portal.profile.level === 1 ? "Навигатор" : "Проверенный агент"}</h2></div><p>Серия полезных действий: <strong>{portal.profile.usefulActionStreak}</strong></p><ul><li className={portal.profile.emailVerifiedAt ? "done" : ""}>{portal.profile.emailVerifiedAt ? "✓" : "○"} Email подтверждён</li><li className={portal.profile.whatsappVerifiedAt ? "done" : ""}>{portal.profile.whatsappVerifiedAt ? "✓" : "○"} WhatsApp подтверждён</li><li className={acceptedLead ? "done" : ""}>{acceptedLead ? "✓" : "○"} Первый принятый лид</li></ul><p className="level-gate-note">Уровень 2 откроется только после выполнения всех трёх условий.</p></section><PartnerProfileForm token={token} partner={{ email: portal.partner.email, phone: portal.partner.phone }} profile={portal.profile} /></div></div>;
+  const activeMissions = portal.missions.filter((mission) => mission.status === "ACTIVE");
+  const bestReward = [...activeMissions].sort((left, right) => right.rewardValue - left.rewardValue)[0]?.rewardLabel || "";
+  const rewardItems = portal.rewards.map((reward) => ({ amount: reward.amount, status: reward.status, partnerConfirmedAt: reward.partnerConfirmedAt, createdAt: reward.createdAt, type: portal.submissions.find((submission) => submission.id === reward.submissionId)?.mission?.type || "" }));
+  return <div className="partner-portal-content"><div className="partner-page-heading"><div><span>ВАШ АККАУНТ</span><h1>Профиль агента</h1><p>Для работы достаточно имени и WhatsApp. Остальные данные помогают получать более подходящие задания и поддерживать связь.</p></div><PartnerExitButton /></div><ProfileEarningsSummary rewards={rewardItems} currency={portal.program.currency} missionCount={activeMissions.length} bestReward={bestReward} calculatedAt={new Date(portal.partner.lastActiveAt || portal.partner.joinedAt).getTime()} /><PartnerProfileForm token={token} partner={{ email: portal.partner.email, phone: portal.partner.phone }} profile={portal.profile} /></div>;
 }

@@ -38,6 +38,8 @@ export const companies = sqliteTable("companies", {
   ownerUserId: text("owner_user_id").notNull().unique().references(() => users.id),
   name: text("name").notNull(),
   website: text("website").notNull(),
+  contactWhatsapp: text("contact_whatsapp").notNull().default(""),
+  contactInstagram: text("contact_instagram").notNull().default(""),
   industry: text("industry").notNull(),
   teamSize: text("team_size").notNull(),
   primaryGoal: text("primary_goal").notNull(),

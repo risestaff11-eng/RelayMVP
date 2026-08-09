@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     if (phone.length < 7) throw new Error("Проверьте телефон");
     const db = getDb();
     const duplicates = await db.select({ id: partners.id }).from(partners).where(and(eq(partners.programId, portal.program.id), eq(partners.email, email), ne(partners.id, portal.partner.id))).limit(1);
-    if (duplicates.length) throw new Error("Этот email уже используется другим партнёром программы");
+    if (duplicates.length) throw new Error("Этот email уже используется другим агентом программы");
     const avatar = form.get("avatar");
     let avatarObjectKey = portal.profile.avatarObjectKey;
     if (avatar instanceof File && avatar.size > 0) {

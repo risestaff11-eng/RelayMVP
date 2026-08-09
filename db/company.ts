@@ -9,6 +9,8 @@ export async function getCompanyForUser(userId: string) {
       id: companies.id,
       name: companies.name,
       website: companies.website,
+      contactWhatsapp: companies.contactWhatsapp,
+      contactInstagram: companies.contactInstagram,
       industry: companies.industry,
       teamSize: companies.teamSize,
       primaryGoal: companies.primaryGoal,

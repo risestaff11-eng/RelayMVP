@@ -17,8 +17,14 @@ export async function PATCH(request: Request) {
   try {
     const payload = (await request.json()) as Record<string, unknown>;
     const websiteValue = typeof payload.website === "string" ? normalizeWebsite(payload.website.trim()) : null;
+    const hasWhatsapp = Object.prototype.hasOwnProperty.call(payload, "contactWhatsapp");
+    const hasInstagram = Object.prototype.hasOwnProperty.call(payload, "contactInstagram");
+    const contactWhatsapp = hasWhatsapp && typeof payload.contactWhatsapp === "string" ? payload.contactWhatsapp.trim().slice(0, 40) : null;
+    const contactInstagram = hasInstagram && typeof payload.contactInstagram === "string" ? payload.contactInstagram.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").replace(/\/$/, "").slice(0, 100) : null;
     const planCode = typeof payload.planCode === "string" ? payload.planCode : null;
-    if (!websiteValue && !planCode) throw new Error("Нет данных для сохранения");
+    if (!websiteValue && !planCode && !hasWhatsapp && !hasInstagram) throw new Error("Нет данных для сохранения");
+    if (contactWhatsapp && contactWhatsapp.replace(/\D/g, "").length < 7) throw new Error("Проверьте номер WhatsApp");
+    if (contactInstagram && !/^[a-zA-Z0-9._]+$/.test(contactInstagram)) throw new Error("Укажите имя пользователя Instagram без пробелов");
     if (planCode && !PLANS.has(planCode)) throw new Error("Неизвестный тариф");
     if (planCode) throw new Error("Автоматическая смена тарифа пока не подключена");
 
@@ -28,10 +34,14 @@ export async function PATCH(request: Request) {
       changes.website = websiteValue;
       if (websiteValue !== company.website) changes.onboardingStatus = "WEBSITE_UPDATED";
     }
+    if (hasWhatsapp) changes.contactWhatsapp = contactWhatsapp ?? "";
+    if (hasInstagram) changes.contactInstagram = contactInstagram ?? "";
 
     await getDb().update(companies).set(changes).where(eq(companies.id, company.id));
     return Response.json({
       website: websiteValue ?? company.website,
+      contactWhatsapp: hasWhatsapp ? contactWhatsapp ?? "" : company.contactWhatsapp,
+      contactInstagram: hasInstagram ? contactInstagram ?? "" : company.contactInstagram,
       planCode: planCode ?? company.planCode,
       aiTokenBalance: changes.aiTokenBalance ?? company.aiTokenBalance,
     });

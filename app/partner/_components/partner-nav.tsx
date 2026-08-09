@@ -10,8 +10,8 @@ const items = [
   ["/missions", "Мои задания", "Что взято в работу", "◎"],
   ["/submissions", "Лиды и сделки", "Статусы ваших результатов", "↗"],
   ["/payouts", "Выплаты", "Начисления и даты выплат", "₸"],
-  ["/materials", "Материалы", "Сообщения, кейсы и презентации", "▤"],
-  ["/profile", "Профиль", "Контакты, данные и уровень", "○"],
+  ["/materials", "База знаний", "Компания, сообщения и материалы", "▤"],
+  ["/profile", "Профиль", "Ваши данные и заработок", "○"],
 ] as const;
 
 export function PartnerNav({ token }: { token: string }) {
@@ -41,7 +41,6 @@ export function PartnerNav({ token }: { token: string }) {
       <nav aria-label="Мобильная навигация агента">
         {items.map(([suffix, label, hint, icon]) => <Link key={suffix} className={isActive(suffix) ? "active" : undefined} href={hrefFor(suffix)} aria-current={isActive(suffix) ? "page" : undefined} onClick={() => setOpen(false)}><i>{icon}</i><span><strong>{label}</strong><small>{hint}</small></span><b>→</b></Link>)}
       </nav>
-      <section className="mobile-drawer-trust"><i>✓</i><div><strong>Ваши рекомендации защищены</strong><p>Relay сохраняет владельца, дату и историю каждого результата.</p></div></section>
       <footer className="mobile-telegram-footer"><a href="https://t.me/relayagents" target="_blank" rel="noreferrer"><i>↗</i><span><strong>Relay Agents</strong><small>Telegram-канал для всех агентов</small></span><b>Открыть</b></a></footer>
     </aside>
   </>;

@@ -14,9 +14,9 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
   const available = portal.rewards.filter((item) => item.status === "APPROVED").reduce((sum, item) => sum + item.amount, 0);
   const expected = portal.rewards.filter((item) => item.status === "PENDING").reduce((sum, item) => sum + item.amount, 0);
   const earned = portal.rewards.filter((item) => item.status === "PAID" && item.partnerConfirmedAt).reduce((sum, item) => sum + item.amount, 0);
-  const acceptedCount = portal.submissions.filter((item) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(item.status)).length;
-  const verifiedCount = Number(Boolean(portal.profile.emailVerifiedAt)) + Number(Boolean(portal.profile.whatsappVerifiedAt));
-  const progress = Math.round(((verifiedCount + Number(acceptedCount > 0)) / 3) * 100);
+  const activeMissionCount = portal.missions.filter((mission) => mission.status === "ACTIVE").length;
+  const activeWorkCount = portal.acceptances.filter((item) => item.status === "ACTIVE").length;
+  const bestReward = [...portal.missions].sort((left, right) => right.rewardValue - left.rewardValue)[0];
   const recommended = portal.missions.find((mission) => mission.status === "ACTIVE") ?? portal.missions[0];
   const recentEvents = portal.submissions.flatMap((submission) => submission.events.map((event) => ({ ...event, submission }))).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4);
   const deadline = portal.program.expiresAt ? `до ${new Date(portal.program.expiresAt).toLocaleDateString("ru-RU")}` : "без дедлайна";
@@ -60,7 +60,7 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
         <article className="wallet-card available"><small>ДОСТУПНО К ВЫПЛАТЕ</small><strong>{money(available, portal.program.currency)}</strong><span>Подтверждено компанией</span></article>
         <article className="wallet-card"><small>ОЖИДАЕТСЯ</small><strong>{money(expected, portal.program.currency)}</strong><span>Результаты на пути к начислению</span></article>
         <article className="wallet-card"><small>ЗАРАБОТАНО ЗА ВСЁ ВРЕМЯ</small><strong>{money(earned, portal.program.currency)}</strong><span>Отмечено выплаченным</span></article>
-        <article className="wallet-card level"><small>ТЕКУЩИЙ УРОВЕНЬ</small><strong>{portal.profile.level === 1 ? "Навигатор" : "Проверенный"}</strong><span>Уровень {portal.profile.level}</span></article>
+        <article className="wallet-card earning-potential"><small>ЛУЧШАЯ ВОЗМОЖНОСТЬ</small><strong>{bestReward?.rewardLabel || "Новые задания скоро"}</strong><span>{activeMissionCount} доступно сейчас</span></article>
       </section>
 
       <section className="partner-home-grid">
@@ -77,7 +77,7 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
           </section>
         </div>
         <aside className="partner-home-side">
-          <section className="level-progress-card"><span>СЛЕДУЮЩИЙ УРОВЕНЬ</span><h2>Проверенный агент</h2><p>Подтвердите email и WhatsApp, затем получите первый принятый лид.</p><div><i style={{ width: `${progress}%` }} /></div><small>{verifiedCount + Number(acceptedCount > 0)}/3 условий выполнено</small><ul><li>{portal.profile.emailVerifiedAt ? "✓" : "○"} Email подтверждён</li><li>{portal.profile.whatsappVerifiedAt ? "✓" : "○"} WhatsApp подтверждён</li><li>{acceptedCount ? "✓" : "○"} Первый принятый лид</li></ul><Link className="level-profile-link" href={`/partner/${token}/profile`}>Подтвердить контакты →</Link></section>
+          <section className="earning-opportunity-card"><span>ПОТЕНЦИАЛ ЗАРАБОТКА</span><h2>{bestReward ? `До ${bestReward.rewardLabel} за одно задание` : "Ожидаем новые задания"}</h2><p>{activeMissionCount ? `Сейчас доступно ${activeMissionCount} заданий. В работе у вас: ${activeWorkCount}.` : "Компания пока не опубликовала активные задания."}</p><dl><div><dt>К выплате</dt><dd>{money(available, portal.program.currency)}</dd></div><div><dt>Получено</dt><dd>{money(earned, portal.program.currency)}</dd></div></dl><Link href={`/partner/${token}/opportunities`}>Посмотреть все возможности →</Link></section>
           <section className="next-reward-card"><span>БЛИЖАЙШАЯ НАГРАДА</span>{portal.submissions[0] ? <><strong>{portal.submissions[0].mission?.rewardLabel || "После принятия"}</strong><p>{portal.submissions[0].contactCompany} · {statusNames[portal.submissions[0].status]}</p></> : <><strong>Первая выплата</strong><p>Выберите задание и передайте подходящий контакт.</p></>}<Link href={`/partner/${token}/payouts`}>Открыть выплаты →</Link></section>
           <section className="new-offers-card"><div><span>НОВЫЕ ПРЕДЛОЖЕНИЯ</span><b>{portal.missions.length}</b></div>{portal.missions.slice(0, 3).map((mission) => <Link href={`/p/${portal.program.slug}?access=${token}#missions`} key={mission.id}><i className={`type-dot-${mission.type.toLowerCase()}`} /><span className="offer-title"><strong>{mission.title}</strong><small>Дедлайн: {deadline}</small></span><span>→</span></Link>)}</section>
         </aside>

@@ -3,6 +3,7 @@ import { getDb } from ".";
 import { hashPartnerToken } from "../lib/partner-token";
 import {
   companies,
+  companyProfileVersions,
   missions,
   partnerAccessLinks,
   partnerMissionAcceptances,
@@ -49,7 +50,7 @@ export async function getPartnerPortal(token: string) {
   const partner = partnerRows[0];
   if (!partner) return null;
 
-  const [programRows, companyRows, missionRows, submissionRows, rewardRows, profileRows, acceptanceRows, disputeRows] = await Promise.all([
+  const [programRows, companyRows, missionRows, submissionRows, rewardRows, profileRows, acceptanceRows, disputeRows, companyProfileRows] = await Promise.all([
     db.select().from(programs).where(eq(programs.id, partner.programId)).limit(1),
     db.select().from(companies).where(eq(companies.id, partner.companyId)).limit(1),
     db.select().from(missions).where(eq(missions.programId, partner.programId)).orderBy(asc(missions.sortOrder)),
@@ -58,6 +59,7 @@ export async function getPartnerPortal(token: string) {
     db.select().from(partnerProfiles).where(eq(partnerProfiles.partnerId, partner.id)).limit(1),
     db.select().from(partnerMissionAcceptances).where(eq(partnerMissionAcceptances.partnerId, partner.id)).orderBy(desc(partnerMissionAcceptances.acceptedAt)),
     db.select().from(submissionDisputes).where(eq(submissionDisputes.partnerId, partner.id)).orderBy(desc(submissionDisputes.createdAt)),
+    db.select().from(companyProfileVersions).where(and(eq(companyProfileVersions.companyId, partner.companyId), eq(companyProfileVersions.status, "CONFIRMED"))).orderBy(desc(companyProfileVersions.versionNumber)).limit(1),
   ]);
   const program = programRows[0];
   const company = companyRows[0];
@@ -103,11 +105,16 @@ export async function getPartnerPortal(token: string) {
       industries: parseList(profile?.industriesJson),
       geographies: parseList(profile?.geographiesJson),
       preferredTypes: parseList(profile?.preferredTypesJson),
-      level: profile?.level ?? 1,
-      usefulActionStreak: profile?.usefulActionStreak ?? 0,
       emailVerifiedAt: profile?.emailVerifiedAt ?? null,
       whatsappVerifiedAt: profile?.whatsappVerifiedAt ?? null,
     },
+    companyProfile: companyProfileRows[0] ? {
+      businessDescription: companyProfileRows[0].businessDescription,
+      products: parseList(companyProfileRows[0].productsJson),
+      targetAudience: companyProfileRows[0].targetAudience,
+      advantages: parseList(companyProfileRows[0].advantagesJson),
+      partnerPitch: companyProfileRows[0].partnerPitch,
+    } : null,
   };
 }
 
