@@ -1,0 +1,172 @@
+.mobile-menu-trigger,
+.mobile-side-drawer,
+.mobile-drawer-scrim,
+.mobile-agent-roadmap,
+.relay-install-prompt { display: none; }
+
+@media (max-width: 760px) {
+  :root { --mobile-appbar: 72px; }
+  body.mobile-drawer-open { overflow: hidden; }
+
+  /* One compact app bar; navigation lives in an off-canvas drawer. */
+  .company-mobile-nav,
+  .agent-mobile-nav,
+  .mobile-more-sheet,
+  .mobile-nav-scrim { display: none !important; }
+  .dashboard-main,
+  .partner-portal-main { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+  .dashboard-topbar,
+  .partner-portal-topbar { height: var(--mobile-appbar); padding-left: 72px; }
+  .dashboard-topbar { padding-right: 12px; }
+  .partner-portal-topbar { padding-right: 14px; }
+  .mobile-company-identity small { font-size: 8px; }
+  .mobile-company-identity strong { max-width: 145px; font-size: 13px; }
+  .mobile-relay-mark { display: none; }
+  .partner-top-identity strong { max-width: 132px; font-size: 13px !important; }
+
+  .mobile-menu-trigger {
+    position: fixed;
+    z-index: 1320;
+    top: 14px;
+    left: 14px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: grid;
+    place-content: center;
+    gap: 5px;
+    border: 1px solid #d8d9d1;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 5px 16px rgba(17,18,15,.06);
+  }
+  .mobile-menu-trigger i { width: 19px; height: 2px; display: block; border-radius: 99px; background: var(--ink); }
+  .mobile-drawer-scrim { position: fixed; z-index: 1450; inset: 0; display: block; padding: 0; border: 0; background: rgba(11,12,9,.56); backdrop-filter: blur(3px); }
+  .mobile-side-drawer {
+    position: fixed;
+    z-index: 1500;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(88vw, 390px);
+    padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    background: #151611;
+    box-shadow: 24px 0 70px rgba(0,0,0,.28);
+    transform: translateX(-104%);
+    transition: transform .26s ease;
+  }
+  .mobile-side-drawer.open { transform: translateX(0); }
+  .mobile-side-drawer > header { min-height: 58px; padding: 0 4px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #34362e; }
+  .mobile-side-drawer > header > button { width: 42px; height: 42px; border: 1px solid #3c3e35; border-radius: 12px; color: #fff; background: #24261f; font-size: 25px; }
+  .mobile-drawer-brand { display: flex; align-items: center; gap: 11px; }
+  .mobile-drawer-brand > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; color: var(--ink); background: var(--lime); font-size: 14px; font-weight: 950; }
+  .mobile-drawer-brand small,.mobile-drawer-brand strong { display: block; }
+  .mobile-drawer-brand small { color: var(--lime); font-size: 9px; font-weight: 950; letter-spacing: .12em; }
+  .mobile-drawer-brand strong { margin-top: 4px; font-size: 13px; letter-spacing: .03em; }
+  .mobile-side-drawer > nav { min-height: 0; margin: 14px 0; overflow-y: auto; overscroll-behavior: contain; }
+  .mobile-side-drawer > nav a { min-height: 70px; padding: 10px; display: grid; grid-template-columns: 43px minmax(0,1fr) 20px; align-items: center; gap: 11px; border-radius: 14px; color: #c1c4ba; text-decoration: none; }
+  .mobile-side-drawer > nav a + a { margin-top: 3px; }
+  .mobile-side-drawer > nav a.active { color: #fff; background: #292b24; }
+  .mobile-side-drawer > nav a > i { width: 43px; height: 43px; display: grid; place-items: center; border-radius: 12px; color: #a4a79d; background: #24261f; font-size: 16px; font-style: normal; font-weight: 900; }
+  .mobile-side-drawer > nav a.active > i { color: var(--ink); background: var(--lime); }
+  .mobile-side-drawer > nav strong,.mobile-side-drawer > nav small { display: block; }
+  .mobile-side-drawer > nav strong { font-size: 14px; }
+  .mobile-side-drawer > nav small { margin-top: 5px; color: #7f8278; font-size: 10px; line-height: 1.35; }
+  .mobile-side-drawer > nav a.active small { color: #aaada3; }
+  .mobile-side-drawer > nav b { color: #6f7268; font-size: 16px; }
+  .mobile-side-drawer > footer { margin-top: auto; padding: 16px 10px 2px; border-top: 1px solid #34362e; }
+  .mobile-side-drawer > footer > span { color: var(--lime); font-size: 8px; font-weight: 950; letter-spacing: .1em; }
+  .mobile-side-drawer > footer p { margin: 7px 0 0; color: #888b81; font-size: 11px; line-height: 1.45; }
+  .mobile-side-drawer > footer a { min-height: 48px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; border-radius: 12px; color: var(--ink); background: var(--lime); font-size: 13px; font-weight: 900; }
+  .mobile-drawer-trust { margin-top: auto; padding: 15px; display: grid; grid-template-columns: 38px 1fr; gap: 11px; border: 1px solid #36382f; border-radius: 15px; background: #20211c; }
+  .mobile-drawer-trust > i { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; color: var(--ink); background: var(--lime); font-style: normal; font-weight: 950; }
+  .mobile-drawer-trust strong { font-size: 12px; }
+  .mobile-drawer-trust p { margin: 5px 0 0; color: #8f9288; font-size: 10px; line-height: 1.45; }
+  .agent-side-drawer > footer { margin-top: 10px; }
+
+  /* Large blocks in a natural vertical reading order. */
+  .metrics,
+  .operations-metrics,
+  .partner-wallet-grid {
+    margin-right: 0;
+    padding-right: 0;
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: 1fr;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .metric,.operations-metrics article { min-height: 154px; padding: 21px; border-radius: 19px; }
+  .metric strong,.operations-metrics article > strong { font-size: 38px; }
+  .dashboard-grid { gap: 16px; }
+  .setup-card,.panel { border-radius: 19px; }
+  .setup-card { padding: 22px; }
+  .setup-step { min-height: 78px; padding: 16px; border-radius: 14px; }
+  .dashboard-campaign-mini-grid > a { min-height: 188px; padding: 20px; border-radius: 17px; }
+  .activity { min-height: 100px; padding: 19px 0; }
+
+  /* Agent home follows one visible path with full-size step cards. */
+  .mobile-agent-guide { display: none !important; }
+  .mobile-agent-roadmap { margin-top: 20px; display: block; }
+  .mobile-agent-roadmap > header { padding: 0 2px 16px; }
+  .mobile-agent-roadmap > header small { color: #85887e; font-size: 9px; font-weight: 950; letter-spacing: .1em; }
+  .mobile-agent-roadmap > header h2 { max-width: 340px; margin: 9px 0 0; font-size: 31px; line-height: 1.04; letter-spacing: -.05em; }
+  .mobile-agent-roadmap > header p { margin: 10px 0 0; color: #777a70; font-size: 14px; line-height: 1.5; }
+  .mobile-agent-roadmap > div { display: grid; gap: 14px; }
+  .mobile-agent-roadmap article { position: relative; min-height: 320px; padding: 24px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #d9dad2; border-radius: 24px; background: #fff; box-shadow: 0 12px 30px rgba(17,18,15,.07); }
+  .mobile-agent-roadmap article::after { content: ""; position: absolute; top: -76px; right: -70px; width: 190px; height: 190px; border: 1px solid currentColor; border-radius: 50%; opacity: .09; }
+  .mobile-agent-roadmap article.current { color: #fff; border-color: var(--ink); background: var(--ink); box-shadow: 0 20px 44px rgba(17,18,15,.2); }
+  .mobile-agent-roadmap article.done { background: #efffd0; }
+  .mobile-agent-roadmap article.ahead { min-height: 260px; background: #eeece4; box-shadow: none; }
+  .mobile-roadmap-top { display: flex; align-items: center; justify-content: space-between; }
+  .mobile-roadmap-top > span { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px; color: var(--ink); background: var(--lime); font-size: 13px; font-weight: 950; }
+  .mobile-agent-roadmap article.done .mobile-roadmap-top > span { background: #fff; }
+  .mobile-roadmap-top small { padding: 8px 10px; border-radius: 999px; color: inherit; background: rgba(255,255,255,.12); font-size: 8px; font-weight: 950; letter-spacing: .08em; }
+  .mobile-agent-roadmap article:not(.current) .mobile-roadmap-top small { background: rgba(17,18,15,.07); }
+  .mobile-agent-roadmap h3 { max-width: 300px; margin: 34px 0 0; font-size: 29px; line-height: 1.02; letter-spacing: -.05em; }
+  .mobile-agent-roadmap article > p { max-width: 310px; margin: 12px 0 0; color: inherit; font-size: 15px; line-height: 1.55; opacity: .72; }
+  .mobile-roadmap-reward { margin-top: 16px; color: var(--lime); font-size: 14px; }
+  .mobile-agent-roadmap article > a { min-height: 56px; margin-top: auto; padding: 0 17px; display: flex; align-items: center; justify-content: space-between; border-radius: 14px; color: var(--ink); background: var(--lime); font-size: 14px; font-weight: 950; }
+  .mobile-agent-roadmap article.done > a { background: #fff; }
+  .mobile-roadmap-locked { margin-top: auto; color: #777a70; font-size: 11px; font-weight: 800; }
+  .mobile-agent-balance { min-height: 150px; padding: 22px; border-radius: 20px; }
+
+  /* A single, non-blocking installation offer. */
+  .relay-install-prompt {
+    position: fixed;
+    z-index: 1700;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 12px;
+    min-height: 112px;
+    padding: 16px 44px 16px 14px;
+    display: grid;
+    grid-template-columns: 46px minmax(0,1fr);
+    align-items: center;
+    gap: 11px;
+    border: 1px solid #3a3c33;
+    border-radius: 18px;
+    color: #fff;
+    background: #151611;
+    box-shadow: 0 22px 60px rgba(0,0,0,.28);
+  }
+  .relay-install-icon { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 13px; color: var(--ink); background: var(--lime); font-size: 15px; font-weight: 950; }
+  .relay-install-prompt strong { font-size: 13px; }
+  .relay-install-prompt p { margin: 5px 0 0; color: #a7aaa0; font-size: 10px; line-height: 1.4; }
+  .relay-install-action { min-height: 42px; grid-column: 1 / -1; border: 0; border-radius: 11px; color: var(--ink); background: var(--lime); font-size: 12px; font-weight: 950; }
+  .relay-install-close { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border: 0; color: #a7aaa0; background: transparent; font-size: 21px; }
+}
+
+@media (max-width: 380px) {
+  .mobile-side-drawer { width: 92vw; }
+  .partner-level-pill { display: none; }
+  .partner-top-identity strong { max-width: 175px; }
+  .mobile-agent-roadmap article { min-height: 300px; padding: 21px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-side-drawer { transition: none; }
+}

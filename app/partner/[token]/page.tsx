@@ -32,6 +32,12 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
       : acceptedMission && !acceptedMissionResult
         ? { step: 3, eyebrow: "ШАГ 3 ИЗ 4", title: "Передайте результат", text: `${acceptedMission.title}. Всё необходимое заполняется за два коротких шага.`, action: "Передать результат", href: `/p/${portal.program.slug}/missions/${acceptedMission.id}/submit?access=${token}` }
         : { step: 4, eyebrow: "ШАГ 4 ИЗ 4", title: "Следите за результатом", text: "Компания проверяет данные. Все изменения статуса и комментарии появятся в одном месте.", action: "Открыть результат", href: `/partner/${token}/submissions` };
+  const journey = [
+    { title: "Подтвердите контакты", text: "Защитите аккаунт и подготовьте профиль к следующему уровню.", href: `/partner/${token}/profile`, action: "Открыть профиль" },
+    { title: "Выберите задание", text: "Сравните условия и возьмите одно понятное задание в работу.", href: `/partner/${token}/opportunities`, action: "Выбрать задание" },
+    { title: "Передайте результат", text: acceptedMission ? acceptedMission.title : "Добавьте контакт и контекст, чтобы компания могла быстро всё проверить.", href: acceptedMission ? `/p/${portal.program.slug}/missions/${acceptedMission.id}/submit?access=${token}` : `/partner/${token}/missions`, action: "Передать результат" },
+    { title: "Следите за статусом", text: "Решение компании, комментарии и начисление сохраняются в одной истории.", href: `/partner/${token}/submissions`, action: "Открыть результаты" },
+  ];
 
   return (
     <div className="partner-portal-content partner-home-page">
@@ -40,13 +46,9 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
         <Link className="button button-primary" href={`/p/${portal.program.slug}?access=${token}`}>Передать новый результат <span>↗</span></Link>
       </div>
 
-      <section className="mobile-agent-guide" aria-label="Следующий шаг">
-        <div className="mobile-agent-guide-progress">{[1, 2, 3, 4].map((step) => <i className={step <= guide.step ? "done" : ""} key={step} />)}</div>
-        <small>{guide.eyebrow}</small>
-        <h2>{guide.title}</h2>
-        <p>{guide.text}</p>
-        {acceptedMission && guide.step === 3 && <div className="mobile-guide-reward"><span>НАГРАДА</span><strong>{acceptedMission.rewardLabel}</strong></div>}
-        <Link href={guide.href}>{guide.action}<span>→</span></Link>
+      <section className="mobile-agent-roadmap" aria-label="Путь к первой выплате">
+        <header><small>ВАШ МАРШРУТ</small><h2>Четыре шага к первой выплате</h2><p>Relay показывает только то, что нужно сделать дальше.</p></header>
+        <div>{journey.map((item, index) => { const step = index + 1; const state = step < guide.step ? "done" : step === guide.step ? "current" : "ahead"; return <article className={state} key={item.title}><div className="mobile-roadmap-top"><span>{step < guide.step ? "✓" : `0${step}`}</span><small>{state === "done" ? "ВЫПОЛНЕНО" : state === "current" ? "СЛЕДУЮЩИЙ ШАГ" : "ДАЛЬШЕ"}</small></div><h3>{item.title}</h3><p>{item.text}</p>{step === 3 && acceptedMission && <strong className="mobile-roadmap-reward">Награда: {acceptedMission.rewardLabel}</strong>}{state !== "ahead" ? <Link href={item.href}>{state === "current" ? item.action : "Посмотреть"}<span>→</span></Link> : <span className="mobile-roadmap-locked">Откроется после предыдущего шага</span>}</article>; })}</div>
       </section>
 
       <section className="mobile-agent-balance">

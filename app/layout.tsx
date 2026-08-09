@@ -8,6 +8,8 @@ import "./landing-refine.css";
 import "./mobile-role-ux.css";
 import "./landing-mobile.css";
 import "./agent-mobile-simple.css";
+import "./mobile-drawer-ux.css";
+import { InstallRelayPrompt } from "./install-relay-prompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +35,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+    manifest: "/manifest.webmanifest",
+    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Relay" },
     openGraph: {
       title: "Relay — агентские продажи по одной ссылке",
       description,
@@ -59,6 +63,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <InstallRelayPrompt />
       </body>
     </html>
   );

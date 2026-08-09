@@ -1,0 +1,14 @@
+{
+  "name": "Relay — агентские продажи",
+  "short_name": "Relay",
+  "description": "Программы, задания, результаты и выплаты в одном кабинете.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f7f2",
+  "theme_color": "#151611",
+  "lang": "ru",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
