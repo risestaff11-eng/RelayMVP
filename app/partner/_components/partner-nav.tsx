@@ -21,27 +21,17 @@ export function PartnerNav({ token }: { token: string }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const wasOpenRef = useRef(false);
   const hrefFor = (suffix: string) => `${root}${suffix}`;
   const isActive = (suffix: string) => suffix ? pathname.startsWith(hrefFor(suffix)) : pathname === root;
 
   const closeMenu = useCallback(() => {
     setOpen(false);
+    window.setTimeout(() => triggerRef.current?.focus({ preventScroll: true }), 0);
   }, []);
 
   useEffect(() => {
     document.body.classList.toggle("mobile-drawer-open", open);
-    if (!open) {
-      const frame = wasOpenRef.current
-        ? window.requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }))
-        : 0;
-      wasOpenRef.current = false;
-      return () => {
-        if (frame) window.cancelAnimationFrame(frame);
-        document.body.classList.remove("mobile-drawer-open");
-      };
-    }
-    wasOpenRef.current = true;
+    if (!open) return () => document.body.classList.remove("mobile-drawer-open");
     window.setTimeout(() => closeRef.current?.focus(), 0);
     const close = (event: KeyboardEvent) => { if (event.key === "Escape") closeMenu(); };
     document.addEventListener("keydown", close);
