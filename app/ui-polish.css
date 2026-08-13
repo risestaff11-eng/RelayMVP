@@ -227,6 +227,22 @@ details > summary { cursor: pointer; }
 }
 
 @media (max-width:760px) {
+  .dashboard-shell > .sidebar,
+  .partner-portal-sidebar {
+    position: fixed;
+    z-index: 1300;
+    top: 0;
+    left: 0;
+    width: 72px;
+    height: 72px;
+    padding: 0;
+    display: block;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+  .mobile-menu-trigger,.mobile-side-drawer,.mobile-drawer-scrim { pointer-events: auto; }
   .dashboard-content,.partner-portal-content { padding-right: max(13px,env(safe-area-inset-right)); padding-left: max(13px,env(safe-area-inset-left)); }
   .brand-table-row:hover { box-shadow: none; }
   .lp-hero-copy > p,.lp-section-intro > p,.lp-ai-copy > p,.lp-partner-copy > p,.lp-access p,.lp-final > p { color: #41443d; }
