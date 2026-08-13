@@ -146,6 +146,54 @@ small { line-height: 1.4; }
 
 /* Dialogs, disclosure and loading */
 .tour-tooltip { animation: ui-dialog-in .2s var(--ui-ease) both; }
+
+/* Native option popups stay readable while the deal editor keeps its dark card. */
+.mission-editor-card.type-deal select { color-scheme: dark; }
+.mission-editor-card.type-deal select option { color: #171813; background: #fff; }
+
+/* Analytics values keep their unit and context attached at every breakpoint. */
+.agent-analytics-page .analytics-metric-value {
+  margin-top: 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.agent-analytics-page .analytics-metric-value strong { margin-top: 0; }
+.agent-analytics-page .analytics-metric-value em {
+  color: #5d6157;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 850;
+}
+.brand-metrics article:nth-child(2) .analytics-metric-value em { color: #c5c8be; }
+.agent-analytics-page .funnel-list b { display: flex; align-items: baseline; gap: 5px; }
+.agent-analytics-page .funnel-list b em { color: #777b70; font-size: 8px; font-style: normal; font-weight: 700; }
+
+/* On a phone the tour becomes a bounded bottom sheet, so every control is reachable. */
+.tour-tooltip.mobile {
+  top: auto !important;
+  right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 12px !important;
+  width: auto;
+  max-height: calc(100dvh - 24px - env(safe-area-inset-bottom));
+  padding: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tour-tooltip.mobile .tour-progress button,
+.tour-tooltip.mobile .tour-actions button { min-height: 44px; font-size: 12px; }
+.tour-tooltip.mobile h2 { margin-top: 15px; font-size: 27px; }
+.tour-tooltip.mobile p { font-size: 14px; }
+.tour-tooltip.mobile .tour-actions { position: sticky; bottom: -20px; padding: 12px 0 20px; background: #1e2019; }
+
+@media (max-width:760px) {
+  .agent-analytics-page .analytics-metric-value { margin-top: 16px; gap: 7px; }
+  .agent-analytics-page .analytics-metric-value strong { font-size: 32px; }
+  .agent-analytics-page .analytics-metric-value em { font-size: 12px; }
+  .agent-analytics-page .funnel-list b em { font-size: 10px; }
+}
 .tour-backdrop { animation: ui-fade-in .16s ease both; }
 details > summary { cursor: pointer; }
 .lp-faq details { transition: border-color .18s ease, background-color .18s ease; }

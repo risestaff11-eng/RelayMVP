@@ -16,6 +16,7 @@ type TourRect = { top: number; left: number; width: number; height: number };
 export function DashboardTour() {
   const [step, setStep] = useState<number | null>(null);
   const [rect, setRect] = useState<TourRect | null>(null);
+  const [compact, setCompact] = useState(false);
 
   const updateRect = useCallback(() => {
     if (step === null) return;
@@ -24,6 +25,13 @@ export function DashboardTour() {
     const box = element.getBoundingClientRect();
     setRect({ top: box.top - 6, left: box.left - 6, width: box.width + 12, height: box.height + 12 });
   }, [step]);
+
+  useEffect(() => {
+    const updateCompact = () => setCompact(window.innerWidth <= 760);
+    updateCompact();
+    window.addEventListener("resize", updateCompact);
+    return () => window.removeEventListener("resize", updateCompact);
+  }, []);
 
   useEffect(() => {
     if (localStorage.getItem("relay-dashboard-tour-v1") !== "done") {
@@ -52,10 +60,12 @@ export function DashboardTour() {
     setStep(step + 1);
   }
 
+  const targeted = Boolean(rect && !compact);
+
   return (
     <>
       <button className="icon-button tour-launch" type="button" onClick={() => setStep(0)} aria-label="Открыть обучение">?</button>
-      {step !== null && <div className="tour-layer" role="dialog" aria-modal="true" aria-label="Обучение по кабинету"><div className="tour-backdrop" />{rect && <div className="tour-highlight" style={rect} />}<div className={`tour-tooltip ${rect ? "targeted" : "centered"}`} style={rect ? { top: Math.min(window.innerHeight - 250, Math.max(20, rect.top)), left: Math.min(window.innerWidth - 350, rect.left + rect.width + 18) } : undefined}><div className="tour-progress"><span>ШАГ {step + 1} ИЗ {steps.length}</span><button type="button" onClick={close}>Пропустить</button></div><h2>{steps[step].title}</h2><p>{steps[step].text}</p><div className="tour-dots">{steps.map((item, index) => <i className={index === step ? "active" : ""} key={item.target} />)}</div><div className="tour-actions">{step > 0 && <button type="button" className="tour-back" onClick={() => setStep(step - 1)}>Назад</button>}<button type="button" className="tour-next" onClick={next}>{step === steps.length - 1 ? "Готово" : "Далее →"}</button></div></div></div>}
+      {step !== null && <div className="tour-layer" role="dialog" aria-modal="true" aria-label="Обучение по кабинету"><div className="tour-backdrop" />{targeted && rect && <div className="tour-highlight" style={rect} />}<div className={`tour-tooltip ${compact ? "mobile" : targeted ? "targeted" : "centered"}`} style={targeted && rect ? { top: Math.min(window.innerHeight - 250, Math.max(20, rect.top)), left: Math.min(window.innerWidth - 350, rect.left + rect.width + 18) } : undefined}><div className="tour-progress"><span>ШАГ {step + 1} ИЗ {steps.length}</span><button type="button" onClick={close}>Пропустить</button></div><h2>{steps[step].title}</h2><p>{steps[step].text}</p><div className="tour-dots">{steps.map((item, index) => <i className={index === step ? "active" : ""} key={item.target} />)}</div><div className="tour-actions">{step > 0 && <button type="button" className="tour-back" onClick={() => setStep(step - 1)}>Назад</button>}<button type="button" className="tour-next" onClick={next}>{step === steps.length - 1 ? "Готово" : "Далее →"}</button></div></div></div>}
     </>
   );
 }

@@ -46,10 +46,10 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       </div>
 
       <section className="operations-metrics brand-metrics">
-        <article><small>ВСЕГО АГЕНТОВ</small><strong>{analytics.agents.length}</strong><span>В выбранных программах</span></article>
-        <article><small>АКТИВНЫЕ АГЕНТЫ</small><strong>{activeAgentIds.size}</strong><span>Передали результат {periodLabel}</span></article>
-        <article><small>РЕЗУЛЬТАТОВ НА АГЕНТА</small><strong>{averageResults}</strong><span>Среднее среди активных</span></article>
-        <article><small>ВЫПЛАЧЕНО АГЕНТАМ</small><strong>{formatInteger(paid)} ₸</strong><span>По результатам периода</span></article>
+        <article><small>ВСЕГО АГЕНТОВ</small><div className="analytics-metric-value"><strong>{analytics.agents.length}</strong><em>всего</em></div><span>В выбранных программах</span></article>
+        <article><small>АКТИВНЫЕ АГЕНТЫ</small><div className="analytics-metric-value"><strong>{activeAgentIds.size}</strong><em>с результатом</em></div><span>Передали результат {periodLabel}</span></article>
+        <article><small>РЕЗУЛЬТАТОВ НА АГЕНТА</small><div className="analytics-metric-value"><strong>{averageResults}</strong><em>в среднем</em></div><span>Только среди активных агентов</span></article>
+        <article><small>ВЫПЛАЧЕНО АГЕНТАМ</small><div className="analytics-metric-value"><strong>{formatInteger(paid)}</strong><em>₸ за период</em></div><span>Фактически отмечено выплаченным</span></article>
       </section>
 
       <section className="analytics-decision-strip"><article><small>РЕЗУЛЬТАТ → ПРИНЯТО</small><strong>{submittedToAccepted}%</strong><span>Качество входящего потока</span></article><article><small>РЕЗУЛЬТАТ → СДЕЛКА</small><strong>{submittedToDeal}%</strong><span>Итоговая конверсия</span></article><article><small>ТРЕБУЮТ ВНИМАНИЯ</small><strong>{inactiveAgents.length}</strong><span>Без результата за период</span></article></section>
@@ -76,10 +76,10 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <section className="panel funnel-card agent-funnel-card">
           <div className="panel-header"><div><h2>Воронка агентов</h2><p>Количество людей на каждом этапе.</p></div></div>
           <div className="funnel-list">
-            <div><span>Зарегистрировались</span><b>{analytics.agents.length}</b><i style={{ width: analytics.agents.length ? "100%" : "0%" }} /></div>
-            <div><span>Передали результат</span><b>{activeAgentIds.size}</b><i style={{ width: `${analytics.agents.length ? Math.max(4, activeAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
-            <div><span>Получили принятие</span><b>{acceptedAgentIds.size}</b><i style={{ width: `${analytics.agents.length ? Math.max(4, acceptedAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
-            <div><span>Довели до сделки</span><b>{dealAgentIds.size}</b><i style={{ width: `${analytics.agents.length ? Math.max(4, dealAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
+            <div><span>Зарегистрировались</span><b>{analytics.agents.length}<em>всего</em></b><i style={{ width: analytics.agents.length ? "100%" : "0%" }} /></div>
+            <div><span>Передали результат</span><b>{activeAgentIds.size}<em>из {analytics.agents.length}</em></b><i style={{ width: `${analytics.agents.length ? Math.max(4, activeAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
+            <div><span>Получили принятие</span><b>{acceptedAgentIds.size}<em>из {analytics.agents.length}</em></b><i style={{ width: `${analytics.agents.length ? Math.max(4, acceptedAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
+            <div><span>Довели до сделки</span><b>{dealAgentIds.size}<em>из {analytics.agents.length}</em></b><i style={{ width: `${analytics.agents.length ? Math.max(4, dealAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
           </div>
           <div className="agent-funnel-insight">
             <small>НОВЫЕ АГЕНТЫ</small>
