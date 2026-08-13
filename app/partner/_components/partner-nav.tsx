@@ -26,7 +26,7 @@ export function PartnerNav({ token }: { token: string }) {
 
   const closeMenu = useCallback(() => {
     setOpen(false);
-    window.setTimeout(() => triggerRef.current?.focus({ preventScroll: true }), 0);
+    window.setTimeout(() => triggerRef.current?.focus({ preventScroll: true }), 150);
   }, []);
 
   useEffect(() => {
