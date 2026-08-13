@@ -9,6 +9,7 @@ import "./mobile-role-ux.css";
 import "./landing-mobile.css";
 import "./agent-mobile-simple.css";
 import "./mobile-drawer-ux.css";
+import "./ui-polish.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

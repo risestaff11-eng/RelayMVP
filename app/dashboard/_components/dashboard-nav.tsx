@@ -32,17 +32,17 @@ export function DashboardNav() {
   return <>
     <nav className="sidebar-nav" aria-label="Навигация кабинета компании">
       <small className="sidebar-nav-label">УПРАВЛЕНИЕ</small>
-      {items.slice(0, 6).map((item) => <Link key={item.href} data-tour={item.exact ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i>{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
+      {items.slice(0, 6).map((item) => <Link key={item.href} data-tour={item.exact ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i aria-hidden="true">{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
       <small className="sidebar-nav-label">НАСТРОЙКА</small>
-      {items.slice(6).map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i>{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
+      {items.slice(6).map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i aria-hidden="true">{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
     </nav>
 
     <button className="mobile-menu-trigger company-menu-trigger" type="button" aria-label="Открыть меню" aria-expanded={open} aria-controls="company-mobile-drawer" onClick={() => setOpen(true)}><i /><i /><i /></button>
     {open && <button className="mobile-drawer-scrim" type="button" aria-label="Закрыть меню" onClick={() => setOpen(false)} />}
-    <aside className={`mobile-side-drawer company-side-drawer ${open ? "open" : ""}`} id="company-mobile-drawer" aria-hidden={!open}>
+    <aside className={`mobile-side-drawer company-side-drawer ${open ? "open" : ""}`} id="company-mobile-drawer" aria-hidden={!open} inert={!open} role="dialog" aria-modal="true" aria-label="Меню кабинета компании">
       <header><div className="mobile-drawer-brand"><span>R</span><div><small>RELAY</small><strong>КАБИНЕТ КОМПАНИИ</strong></div></div><button type="button" aria-label="Закрыть меню" onClick={() => setOpen(false)}>×</button></header>
       <nav aria-label="Мобильная навигация компании">
-        {items.map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined} onClick={() => setOpen(false)}><i>{item.icon}</i><span><strong>{item.label}</strong><small>{item.hint}</small></span><b>→</b></Link>)}
+        {items.map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined} onClick={() => setOpen(false)}><i aria-hidden="true">{item.icon}</i><span><strong>{item.label}</strong><small>{item.hint}</small></span><b aria-hidden="true">→</b></Link>)}
       </nav>
       <footer><span>RELAY · АГЕНТСКИЕ ПРОДАЖИ</span><p>Все основные разделы доступны из этого меню.</p></footer>
     </aside>
