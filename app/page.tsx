@@ -35,13 +35,14 @@ export default async function Home() {
   const whatsappHref = "https://wa.me/77765086000?text=%D0%A0%D1%83%D1%81%20%D0%A1%D0%B0%D0%BB%D0%B5%D0%BC%20%D0%B4%D0%B0%D0%B2%D0%B0%D0%B9%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D0%BC%20Relay";
 
   return <main className="lp-shell">
+    <a className="skip-link" href="#main-content">К основному содержанию</a>
     <header className="lp-header">
       <Link className="lp-brand" href="/" aria-label="Relay — главная"><MarketingLogo /><span>Relay</span></Link>
       <nav className="lp-nav" aria-label="Основная навигация"><a href="#product">Продукт</a><a href="#how">Как работает</a><Link href="/pricing">Тарифы</Link><Link href="/integrators">Стать интегратором</Link><a href="#faq">FAQ</a></nav>
       <div className="lp-header-actions"><a className="lp-login" href={loginHref}>{user ? "Кабинет" : "Войти"}</a><a className="lp-nav-cta" href={whatsappHref} target="_blank" rel="noreferrer">Обсудить Relay<span>↗</span></a></div>
     </header>
 
-    <section className="lp-hero">
+    <section className="lp-hero" id="main-content">
       <div className="lp-orbit lp-orbit-one" aria-hidden="true" /><div className="lp-orbit lp-orbit-two" aria-hidden="true" />
       <div className="lp-hero-copy">
         <div className="lp-kicker"><span>●</span> ПЛАТФОРМА АГЕНТСКИХ ПРОДАЖ ДЛЯ B2B-КОМПАНИЙ</div>

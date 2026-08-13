@@ -13,5 +13,26 @@ const plans = [
 const whatsapp = "https://wa.me/77765086000?text=%D0%A0%D1%83%D1%81%20%D0%A1%D0%B0%D0%BB%D0%B5%D0%BC%20%D0%B4%D0%B0%D0%B2%D0%B0%D0%B9%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D0%BC%20Relay";
 
 export default function PricingPage() {
-  return <main className="marketing-subpage pricing-page"><header className="subpage-header"><Link className="lp-brand" href="/"><MarketingLogo /><span>Relay</span></Link><Link href="/">← На главную</Link></header><section className="pricing-hero"><span>ВАРИАНТЫ ПОДКЛЮЧЕНИЯ</span><h1>Тариф зависит от задачи, а не от красивой таблицы цен.</h1><p>Сначала определим, сколько программ и агентов вам действительно нужно. После этого зафиксируем понятный состав продукта и условия подключения.</p></section><section className="pricing-grid">{plans.map((plan) => <article key={plan.code}><div><span>{plan.code}</span><small>{plan.label}</small></div><h2>{plan.name}</h2><p>{plan.text}</p><ul>{plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}</ul><a href={whatsapp} target="_blank" rel="noreferrer">Обсудить условия <span>↗</span></a></article>)}</section><section className="pricing-note"><strong>Почему без цен?</strong><p>На этапе раннего доступа Relay подключается под конкретный сценарий. Мы не будем продавать лишние лимиты до того, как поймём реальный объём агентского канала.</p></section></main>;
+  return <main className="marketing-subpage pricing-page">
+    <a className="skip-link" href="#main-content">К тарифам</a>
+    <header className="subpage-header">
+      <Link className="lp-brand" href="/" aria-label="Relay — главная"><MarketingLogo /><span>Relay</span></Link>
+      <Link className="subpage-back" href="/">← На главную</Link>
+    </header>
+    <section className="pricing-hero" id="main-content">
+      <span>ВАРИАНТЫ ПОДКЛЮЧЕНИЯ</span>
+      <h1>Тариф зависит от задачи, а не от красивой таблицы цен.</h1>
+      <p>Сначала определим, сколько программ и агентов вам действительно нужно. После этого зафиксируем понятный состав продукта и условия подключения.</p>
+    </section>
+    <section className="pricing-grid" aria-label="Варианты подключения Relay">
+      {plans.map((plan) => <article key={plan.code}>
+        <div><span>{plan.code}</span><small>{plan.label}</small></div>
+        <h2>{plan.name}</h2>
+        <p>{plan.text}</p>
+        <ul>{plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}</ul>
+        <a href={whatsapp} target="_blank" rel="noreferrer">Обсудить условия <span aria-hidden="true">↗</span></a>
+      </article>)}
+    </section>
+    <section className="pricing-note"><strong>Почему без цен?</strong><p>На этапе раннего доступа Relay подключается под конкретный сценарий. Мы не будем продавать лишние лимиты до того, как поймём реальный объём агентского канала.</p></section>
+  </main>;
 }
