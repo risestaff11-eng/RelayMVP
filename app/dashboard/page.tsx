@@ -6,6 +6,7 @@ import { getCompanyForUser } from "../../db/company";
 import { getConfirmedCompanyProfile } from "../../db/profile";
 import { getCompanyOperations, getProgramsForCompany, getSubmissionsForCompany } from "../../db/programs";
 import { ProgramQuickActions } from "./_components/program-quick-actions";
+import { formatActivityDate, formatInteger } from "@/lib/format-display";
 
 export const metadata: Metadata = { title: "Кабинет компании" };
 export const dynamic = "force-dynamic";
@@ -47,8 +48,8 @@ export default async function DashboardPage() {
         <article className="metric"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>Из {stats.programs} созданных</small></article>
         <article className="metric"><div className="metric-top"><span>АГЕНТЫ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{stats.activePartners} активных</small></article>
         <article className="metric"><div className="metric-top"><span>ПОЛУЧЕНО РЕЗУЛЬТАТОВ</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{stats.awaitingReview} ждут проверки</small></article>
-        <article className="metric"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">₸</span></div><strong>{stats.approvedRewards.toLocaleString("ru-RU")} ₸</strong><small>Подтверждённые вознаграждения</small></article>
-        <article className={`metric ai-balance-metric ${company.aiTokenBalance < 1000 ? "low" : ""}`}><div className="metric-top"><span>AI-БАЛАНС</span><span className="metric-icon">✦</span></div><strong>{company.aiTokenBalance.toLocaleString("ru-RU")}</strong><small>{company.aiTokenBalance < 1000 ? "Требуется пополнение" : "Токенов для анализа и генерации"}</small>{company.aiTokenBalance < 1000 && <a href="https://wa.me/77765086000?text=%D0%97%D0%B0%D0%BA%D0%BE%D0%BD%D1%87%D0%B8%D0%BB%D0%B8%D1%81%D1%8C%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%D1%8B" target="_blank" rel="noreferrer">Пополнить в WhatsApp →</a>}</article>
+        <article className="metric"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">₸</span></div><strong>{formatInteger(stats.approvedRewards)} ₸</strong><small>Подтверждённые вознаграждения</small></article>
+        <article className={`metric ai-balance-metric ${company.aiTokenBalance < 1000 ? "low" : ""}`}><div className="metric-top"><span>AI-БАЛАНС</span><span className="metric-icon">✦</span></div><strong>{formatInteger(company.aiTokenBalance)}</strong><small>{company.aiTokenBalance < 1000 ? "Требуется пополнение" : "Токенов для анализа и генерации"}</small>{company.aiTokenBalance < 1000 && <a href="https://wa.me/77765086000?text=%D0%97%D0%B0%D0%BA%D0%BE%D0%BD%D1%87%D0%B8%D0%BB%D0%B8%D1%81%D1%8C%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%D1%8B" target="_blank" rel="noreferrer">Пополнить в WhatsApp →</a>}</article>
       </section>
 
       <section className="dashboard-grid">
@@ -72,7 +73,7 @@ export default async function DashboardPage() {
 
         <aside className="panel">
           <div className="panel-header"><h2>Последние события</h2><span>Обновляется автоматически</span></div>
-          <div className="activity-list">{activities.map((activity, index) => <div className="activity" key={`${activity.title}-${index}`}><span className="activity-mark">{activity.mark}</span><div><strong>{activity.title}</strong><p>{activity.text}</p><small>{new Date(activity.date).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</small><Link href={activity.href}>{activity.action} →</Link></div></div>)}</div>
+          <div className="activity-list">{activities.map((activity, index) => <div className="activity" key={`${activity.title}-${index}`}><span className="activity-mark">{activity.mark}</span><div><strong>{activity.title}</strong><p>{activity.text}</p><small>{formatActivityDate(activity.date)}</small><Link href={activity.href}>{activity.action} →</Link></div></div>)}</div>
         </aside>
       </section>
     </div>

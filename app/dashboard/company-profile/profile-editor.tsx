@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { SafeLink as Link } from "@/app/safe-link";
 import type { CompanyProfile } from "../../../db/profile";
+import { formatInteger } from "@/lib/format-display";
 
 type FormState = {
   businessDescription: string;
@@ -163,7 +164,7 @@ export function CompanyProfileEditor({
     <div className="dashboard-content module-content profile-editor-page">
       <div className="module-heading profile-page-heading">
         <div><span className="module-kicker">ШАГ 2 ИЗ 4 · AI-ПРОФИЛЬ</span><h1>Профиль компании</h1><p>AI собирает факты с сайта, но решение всегда остаётся за вами: исправьте пробелы и подтвердите каждую новую версию.</p></div>
-        <div className="heading-actions"><span className="token-pill">AI · {tokenBalance.toLocaleString("ru-RU")} токенов</span><Link className="button button-ghost compact-button" href="/dashboard/settings">Настройки профиля →</Link></div>
+        <div className="heading-actions"><span className="token-pill">AI · {formatInteger(tokenBalance)} токенов</span><Link className="button button-ghost compact-button" href="/dashboard/settings">Настройки профиля →</Link></div>
       </div>
 
       {notice && <div className={`inline-notice ${notice.type}`} role="status">{notice.text}</div>}
@@ -180,7 +181,7 @@ export function CompanyProfileEditor({
       <div className="profile-status-row">
         <div><small>ТЕКУЩАЯ ВЕРСИЯ</small><strong>{statusLabel}</strong></div>
         {profile && <div><small>ИСТОЧНИК</small><strong>{profile.sourceWebsite}</strong></div>}
-        {profile && <div><small>РАСХОД</small><strong>{(profile.inputTokens + profile.outputTokens).toLocaleString("ru-RU")} токенов</strong></div>}
+        {profile && <div><small>РАСХОД</small><strong>{formatInteger(profile.inputTokens + profile.outputTokens)} токенов</strong></div>}
       </div>
 
       {!profile ? (

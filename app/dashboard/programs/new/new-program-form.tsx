@@ -3,6 +3,7 @@
 import { SafeLink as Link } from "@/app/safe-link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatInteger } from "@/lib/format-display";
 
 const missionTypes = [
   { type: "LEAD", title: "Лиды", icon: "↗", text: "Агент передаёт контакт, который соответствует критериям." },
@@ -41,7 +42,7 @@ export function NewProgramForm({ companyName, tokenBalance, profileVersion, prof
 
   return (
     <div className="dashboard-content module-content program-builder-page">
-      <div className="builder-back"><Link href="/dashboard/programs">← Все программы</Link><span>{profileVersion ? `AI-профиль v${profileVersion}${profileStatus === "CONFIRMED" ? " · подтверждён" : " · черновик"}` : "AI-профиль не заполнен"} · {tokenBalance.toLocaleString("ru-RU")} токенов</span></div>
+      <div className="builder-back"><Link href="/dashboard/programs">← Все программы</Link><span>{profileVersion ? `AI-профиль v${profileVersion}${profileStatus === "CONFIRMED" ? " · подтверждён" : " · черновик"}` : "AI-профиль не заполнен"} · {formatInteger(tokenBalance)} токенов</span></div>
       <div className="module-heading"><div><span className="module-kicker">НОВАЯ ПРОГРАММА · ШАГ 1 ИЗ 3</span><h1>Задайте рамки программы</h1><p>Gemini использует доступные данные компании и создаст редактируемый черновик каждого выбранного задания. Подтверждение профиля не обязательно.</p></div></div>
       <div className="builder-stepper"><span className="active"><b>1</b>Основа</span><span><b>2</b>Задания и награды</span><span><b>3</b>Правила и публикация</span></div>
 

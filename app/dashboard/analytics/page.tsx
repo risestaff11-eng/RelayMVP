@@ -5,13 +5,10 @@ import { getCompanyForUser } from "../../../db/company";
 import { getCompanyAnalytics, getProgramsForCompany } from "../../../db/programs";
 import { AnalyticsFilters } from "./analytics-filters";
 import { CsvExportButton } from "../_components/table-actions";
+import { formatDate, formatInteger } from "@/lib/format-display";
 
 export const metadata: Metadata = { title: "Сравнение агентов" };
 export const dynamic = "force-dynamic";
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
-}
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const query = await searchParams;
@@ -52,7 +49,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <article><small>ВСЕГО АГЕНТОВ</small><strong>{analytics.agents.length}</strong><span>В выбранных программах</span></article>
         <article><small>АКТИВНЫЕ АГЕНТЫ</small><strong>{activeAgentIds.size}</strong><span>Передали результат {periodLabel}</span></article>
         <article><small>РЕЗУЛЬТАТОВ НА АГЕНТА</small><strong>{averageResults}</strong><span>Среднее среди активных</span></article>
-        <article><small>ВЫПЛАЧЕНО АГЕНТАМ</small><strong>{paid.toLocaleString("ru-RU")} ₸</strong><span>По результатам периода</span></article>
+        <article><small>ВЫПЛАЧЕНО АГЕНТАМ</small><strong>{formatInteger(paid)} ₸</strong><span>По результатам периода</span></article>
       </section>
 
       <section className="analytics-decision-strip"><article><small>РЕЗУЛЬТАТ → ПРИНЯТО</small><strong>{submittedToAccepted}%</strong><span>Качество входящего потока</span></article><article><small>РЕЗУЛЬТАТ → СДЕЛКА</small><strong>{submittedToDeal}%</strong><span>Итоговая конверсия</span></article><article><small>ТРЕБУЮТ ВНИМАНИЯ</small><strong>{inactiveAgents.length}</strong><span>Без результата за период</span></article></section>
@@ -92,7 +89,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         </section>
       </div>
 
-      <section className="panel program-comparison-panel"><div className="panel-header"><div><h2>Эффективность программ</h2><p>Сравнение помогает понять, куда приглашать новых агентов и какие условия нужно пересмотреть.</p></div></div><div className="program-comparison-list">{analytics.byProgram.map((program) => { const conversion = program.results ? Math.round(program.deals / program.results * 100) : 0; return <article key={program.id}><div><strong>{program.name}</strong><small>{program.agents} агентов · {program.results} результатов</small></div><span><b>{program.accepted}</b> принято</span><span><b>{program.deals}</b> сделок</span><span><b>{conversion}%</b> конверсия</span><span><b>{program.paid.toLocaleString("ru-RU")} ₸</b> выплачено</span></article>; })}{!analytics.byProgram.length && <div className="table-empty">Нет программ для сравнения.</div>}</div></section>
+      <section className="panel program-comparison-panel"><div className="panel-header"><div><h2>Эффективность программ</h2><p>Сравнение помогает понять, куда приглашать новых агентов и какие условия нужно пересмотреть.</p></div></div><div className="program-comparison-list">{analytics.byProgram.map((program) => { const conversion = program.results ? Math.round(program.deals / program.results * 100) : 0; return <article key={program.id}><div><strong>{program.name}</strong><small>{program.agents} агентов · {program.results} результатов</small></div><span><b>{program.accepted}</b> принято</span><span><b>{program.deals}</b> сделок</span><span><b>{conversion}%</b> конверсия</span><span><b>{formatInteger(program.paid)} ₸</b> выплачено</span></article>; })}{!analytics.byProgram.length && <div className="table-empty">Нет программ для сравнения.</div>}</div></section>
 
       <section className="panel workflow-panel analytics-table-panel">
         <div className="panel-header">
@@ -107,8 +104,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
               <b>{agent.accepted}</b>
               <b>{agent.deals}</b>
               <b>{agent.dealRate}%</b>
-              <b>{agent.due.toLocaleString("ru-RU")} ₸</b>
-              <b>{agent.paid.toLocaleString("ru-RU")} ₸</b>
+              <b>{formatInteger(agent.due)} ₸</b>
+              <b>{formatInteger(agent.paid)} ₸</b>
               <div><b>{formatDate(agent.lastActivity)}</b><small>{agent.results ? "Есть активность" : "Нет результатов за период"}</small></div>
             </div>
           ))}
