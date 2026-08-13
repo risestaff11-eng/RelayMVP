@@ -17,7 +17,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   let tokenBalance: number | undefined;
   if (payload.tokenAmount !== undefined) {
     const tokenAmount = Math.round(Number(payload.tokenAmount));
-    if (!Number.isFinite(tokenAmount) || tokenAmount < 1 || tokenAmount > 10_000_000) return Response.json({ error: "Введите от 1 до 10 000 000 токенов" }, { status: 400 });
+    if (!Number.isFinite(tokenAmount) || tokenAmount < 1 || tokenAmount > 10_000_000) return Response.json({ error: "Введите от 1 до 10 000 000 AI-кредитов" }, { status: 400 });
     const company = (await getDb().select({ id: companies.id, aiTokenBalance: companies.aiTokenBalance }).from(companies).where(eq(companies.ownerUserId, id)).limit(1))[0];
     if (!company) return Response.json({ error: "У пользователя нет компании" }, { status: 404 });
     tokenBalance = company.aiTokenBalance + tokenAmount;

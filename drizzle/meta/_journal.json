@@ -99,6 +99,13 @@
       "when": 1786575600000,
       "tag": "0013_demo_account_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1786653000000,
+      "tag": "0014_restore_demo_ai_credits",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
@@ -6,6 +6,7 @@ import { getLatestCompanyProfile } from "../../../../db/profile";
 import { getCompanyOperations, getProgramsForCompany } from "../../../../db/programs";
 import { companies } from "../../../../db/schema";
 import { generateStructuredJson } from "../../../../lib/ai";
+import { aiCreditLimit, calculateAiCredits, minimumAiCredits } from "../../../../lib/ai-credits";
 import { cleanString, sameOrigin } from "../_utils";
 
 type AssistantReply = {
@@ -39,11 +40,11 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
-  if (company.aiTokenBalance < 1) return Response.json({ error: "AI-токены закончились. Пополните баланс в настройках." }, { status: 402 });
+  if (company.aiTokenBalance < minimumAiCredits("ASSISTANT_REPLY")) return Response.json({ error: "Недостаточно AI-кредитов для ответа. Пополните баланс в настройках." }, { status: 402 });
 
   try {
     const payload = await request.json() as { messages?: Array<{ role?: string; content?: string }> };
-    const messages = (payload.messages ?? []).slice(-10).map((message) => ({ role: message.role === "assistant" ? "assistant" : "user", content: cleanString(message.content, 1600) })).filter((message) => message.content);
+    const messages = (payload.messages ?? []).slice(-4).map((message) => ({ role: message.role === "assistant" ? "assistant" : "user", content: cleanString(message.content, 700) })).filter((message) => message.content);
     if (!messages.length) return Response.json({ error: "Напишите вопрос или задачу" }, { status: 400 });
     const [profile, programs, operations] = await Promise.all([getLatestCompanyProfile(company.id), getProgramsForCompany(company.id), getCompanyOperations(company.id)]);
     const schema = {
@@ -75,15 +76,15 @@ export async function POST(request: Request) {
 Каждый ответ заканчивай конкретным следующим шагом или вопросом выбора.`,
       prompt: JSON.stringify({
         company: { id: company.id, name: company.name, website: company.website, industry: company.industry, goal: company.primaryGoal, tokens: company.aiTokenBalance, contacts: { whatsapp: company.contactWhatsapp, instagram: company.contactInstagram } },
-        profile: profile ? { status: profile.status, targetAudience: profile.targetAudience, partnerPitch: profile.partnerPitch, products: profile.products, advantages: profile.advantages } : null,
+        profile: profile ? { status: profile.status, targetAudience: cleanString(profile.targetAudience, 700), partnerPitch: cleanString(profile.partnerPitch, 500), products: profile.products.slice(0, 6), advantages: profile.advantages.slice(0, 5) } : null,
         operations,
-        programs: programs.map((program) => ({ id: program.id, name: program.name, status: program.status, goal: program.goal, missions: program.missions.map((mission) => ({ type: mission.type, title: mission.title, reward: mission.rewardLabel })) })),
+        programs: programs.slice(0, 6).map((program) => ({ id: program.id, name: program.name, status: program.status, goal: program.goal, missions: program.missions.slice(0, 4).map((mission) => ({ type: mission.type, title: mission.title, reward: mission.rewardLabel })) })),
         conversation: messages,
-      }), schema, maxOutputTokens: 1800,
+      }), schema, maxOutputTokens: 850, thinkingLevel: "minimal",
     });
-    const spent = Math.min(company.aiTokenBalance, ai.totalTokens);
-    await getDb().update(companies).set({ aiTokenBalance: Math.max(0, company.aiTokenBalance - spent), aiTokensUsed: company.aiTokensUsed + spent, updatedAt: new Date().toISOString() }).where(eq(companies.id, company.id));
-    return Response.json({ ...ai.data, tokenBalance: Math.max(0, company.aiTokenBalance - spent) });
+    const spent = Math.min(company.aiTokenBalance, calculateAiCredits("ASSISTANT_REPLY", ai));
+    await getDb().update(companies).set({ aiTokenBalance: sql`max(${companies.aiTokenBalance} - ${spent}, 0)`, aiTokensUsed: sql`${companies.aiTokensUsed} + ${spent}`, updatedAt: new Date().toISOString() }).where(eq(companies.id, company.id));
+    return Response.json({ ...ai.data, tokenBalance: Math.max(0, company.aiTokenBalance - spent), creditsSpent: spent, creditLimit: aiCreditLimit("ASSISTANT_REPLY") });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "AI-агент временно недоступен" }, { status: 400 });
   }

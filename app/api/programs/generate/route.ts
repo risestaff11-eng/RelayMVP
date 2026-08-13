@@ -1,10 +1,11 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
 import { getConfirmedCompanyProfile, getLatestCompanyProfile } from "../../../../db/profile";
 import { companies, missions, programs } from "../../../../db/schema";
 import { generateStructuredJson } from "../../../../lib/ai";
+import { aiCreditLimit, calculateAiCredits, minimumAiCredits } from "../../../../lib/ai-credits";
 import { cleanString, sameOrigin } from "../../company/_utils";
 
 const MISSION_TYPES = new Set(["LEAD", "DEAL", "IMAGE", "ENGAGEMENT"]);
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
     if (!GOALS.has(goal)) throw new Error("Выберите цель программы");
     if (!CURRENCIES.has(currency)) throw new Error("Выберите валюту вознаграждений");
     if (selectedTypes.length < 1 || selectedTypes.length > 4 || selectedTypes.some((type) => !MISSION_TYPES.has(type))) throw new Error("Выберите от одного до четырёх типов миссий");
+    if (company.aiTokenBalance < minimumAiCredits("PROGRAM_GENERATION")) throw new Error("Недостаточно AI-кредитов для генерации программы");
 
     const db = getDb();
     const schema = {
@@ -107,7 +109,8 @@ export async function POST(request: Request) {
         },
       }),
       schema,
-      maxOutputTokens: 5000,
+      maxOutputTokens: 950 + selectedTypes.length * 500,
+      thinkingLevel: "low",
     });
 
     const byType = new Map(ai.data.missions.map((mission) => [mission.type, mission]));
@@ -136,13 +139,14 @@ export async function POST(request: Request) {
       };
     });
 
+    const spent = Math.min(company.aiTokenBalance, calculateAiCredits("PROGRAM_GENERATION", ai, selectedTypes.length));
     await db.batch([
       db.insert(programs).values({ id: programId, companyId: company.id, profileVersionId: profile?.id ?? null, name, slug, description: cleanString(ai.data.programDescription, 1800), goal, currency, payoutTerms: cleanString(ai.data.payoutTerms, 1800), legalTerms: cleanString(ai.data.legalTerms, 2400), status: "DRAFT", createdAt: now, updatedAt: now }),
       db.insert(missions).values(missionRows),
-      db.update(companies).set({ aiTokenBalance: Math.max(0, company.aiTokenBalance - ai.totalTokens), aiTokensUsed: company.aiTokensUsed + ai.totalTokens, onboardingStatus: "PROGRAM_DRAFT", updatedAt: now }).where(eq(companies.id, company.id)),
+      db.update(companies).set({ aiTokenBalance: sql`max(${companies.aiTokenBalance} - ${spent}, 0)`, aiTokensUsed: sql`${companies.aiTokensUsed} + ${spent}`, onboardingStatus: "PROGRAM_DRAFT", updatedAt: now }).where(eq(companies.id, company.id)),
     ]);
 
-    return Response.json({ programId, tokenBalance: Math.max(0, company.aiTokenBalance - ai.totalTokens) }, { status: 201 });
+    return Response.json({ programId, tokenBalance: Math.max(0, company.aiTokenBalance - spent), creditsSpent: spent, creditLimit: aiCreditLimit("PROGRAM_GENERATION", selectedTypes.length) }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Не удалось создать программу";
     return Response.json({ error: message }, { status: 400 });

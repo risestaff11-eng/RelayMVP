@@ -102,12 +102,13 @@ export function CompanyProfileEditor({
     setNotice(null);
     try {
       const response = await fetch("/api/company/profile/analyze", { method: "POST" });
-      const data = await response.json() as { profile?: CompanyProfile; aiTokenBalance?: number; warning?: string | null; error?: string };
+      const data = await response.json() as { profile?: CompanyProfile; aiTokenBalance?: number; creditsSpent?: number; warning?: string | null; error?: string };
       if (!response.ok || !data.profile) throw new Error(messageFromResponse(data, "AI-анализ не выполнен"));
       setProfile(data.profile);
       setForm(formFromProfile(data.profile));
       if (typeof data.aiTokenBalance === "number") setTokenBalance(data.aiTokenBalance);
-      setNotice({ type: "success", text: data.warning ? `Черновик версии ${data.profile.versionNumber} готов. ${data.warning}` : `Черновик версии ${data.profile.versionNumber} готов. Проверьте каждое поле и обязательно подтвердите профиль.` });
+      const spend = typeof data.creditsSpent === "number" ? ` Списано: ${data.creditsSpent} AI-кредитов.` : "";
+      setNotice({ type: "success", text: data.warning ? `Черновик версии ${data.profile.versionNumber} готов.${spend} ${data.warning}` : `Черновик версии ${data.profile.versionNumber} готов.${spend} Проверьте каждое поле и обязательно подтвердите профиль.` });
     } catch (error) {
       setNotice({ type: "error", text: error instanceof Error ? error.message : "AI-анализ не выполнен" });
     } finally {
@@ -164,7 +165,7 @@ export function CompanyProfileEditor({
     <div className="dashboard-content module-content profile-editor-page">
       <div className="module-heading profile-page-heading">
         <div><span className="module-kicker">ШАГ 2 ИЗ 4 · AI-ПРОФИЛЬ</span><h1>Профиль компании</h1><p>AI собирает факты с сайта, но решение всегда остаётся за вами: исправьте пробелы и подтвердите каждую новую версию.</p></div>
-        <div className="heading-actions"><span className="token-pill">AI · {formatInteger(tokenBalance)} токенов</span><Link className="button button-ghost compact-button" href="/dashboard/settings">Настройки профиля →</Link></div>
+        <div className="heading-actions"><span className="token-pill">AI · {formatInteger(tokenBalance)} кредитов</span><Link className="button button-ghost compact-button" href="/dashboard/settings">Настройки профиля →</Link></div>
       </div>
 
       {notice && <div className={`inline-notice ${notice.type}`} role="status">{notice.text}</div>}
@@ -175,13 +176,13 @@ export function CompanyProfileEditor({
           <label htmlFor="company-website">Сайт компании</label>
           <div><input id="company-website" type="url" value={website} onChange={(event) => setWebsite(event.target.value)} required /><button type="submit" disabled={pending !== null}>{pending === "website" ? "Сохраняем…" : "Сохранить сайт"}</button></div>
         </form>
-        <div className="website-actions-row"><a href={savedWebsite} target="_blank" rel="noreferrer">Открыть сайт ↗</a><button className="button button-primary" type="button" onClick={analyze} disabled={pending !== null}>{pending === "analysis" ? "AI анализирует сайт…" : profile ? "Запустить новый AI-анализ" : "Запустить AI-анализ"}<span>✦</span></button></div>
+        <div className="website-actions-row"><a href={savedWebsite} target="_blank" rel="noreferrer">Открыть сайт ↗</a><span>Списание по факту · максимум 600 AI-кредитов</span><button className="button button-primary" type="button" onClick={analyze} disabled={pending !== null}>{pending === "analysis" ? "AI анализирует сайт…" : profile ? "Запустить новый AI-анализ" : "Запустить AI-анализ"}<span>✦</span></button></div>
       </section>
 
       <div className="profile-status-row">
         <div><small>ТЕКУЩАЯ ВЕРСИЯ</small><strong>{statusLabel}</strong></div>
         {profile && <div><small>ИСТОЧНИК</small><strong>{profile.sourceWebsite}</strong></div>}
-        {profile && <div><small>РАСХОД</small><strong>{formatInteger(profile.inputTokens + profile.outputTokens)} токенов</strong></div>}
+        {profile && <div><small>ТЕХНИЧЕСКИЙ ОБЪЁМ</small><strong>{formatInteger(profile.inputTokens + profile.outputTokens)} токенов Gemini</strong></div>}
       </div>
 
       {!profile ? (

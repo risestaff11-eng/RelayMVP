@@ -13,7 +13,7 @@ const items = [
   { href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "⌁" },
   { href: "/dashboard/assistant", label: "AI-агент", hint: "Советы и изменения в сервисе", icon: "✦" },
   { href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для AI и заданий", icon: "□" },
-  { href: "/dashboard/settings", label: "Настройки", hint: "Контакты, тариф и токены", icon: "⚙" },
+  { href: "/dashboard/settings", label: "Настройки", hint: "Контакты, тариф и AI-кредиты", icon: "⚙" },
 ] as const;
 
 export function DashboardNav() {

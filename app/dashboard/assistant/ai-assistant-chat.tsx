@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatInteger } from "@/lib/format-display";
 
 type Action = { type: string; label: string; summary: string; payload: Record<string, unknown> };
-type Message = { role: "user" | "assistant"; content: string; suggestions?: string[]; action?: Action };
+type Message = { role: "user" | "assistant"; content: string; suggestions?: string[]; action?: Action; creditsSpent?: number };
 
 const starterPrompts = ["Проверь, что мешает запустить агентскую сеть", "Предложи новую программу для лидов", "Как активировать агентов без результатов?", "Какие показатели посмотреть сегодня?"];
 
@@ -25,9 +25,9 @@ export function AiAssistantChat({ companyName, initialTokenBalance }: { companyN
     setMessages(next); setInput(""); setPending(true); setError("");
     try {
       const response = await fetch("/api/company/assistant", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next.map(({ role, content: message }) => ({ role, content: message })) }) });
-      const data = await response.json() as { error?: string; reply?: string; suggestions?: string[]; action?: Action; tokenBalance?: number };
+      const data = await response.json() as { error?: string; reply?: string; suggestions?: string[]; action?: Action; tokenBalance?: number; creditsSpent?: number };
       if (!response.ok || !data.reply) throw new Error(data.error || "AI-агент не ответил");
-      setMessages((current) => [...current, { role: "assistant", content: data.reply!, suggestions: data.suggestions, action: data.action?.type === "NONE" ? undefined : data.action }]);
+      setMessages((current) => [...current, { role: "assistant", content: data.reply!, creditsSpent: data.creditsSpent, suggestions: data.suggestions, action: data.action?.type === "NONE" ? undefined : data.action }]);
       if (typeof data.tokenBalance === "number") setTokenBalance(data.tokenBalance);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "AI-агент временно недоступен"); } finally { setPending(false); }
   }
@@ -57,10 +57,10 @@ export function AiAssistantChat({ companyName, initialTokenBalance }: { companyN
   }
 
   return <div className="dashboard-content module-content assistant-page">
-    <div className="module-heading"><div><span className="module-kicker">AI-АГЕНТ RELAY</span><h1>Развивайте агентскую сеть в диалоге</h1><p>Получайте конкретные предложения и подтверждайте изменения профиля, программ и правил прямо в чате.</p></div><div className="assistant-token-balance"><small>AI-БАЛАНС</small><strong>{formatInteger(tokenBalance)}</strong></div></div>
+    <div className="module-heading"><div><span className="module-kicker">AI-АГЕНТ RELAY</span><h1>Развивайте агентскую сеть в диалоге</h1><p>Получайте конкретные предложения и подтверждайте изменения профиля, программ и правил прямо в чате. Обычный ответ расходует 8–120 AI-кредитов.</p></div><div className="assistant-token-balance"><small>AI-КРЕДИТЫ</small><strong>{formatInteger(tokenBalance)}</strong></div></div>
     <section className="assistant-workspace">
       <aside><span>✦</span><h2>Чем могу помочь</h2><ul><li>Собрать новую программу</li><li>Улучшить задания и награды</li><li>Настроить правила и выплаты</li><li>Найти слабое место в воронке</li></ul><small>AI ничего не меняет без подтверждения.</small></aside>
-      <div className="assistant-chat"><div className="assistant-messages" aria-live="polite">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><span>{message.role === "assistant" ? "✦" : "Вы"}</span><div><p>{message.content}</p>{message.action && <div className="assistant-action"><small>ПРЕДЛОЖЕННОЕ ИЗМЕНЕНИЕ</small><strong>{message.action.summary}</strong><button type="button" disabled={applying} onClick={() => void apply(message.action!)}>{applying ? "Применяю…" : `${message.action.label} →`}</button></div>}{message.suggestions && <div className="assistant-suggestions">{message.suggestions.map((suggestion) => <button type="button" onClick={() => void send(suggestion)} key={suggestion}>{suggestion}</button>)}</div>}</div></article>)}{pending && <article className="assistant"><span>✦</span><div><p>Анализирую кабинет и готовлю следующий шаг…</p></div></article>}</div>{error && <div className="inline-notice error" role="alert">{error}</div>}<form onSubmit={(event) => { event.preventDefault(); void send(); }}><textarea value={input} onChange={(event) => setInput(event.target.value)} rows={3} placeholder="Например: создай программу для привлечения лидов в Казахстане" /><button type="submit" disabled={pending || !input.trim()} aria-label="Отправить сообщение">↑</button></form></div>
+      <div className="assistant-chat"><div className="assistant-messages" aria-live="polite">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><span>{message.role === "assistant" ? "✦" : "Вы"}</span><div><p>{message.content}</p>{typeof message.creditsSpent === "number" && <small>Списано: {message.creditsSpent} AI-кредитов</small>}{message.action && <div className="assistant-action"><small>ПРЕДЛОЖЕННОЕ ИЗМЕНЕНИЕ</small><strong>{message.action.summary}</strong><button type="button" disabled={applying} onClick={() => void apply(message.action!)}>{applying ? "Применяю…" : `${message.action.label} →`}</button></div>}{message.suggestions && <div className="assistant-suggestions">{message.suggestions.map((suggestion) => <button type="button" onClick={() => void send(suggestion)} key={suggestion}>{suggestion}</button>)}</div>}</div></article>)}{pending && <article className="assistant"><span>✦</span><div><p>Анализирую кабинет и готовлю следующий шаг…</p></div></article>}</div>{error && <div className="inline-notice error" role="alert">{error}</div>}<form onSubmit={(event) => { event.preventDefault(); void send(); }}><textarea value={input} onChange={(event) => setInput(event.target.value)} rows={3} placeholder="Например: создай программу для привлечения лидов в Казахстане" /><button type="submit" disabled={pending || !input.trim()} aria-label="Отправить сообщение">↑</button></form></div>
     </section>
   </div>;
 }

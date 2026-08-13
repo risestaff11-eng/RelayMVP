@@ -12,6 +12,7 @@ type GeminiResponse = {
   usageMetadata?: {
     promptTokenCount?: number;
     candidatesTokenCount?: number;
+    thoughtsTokenCount?: number;
     totalTokenCount?: number;
   };
   modelVersion?: string;
@@ -24,6 +25,7 @@ export type StructuredAiResult<T> = {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
+  thoughtsTokens: number;
 };
 
 export async function generateStructuredJson<T>({
@@ -31,11 +33,13 @@ export async function generateStructuredJson<T>({
   prompt,
   schema,
   maxOutputTokens = 3500,
+  thinkingLevel = "minimal",
 }: {
   systemInstruction: string;
   prompt: string;
   schema: JsonSchema;
   maxOutputTokens?: number;
+  thinkingLevel?: "minimal" | "low" | "medium" | "high";
 }): Promise<StructuredAiResult<T>> {
   const runtime = env as unknown as { AI_PROVIDER?: string; GEMINI_API_KEY?: string; GEMINI_MODEL?: string };
   if (runtime.AI_PROVIDER && runtime.AI_PROVIDER !== "gemini") throw new Error("AI-провайдер настроен неверно");
@@ -54,6 +58,7 @@ export async function generateStructuredJson<T>({
         responseMimeType: "application/json",
         responseJsonSchema: schema,
         maxOutputTokens,
+        thinkingConfig: { thinkingLevel },
       },
     }),
   });
@@ -84,5 +89,6 @@ export async function generateStructuredJson<T>({
     inputTokens,
     outputTokens,
     totalTokens: result.usageMetadata?.totalTokenCount ?? inputTokens + outputTokens,
+    thoughtsTokens: result.usageMetadata?.thoughtsTokenCount ?? 0,
   };
 }
