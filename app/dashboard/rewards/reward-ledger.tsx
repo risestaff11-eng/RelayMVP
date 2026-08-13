@@ -27,8 +27,8 @@ export function RewardLedger({ initialRows }: { initialRows: Row[] }) {
   }
 
   function exportCsv() {
-    const header = ["Агент", "Email", "Программа", "Основание", "Сумма", "Валюта", "Плановая дата", "Статус"];
-    const lines = filtered.map((row) => [row.agentName, row.agentEmail, row.programName, `${row.missionTitle}: ${row.contactName}`, row.amount, row.currency, row.plannedAt || "", statusNames[row.status] || row.status]);
+    const header = ["Агент", "Email", "Программа", "Задание", "Связанный контакт", "Компания контакта", "Сумма", "Валюта", "Создано", "Плановая дата", "Дата перевода", "Подтверждение агента", "Статус"];
+    const lines = filtered.map((row) => [row.agentName, row.agentEmail, row.programName, row.missionTitle, row.contactName, row.contactCompany, row.amount, row.currency, row.createdAt, row.plannedAt || "", row.paidAt || "", row.partnerConfirmedAt || "", statusNames[row.status] || row.status]);
     const csv = `\uFEFF${[header, ...lines].map((line) => line.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n")}`;
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const link = document.createElement("a"); link.href = url; link.download = "relay-payouts.csv"; link.click(); URL.revokeObjectURL(url);
   }

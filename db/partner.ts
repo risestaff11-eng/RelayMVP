@@ -48,7 +48,7 @@ export async function getPartnerPortal(token: string) {
 
   const partnerRows = await db.select().from(partners).where(eq(partners.id, access.partnerId)).limit(1);
   const partner = partnerRows[0];
-  if (!partner) return null;
+  if (!partner || partner.status === "BLOCKED") return null;
 
   const [programRows, companyRows, missionRows, submissionRows, rewardRows, profileRows, acceptanceRows, disputeRows, companyProfileRows] = await Promise.all([
     db.select().from(programs).where(eq(programs.id, partner.programId)).limit(1),

@@ -20,6 +20,14 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
     setProgram((current) => ({ ...current, missions: current.missions.map((mission) => mission.id === id ? { ...mission, [field]: value } : mission) }));
   }
 
+  function addMission(type: string) {
+    const labels: Record<string, string> = { LEAD: "Новый квалифицированный лид", DEAL: "Новая подтверждённая сделка", IMAGE: "Новая имиджевая публикация", ENGAGEMENT: "Новое задание на вовлечение" };
+    const id = `new-${crypto.randomUUID()}`;
+    const mission: MissionRecord = { id, type, title: labels[type] || "Новое задание", description: "Опишите конкретный результат, который должен передать агент.", instructions: ["Найдите подходящего участника или площадку", "Передайте результат через Relay"], proofRequirements: ["Контакт, ссылка или файл, подтверждающий выполнение"], rewardMode: "FIXED", rewardValue: 0, rewardLabel: "Уточните награду", verificationRules: "Компания проверяет соответствие условиям задания и отсутствие дубликата.", status: "ACTIVE", sortOrder: program.missions.length };
+    setProgram((current) => ({ ...current, missions: [...current.missions, mission] }));
+    setNotice({ type: "success", text: "Добавлен новый черновик задания. Заполните награду и условия проверки." });
+  }
+
   async function persist(action: "save" | "publish" | "pause") {
     setPending(action);
     setNotice(null);
@@ -29,9 +37,9 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ ...program, publish: action === "publish", pause: action === "pause", missions: program.missions }),
       });
-      const data = await response.json() as { status?: string; publicUrl?: string | null; error?: string };
+      const data = await response.json() as { status?: string; publicUrl?: string | null; error?: string; program?: ProgramRecord };
       if (!response.ok || !data.status) throw new Error(data.error || "Не удалось сохранить программу");
-      setProgram((current) => ({ ...current, status: data.status! }));
+      setProgram(data.program ?? { ...program, status: data.status! });
       setPublicUrl(data.publicUrl ?? null);
       setNotice({ type: "success", text: action === "publish" ? "Программа опубликована. Ссылка готова для агентов." : action === "pause" ? "Программа поставлена на паузу." : "Черновик программы сохранён." });
     } catch (reason) {
@@ -61,7 +69,8 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
         <div className="builder-field-row"><label className="builder-field"><span>Цель</span><select value={program.goal} onChange={(event) => updateProgram("goal", event.target.value)}><option value="MIXED">Смешанная</option><option value="LEADS">Лиды</option><option value="DEALS">Сделки</option><option value="BRAND">Имидж</option><option value="ENGAGEMENT">Вовлечение</option></select></label><label className="builder-field"><span>Валюта</span><select value={program.currency} onChange={(event) => updateProgram("currency", event.target.value)}><option>KZT</option><option>RUB</option><option>USD</option><option>EUR</option></select></label></div>
       </section>
 
-      <div className="mission-editor-heading"><div><span className="module-kicker">ШАГ 2</span><h2>Задания и награды</h2><p>Награда различается по типу результата. AI предложил стартовые значения — ответственность за финальные условия остаётся у компании.</p></div><span>{program.missions.length} карточки</span></div>
+      <div className="mission-editor-heading"><div><span className="module-kicker">ШАГ 2</span><h2>Задания и награды</h2><p>Награда различается по типу результата. AI предложил стартовые значения — ответственность за финальные условия остаётся у компании.</p></div><span>{program.missions.length} заданий</span></div>
+      <div className="add-mission-toolbar"><strong>Добавить задание</strong><div>{Object.entries(typeNames).map(([type, label]) => <button type="button" onClick={() => addMission(type)} key={type}>＋ {label}</button>)}</div></div>
       <section className="mission-editor-grid">{program.missions.map((mission, index) => <article className={`panel mission-editor-card type-${mission.type.toLowerCase()}`} key={mission.id}><div className="mission-editor-top"><span>0{index + 1} · {typeNames[mission.type]}</span><i>{mission.type === "LEAD" ? "↗" : mission.type === "DEAL" ? "◇" : mission.type === "IMAGE" ? "◎" : "✦"}</i></div><label className="builder-field"><span>Название задания</span><input value={mission.title} onChange={(event) => updateMission(mission.id, "title", event.target.value)} /></label><label className="builder-field"><span>Что нужно получить</span><textarea rows={3} value={mission.description} onChange={(event) => updateMission(mission.id, "description", event.target.value)} /></label><label className="builder-field"><span>Шаги агента · по одному в строке</span><textarea rows={5} value={mission.instructions.join("\n")} onChange={(event) => updateMission(mission.id, "instructions", event.target.value.split("\n").map((item) => item.trim()).filter(Boolean))} /></label><label className="builder-field"><span>Что приложить для проверки</span><textarea rows={3} value={mission.proofRequirements.join("\n")} onChange={(event) => updateMission(mission.id, "proofRequirements", event.target.value.split("\n").map((item) => item.trim()).filter(Boolean))} /></label><div className="reward-editor"><label className="builder-field"><span>Тип награды</span><select value={mission.rewardMode} onChange={(event) => updateMission(mission.id, "rewardMode", event.target.value)}><option value="FIXED">Фиксированная сумма</option><option value="PERCENT">Процент</option><option value="POINTS">Баллы</option><option value="NON_MONETARY">Неденежная</option></select></label><label className="builder-field"><span>Значение</span><input type="number" min="0" value={mission.rewardValue} onChange={(event) => updateMission(mission.id, "rewardValue", Number(event.target.value))} /></label></div><label className="builder-field"><span>Как увидит агент</span><input value={mission.rewardLabel} onChange={(event) => updateMission(mission.id, "rewardLabel", event.target.value)} placeholder={`Например: 25 000 ${program.currency}`} /></label><label className="builder-field"><span>Правила проверки</span><textarea rows={3} value={mission.verificationRules} onChange={(event) => updateMission(mission.id, "verificationRules", event.target.value)} /></label></article>)}</section>
 
       <section className="panel publication-card">

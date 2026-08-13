@@ -5,6 +5,7 @@ import { requireChatGPTUser } from "../chatgpt-auth";
 import { getCompanyForUser } from "../../db/company";
 import { getConfirmedCompanyProfile } from "../../db/profile";
 import { getCompanyOperations, getProgramsForCompany, getSubmissionsForCompany } from "../../db/programs";
+import { ProgramQuickActions } from "./_components/program-quick-actions";
 
 export const metadata: Metadata = { title: "Кабинет компании" };
 export const dynamic = "force-dynamic";
@@ -47,6 +48,7 @@ export default async function DashboardPage() {
         <article className="metric"><div className="metric-top"><span>АГЕНТЫ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{stats.activePartners} активных</small></article>
         <article className="metric"><div className="metric-top"><span>ПОЛУЧЕНО РЕЗУЛЬТАТОВ</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{stats.awaitingReview} ждут проверки</small></article>
         <article className="metric"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">₸</span></div><strong>{stats.approvedRewards.toLocaleString("ru-RU")} ₸</strong><small>Подтверждённые вознаграждения</small></article>
+        <article className={`metric ai-balance-metric ${company.aiTokenBalance < 1000 ? "low" : ""}`}><div className="metric-top"><span>AI-БАЛАНС</span><span className="metric-icon">✦</span></div><strong>{company.aiTokenBalance.toLocaleString("ru-RU")}</strong><small>{company.aiTokenBalance < 1000 ? "Требуется пополнение" : "Токенов для анализа и генерации"}</small>{company.aiTokenBalance < 1000 && <a href="https://wa.me/77765086000?text=%D0%97%D0%B0%D0%BA%D0%BE%D0%BD%D1%87%D0%B8%D0%BB%D0%B8%D1%81%D1%8C%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%D1%8B" target="_blank" rel="noreferrer">Пополнить в WhatsApp →</a>}</article>
       </section>
 
       <section className="dashboard-grid">
@@ -63,8 +65,8 @@ export default async function DashboardPage() {
           </article>
 
           <article className="panel" style={{ marginTop: 14 }}>
-            <div className="panel-header"><h2>Агентские программы</h2><Link href="/dashboard/programs">Все программы →</Link></div>
-            {programs.length ? <div className="dashboard-campaign-mini-grid">{programs.slice(0, 3).map((program) => <Link href={`/dashboard/programs/${program.id}`} key={program.id}><div><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : "Черновик"}</span><b>↗</b></div><h3>{program.name}</h3><p>{program.missions.length} заданий · {program.agentCount} агентов · {program.resultCount} результатов</p></Link>)}</div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Создайте её сразу — AI-профиль можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать программу</Link></div></div>}
+            <div className="panel-header"><div><h2>Агентские программы</h2><p>Запускайте, приостанавливайте и архивируйте программы прямо здесь.</p></div><Link href="/dashboard/programs/new">＋ Новая программа</Link></div>
+            {programs.length ? <div className="dashboard-campaign-mini-grid">{programs.slice(0, 3).map((program) => <article className={`dashboard-program-mini status-card-${program.status.toLowerCase()}`} key={program.id}><div><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : program.status === "PAUSED" ? "На паузе" : program.status === "ARCHIVED" ? "В архиве" : "Черновик"}</span><Link href={`/dashboard/programs/${program.id}`} aria-label={`Открыть ${program.name}`}>↗</Link></div><Link className="dashboard-program-mini-main" href={`/dashboard/programs/${program.id}`}><h3>{program.name}</h3><p>{program.missions.length} заданий · {program.agentCount} агентов · {program.resultCount} результатов</p></Link><ProgramQuickActions id={program.id} initialStatus={program.status} /></article>)}</div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Создайте её сразу — AI-профиль можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать программу</Link></div></div>}
           </article>
         </div>
 

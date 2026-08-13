@@ -5,14 +5,15 @@ import { usePathname } from "next/navigation";
 import { SafeLink as Link } from "@/app/safe-link";
 
 const items = [
-  { href: "/dashboard", label: "Рабочий стол", hint: "Главное и следующий шаг", icon: "⌂", exact: true },
+  { href: "/dashboard", label: "Рабочий стол", hint: "Сводка и следующие действия", icon: "⌂", exact: true },
   { href: "/dashboard/programs", label: "Программы", hint: "Задания, награды и ссылки", icon: "◇" },
-  { href: "/dashboard/submissions", label: "Результаты", hint: "Лиды и очередь проверки", icon: "↗" },
-  { href: "/dashboard/partners", label: "Агенты", hint: "Участники и их активность", icon: "○" },
-  { href: "/dashboard/rewards", label: "Выплаты", hint: "Начисления и статусы", icon: "₸" },
+  { href: "/dashboard/submissions", label: "Результаты", hint: "Проверка работы агентов", icon: "↗" },
+  { href: "/dashboard/partners", label: "Агенты", hint: "Участники и управление доступом", icon: "○" },
+  { href: "/dashboard/rewards", label: "Выплаты", hint: "Начисления и реестр", icon: "₸" },
   { href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "⌁" },
-  { href: "/dashboard/company-profile", label: "Профиль компании", hint: "Данные для создания заданий", icon: "✦" },
-  { href: "/dashboard/settings", label: "Настройки", hint: "Аккаунт, тариф и токены", icon: "⚙" },
+  { href: "/dashboard/assistant", label: "AI-агент", hint: "Советы и изменения в сервисе", icon: "✦" },
+  { href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для AI и заданий", icon: "□" },
+  { href: "/dashboard/settings", label: "Настройки", hint: "Контакты, тариф и токены", icon: "⚙" },
 ] as const;
 
 export function DashboardNav() {
@@ -30,7 +31,10 @@ export function DashboardNav() {
 
   return <>
     <nav className="sidebar-nav" aria-label="Навигация кабинета компании">
-      {items.slice(0, 6).map((item) => <Link key={item.href} data-tour={item.exact ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i>{item.icon}</i>{item.label}</Link>)}
+      <small className="sidebar-nav-label">УПРАВЛЕНИЕ</small>
+      {items.slice(0, 6).map((item) => <Link key={item.href} data-tour={item.exact ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i>{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
+      <small className="sidebar-nav-label">НАСТРОЙКА</small>
+      {items.slice(6).map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i>{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
     </nav>
 
     <button className="mobile-menu-trigger company-menu-trigger" type="button" aria-label="Открыть меню" aria-expanded={open} aria-controls="company-mobile-drawer" onClick={() => setOpen(true)}><i /><i /><i /></button>

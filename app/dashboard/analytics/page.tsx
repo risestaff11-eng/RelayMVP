@@ -4,6 +4,7 @@ import { requireChatGPTUser } from "../../chatgpt-auth";
 import { getCompanyForUser } from "../../../db/company";
 import { getCompanyAnalytics, getProgramsForCompany } from "../../../db/programs";
 import { AnalyticsFilters } from "./analytics-filters";
+import { CsvExportButton } from "../_components/table-actions";
 
 export const metadata: Metadata = { title: "Сравнение агентов" };
 export const dynamic = "force-dynamic";
@@ -31,6 +32,10 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const rankedAgents = analytics.byAgent.slice(0, 5);
   const maxScore = Math.max(1, ...rankedAgents.map((agent) => agent.score));
   const periodLabel = period === "all" ? "за всё время" : `за ${period} дней`;
+  const submittedToAccepted = analytics.results.length ? Math.round(analytics.results.filter((result) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(result.status)).length / analytics.results.length * 100) : 0;
+  const submittedToDeal = analytics.results.length ? Math.round(analytics.results.filter((result) => result.status === "DEAL").length / analytics.results.length * 100) : 0;
+  const inactiveAgents = analytics.byAgent.filter((agent) => agent.results === 0).slice(0, 5);
+  const exportRows = analytics.byAgent.map((agent) => [agent.name, agent.email, agent.phone, agent.programName, agent.results, agent.accepted, agent.deals, agent.acceptanceRate, agent.dealRate, agent.due, agent.paid, agent.lastActivity]);
 
   return (
     <div className="dashboard-content module-content operations-page agent-analytics-page">
@@ -49,6 +54,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <article><small>РЕЗУЛЬТАТОВ НА АГЕНТА</small><strong>{averageResults}</strong><span>Среднее среди активных</span></article>
         <article><small>ВЫПЛАЧЕНО АГЕНТАМ</small><strong>{paid.toLocaleString("ru-RU")} ₸</strong><span>По результатам периода</span></article>
       </section>
+
+      <section className="analytics-decision-strip"><article><small>РЕЗУЛЬТАТ → ПРИНЯТО</small><strong>{submittedToAccepted}%</strong><span>Качество входящего потока</span></article><article><small>РЕЗУЛЬТАТ → СДЕЛКА</small><strong>{submittedToDeal}%</strong><span>Итоговая конверсия</span></article><article><small>ТРЕБУЮТ ВНИМАНИЯ</small><strong>{inactiveAgents.length}</strong><span>Без результата за период</span></article></section>
 
       <div className="analytics-grid agent-comparison-grid">
         <section className="panel agent-ranking-card">
@@ -85,9 +92,11 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         </section>
       </div>
 
+      <section className="panel program-comparison-panel"><div className="panel-header"><div><h2>Эффективность программ</h2><p>Сравнение помогает понять, куда приглашать новых агентов и какие условия нужно пересмотреть.</p></div></div><div className="program-comparison-list">{analytics.byProgram.map((program) => { const conversion = program.results ? Math.round(program.deals / program.results * 100) : 0; return <article key={program.id}><div><strong>{program.name}</strong><small>{program.agents} агентов · {program.results} результатов</small></div><span><b>{program.accepted}</b> принято</span><span><b>{program.deals}</b> сделок</span><span><b>{conversion}%</b> конверсия</span><span><b>{program.paid.toLocaleString("ru-RU")} ₸</b> выплачено</span></article>; })}{!analytics.byProgram.length && <div className="table-empty">Нет программ для сравнения.</div>}</div></section>
+
       <section className="panel workflow-panel analytics-table-panel">
         <div className="panel-header">
-          <div><h2>Рейтинг и сравнение агентов</h2><p>Все показатели собраны по каждому агенту. Фильтры сверху меняют расчёт за период и программу.</p></div>
+          <div><h2>Рейтинг и сравнение агентов</h2><p>Все показатели собраны по каждому агенту. Фильтры сверху меняют расчёт за период и программу.</p></div><CsvExportButton filename="relay-agent-analytics.csv" label="Скачать таблицу" headers={["Агент", "Email", "Телефон", "Программа", "Результаты", "Принято", "Сделки", "Принятие %", "Сделки %", "К выплате", "Выплачено", "Последняя активность"]} rows={exportRows} />
         </div>
         <div className="brand-table agent-analytics-table">
           <div className="brand-table-head"><span>АГЕНТ</span><span>РЕЗУЛЬТАТЫ</span><span>ПРИНЯТО</span><span>СДЕЛКИ</span><span>КОНВЕРСИЯ</span><span>К ВЫПЛАТЕ</span><span>ВЫПЛАЧЕНО</span><span>АКТИВНОСТЬ</span></div>
@@ -106,6 +115,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           {!analytics.byAgent.length && <div className="table-empty">Нет агентов для сравнения. Опубликуйте программу и поделитесь ссылкой.</div>}
         </div>
       </section>
+
+      {inactiveAgents.length > 0 && <section className="panel attention-agents-panel"><div className="panel-header"><div><h2>Кого стоит активировать</h2><p>Агенты без результатов в выбранном периоде. Свяжитесь с ними или предложите более подходящее задание.</p></div></div><div>{inactiveAgents.map((agent) => { const digits = agent.phone.replace(/\D/g, ""); const message = encodeURIComponent(`Здравствуйте, ${agent.name || "коллега"}! В программе «${agent.programName}» появились актуальные задания. Подскажите, нужна ли помощь с первым результатом?`); return <article key={agent.id}><span><strong>{agent.name || agent.email}</strong><small>{agent.programName} · активность {formatDate(agent.lastActivity)}</small></span>{digits ? <a href={`https://wa.me/${digits}?text=${message}`} target="_blank" rel="noreferrer">Написать в WhatsApp ↗</a> : <a href={`mailto:${agent.email}`}>Написать на email ↗</a>}</article>; })}</div></section>}
     </div>
   );
 }

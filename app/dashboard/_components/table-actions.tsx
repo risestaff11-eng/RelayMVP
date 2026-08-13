@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 
-export function CsvExportButton({ filename, headers, label = "Экспорт CSV" }: { filename: string; headers: string[]; label?: string }) {
+export function CsvExportButton({ filename, headers, rows = [], label = "Экспорт CSV" }: { filename: string; headers: string[]; rows?: Array<Array<string | number | null | undefined>>; label?: string }) {
   const [notice, setNotice] = useState("");
 
   function download() {
-    const csv = `\uFEFF${headers.map((header) => `"${header.replaceAll('"', '""')}"`).join(",")}\n`;
+    const lines = [headers, ...rows].map((line) => line.map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(","));
+    const csv = `\uFEFF${lines.join("\n")}\n`;
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = filename;
     anchor.click();
     URL.revokeObjectURL(url);
-    setNotice("CSV скачан · записей пока 0");
+    setNotice(`Таблица скачана · ${rows.length} записей`);
   }
 
   return <div className="action-with-feedback"><button type="button" onClick={download}>{label}</button><small aria-live="polite">{notice}</small></div>;

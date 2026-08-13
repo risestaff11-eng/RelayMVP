@@ -5,12 +5,13 @@ import { requireChatGPTUser } from "../../chatgpt-auth";
 import { getCompanyForUser } from "../../../db/company";
 import { getConfirmedCompanyProfile, getLatestCompanyProfile } from "../../../db/profile";
 import { getProgramsForCompany } from "../../../db/programs";
+import { ProgramQuickActions } from "../_components/program-quick-actions";
 
 export const metadata: Metadata = { title: "Агентские программы" };
 export const dynamic = "force-dynamic";
 
 const typeNames: Record<string, string> = { LEAD: "Лиды", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
-const statusNames: Record<string, string> = { DRAFT: "Черновик", ACTIVE: "Опубликована", PAUSED: "На паузе" };
+const statusNames: Record<string, string> = { DRAFT: "Черновик", ACTIVE: "Опубликована", PAUSED: "На паузе", ARCHIVED: "В архиве" };
 
 export default async function ProgramsPage() {
   const user = await requireChatGPTUser("/dashboard/programs");
@@ -41,7 +42,7 @@ export default async function ProgramsPage() {
           <div className="mission-type-preview">{Object.entries(typeNames).map(([type, label], index) => <div className={`type-preview type-${type.toLowerCase()}`} key={type}><span>0{index + 1}</span><strong>{label}</strong><small>{type === "LEAD" ? "Квалифицированный контакт" : type === "DEAL" ? "Подтверждённая продажа" : type === "IMAGE" ? "Публикация или кейс" : "Обучение и комьюнити"}</small></div>)}</div>
         </section>
       ) : (
-        <section className="program-list-grid compact-campaign-grid">{programList.map((program) => <article className="panel program-list-card" key={program.id}><div className="program-card-top"><span className={`program-status status-${program.status.toLowerCase()}`}>● {statusNames[program.status] ?? program.status}</span><span className="program-date">{new Date(program.updatedAt).toLocaleDateString("ru-RU")}</span></div><h2>{program.name}</h2><p>{program.description || "Описание появится после AI-генерации."}</p><div className="campaign-thesis-row"><span><b>{program.missions.length}</b> заданий</span><span><b>{program.agentCount}</b> агентов</span><span><b>{program.resultCount}</b> результатов</span></div><div className="program-card-footer"><small>{program.status === "ACTIVE" ? "Ссылка доступна агентам" : "Ещё не опубликована"}</small><Link href={`/dashboard/programs/${program.id}`}>{program.status === "ACTIVE" ? "Управлять" : "Продолжить"} →</Link></div></article>)}</section>
+        <section className="program-list-grid compact-campaign-grid">{programList.map((program) => <article className={`panel program-list-card status-card-${program.status.toLowerCase()}`} key={program.id}><div className="program-card-top"><span className={`program-status status-${program.status.toLowerCase()}`}>● {statusNames[program.status] ?? program.status}</span><span className="program-date">{new Date(program.updatedAt).toLocaleDateString("ru-RU")}</span></div><h2>{program.name}</h2><p>{program.description || "Описание появится после AI-генерации."}</p><div className="campaign-thesis-row"><span><b>{program.missions.length}</b> заданий</span><span><b>{program.agentCount}</b> агентов</span><span><b>{program.resultCount}</b> результатов</span></div><div className="program-card-footer"><small>{program.status === "ACTIVE" ? "Ссылка доступна агентам" : program.status === "PAUSED" ? "Новые агенты временно не принимаются" : program.status === "ARCHIVED" ? "Скрыта от агентов" : "Ещё не опубликована"}</small><Link href={`/dashboard/programs/${program.id}`}>{program.status === "ACTIVE" ? "Управлять" : "Редактировать"} →</Link></div><ProgramQuickActions id={program.id} initialStatus={program.status} /></article>)}</section>
       )}
     </div>
   );

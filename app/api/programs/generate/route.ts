@@ -23,7 +23,7 @@ type GeneratedMission = {
   verificationRules: string;
 };
 
-type GeneratedProgram = { programDescription: string; missions: GeneratedMission[] };
+type GeneratedProgram = { programDescription: string; payoutTerms: string; legalTerms: string; missions: GeneratedMission[] };
 
 function slugPart(value: string) {
   return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 42) || "partner-program";
@@ -54,6 +54,8 @@ export async function POST(request: Request) {
       additionalProperties: false,
       properties: {
         programDescription: { type: "string" },
+        payoutTerms: { type: "string" },
+        legalTerms: { type: "string" },
         missions: {
           type: "array",
           minItems: selectedTypes.length,
@@ -76,13 +78,19 @@ export async function POST(request: Request) {
           },
         },
       },
-      required: ["programDescription", "missions"],
+      required: ["programDescription", "payoutTerms", "legalTerms", "missions"],
     };
 
     const ai = await generateStructuredJson<GeneratedProgram>({
-      systemInstruction: "Ты проектируешь честные и выполнимые миссии для внешних B2B-партнёров. Используй доступные данные компании; если профиль неполный или не подтверждён, не выдумывай факты и формулируй нейтральный редактируемый черновик. Не обещай гарантированный доход, не придумывай юридические условия и не проси партнёра спамить. Для LEAD результатом должен быть квалифицированный контакт; DEAL — подтверждённая продажа; IMAGE — проверяемая публикация или кейс; ENGAGEMENT — полезное обучающее или комьюнити-действие. Вознаграждение — лишь редактируемое предложение компании. Пиши по-русски, коротко и конкретно.",
+      systemInstruction: `Ты продуктовый архитектор агентских B2B-программ Relay. Создавай честные, выполнимые и готовые к редактированию задания для внешних агентов.
+Для каждой плитки работай в отдельной роли:
+- LEAD: руководитель лидогенерации. Опиши ICP, обязательные данные квалифицированного контакта, проверку дубля и критерий принятия.
+- DEAL: руководитель партнёрских продаж. Привяжи результат к подтверждаемому этапу сделки или оплате, не обещай выплату до выполнения условия.
+- IMAGE: бренд-менеджер. Требуй проверяемую публикацию, кейс, отзыв или упоминание с корректным раскрытием связи с компанией.
+- ENGAGEMENT: комьюнити-менеджер. Предлагай полезное обучение, мероприятие, опрос или знакомство без бессмысленных кликов.
+Для каждого задания сформируй: короткое название, ожидаемый результат, 2–6 шагов, доказательства, реалистичный черновик награды и однозначные правила проверки. Также подготовь пример общих сроков выплаты и пример правил публикации: запрет спама, ложных обещаний, выдачи себя за сотрудника и нарушения конфиденциальности. Это именно черновики — не выдумывай факты, цены и юридические гарантии. Если профиль неполный, используй нейтральные формулировки и явно оставляй компании возможность уточнить детали. Пиши по-русски, коротко и конкретно.`,
       prompt: JSON.stringify({
-        task: "Создай ровно по одной миссии каждого выбранного типа. Верни их в порядке missionTypes.",
+        task: "Создай ровно по одному заданию каждого выбранного типа в порядке missionTypes, а также готовые примеры общих сроков выплаты и правил публикации.",
         program: { name, goal, currency, missionTypes: selectedTypes },
         company: {
           name: company.name,
@@ -129,7 +137,7 @@ export async function POST(request: Request) {
     });
 
     await db.batch([
-      db.insert(programs).values({ id: programId, companyId: company.id, profileVersionId: profile?.id ?? null, name, slug, description: cleanString(ai.data.programDescription, 1800), goal, currency, status: "DRAFT", createdAt: now, updatedAt: now }),
+      db.insert(programs).values({ id: programId, companyId: company.id, profileVersionId: profile?.id ?? null, name, slug, description: cleanString(ai.data.programDescription, 1800), goal, currency, payoutTerms: cleanString(ai.data.payoutTerms, 1800), legalTerms: cleanString(ai.data.legalTerms, 2400), status: "DRAFT", createdAt: now, updatedAt: now }),
       db.insert(missions).values(missionRows),
       db.update(companies).set({ aiTokenBalance: Math.max(0, company.aiTokenBalance - ai.totalTokens), aiTokensUsed: company.aiTokensUsed + ai.totalTokens, onboardingStatus: "PROGRAM_DRAFT", updatedAt: now }).where(eq(companies.id, company.id)),
     ]);

@@ -27,11 +27,5 @@ export async function getCompanyForUser(userId: string) {
     .limit(1);
 
   const company = rows[0];
-  if (!company) return null;
-  if (company.aiTokenBalance > 5000) {
-    const normalizedBalance = Math.max(0, 5000 - company.aiTokensUsed);
-    await db.update(companies).set({ aiTokenBalance: normalizedBalance, updatedAt: new Date().toISOString() }).where(eq(companies.id, company.id));
-    return { ...company, aiTokenBalance: normalizedBalance };
-  }
-  return company;
+  return company ?? null;
 }

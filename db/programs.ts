@@ -157,6 +157,7 @@ export async function getSubmissionsForCompany(companyId: string) {
     ...row.submission,
     partnerName: row.partner.name,
     partnerEmail: row.partner.email,
+    partnerPhone: row.partner.phone,
     missionTitle: row.mission.title,
     rewardValue: row.mission.rewardValue,
     rewardLabel: row.mission.rewardLabel,
