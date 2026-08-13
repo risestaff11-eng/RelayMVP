@@ -150,6 +150,10 @@ small { line-height: 1.4; }
 /* Native option popups stay readable while the deal editor keeps its dark card. */
 .mission-editor-card.type-deal select { color-scheme: dark; }
 .mission-editor-card.type-deal select option { color: #171813; background: #fff; }
+.mission-editor-card.type-deal :is(input, select, textarea):focus {
+  color: #fff;
+  background: #292a25 !important;
+}
 
 /* Analytics values keep their unit and context attached at every breakpoint. */
 .agent-analytics-page .analytics-metric-value {
