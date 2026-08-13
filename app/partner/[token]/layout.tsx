@@ -4,6 +4,7 @@ import { getPartnerPortal } from "../../../db/partner";
 import { SafeLink as Link } from "@/app/safe-link";
 import { PartnerNav } from "../_components/partner-nav";
 import { PartnerEarningStrip } from "../_components/partner-earning-strip";
+import { MarketingLogo } from "../../marketing-logo";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false }, referrer: "no-referrer", title: "Кабинет агента" };
@@ -19,7 +20,7 @@ export default async function PartnerLayout({ children, params }: { children: Re
   return (
     <main className="partner-portal-shell">
       <aside className="partner-portal-sidebar">
-        <Link className="brand partner-brand" href={`/partner/${token}`}><span className="brand-mark">R</span><span>Relay</span></Link>
+        <Link className="brand partner-brand" href={`/partner/${token}`}><MarketingLogo /><span>Relay</span></Link>
         <div className="partner-company-chip"><small>КОМПАНИЯ</small><strong>{portal.company.name}</strong><span>● Задания доступны</span></div>
         <PartnerNav token={token} />
         <div className="partner-trust-note"><i>✓</i><div><strong>Результаты зафиксированы</strong><p>Дата, автор и история статусов сохраняются.</p></div></div>
