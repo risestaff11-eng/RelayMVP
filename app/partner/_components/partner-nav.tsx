@@ -32,9 +32,14 @@ export function PartnerNav({ token }: { token: string }) {
   useEffect(() => {
     document.body.classList.toggle("mobile-drawer-open", open);
     if (!open) {
-      if (wasOpenRef.current) triggerRef.current?.focus();
+      const frame = wasOpenRef.current
+        ? window.requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }))
+        : 0;
       wasOpenRef.current = false;
-      return () => document.body.classList.remove("mobile-drawer-open");
+      return () => {
+        if (frame) window.cancelAnimationFrame(frame);
+        document.body.classList.remove("mobile-drawer-open");
+      };
     }
     wasOpenRef.current = true;
     window.setTimeout(() => closeRef.current?.focus(), 0);
