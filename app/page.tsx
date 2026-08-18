@@ -3,6 +3,7 @@ import { SafeLink as Link } from "@/app/safe-link";
 import { chatGPTSignInPath, getChatGPTUser } from "./chatgpt-auth";
 import { MarketingLogo } from "./marketing-logo";
 import { TypedReasons } from "./typed-reasons";
+import { companyUrl } from "../lib/public-origins";
 
 export const metadata: Metadata = {
   title: "Relay — запустите агентский канал продаж",
@@ -30,8 +31,8 @@ const faqs = [
 
 export default async function Home() {
   const user = await getChatGPTUser();
-  const dashboardHref = user ? "/dashboard" : chatGPTSignInPath("/onboarding");
-  const loginHref = user ? "/dashboard" : chatGPTSignInPath("/dashboard");
+  const dashboardHref = companyUrl(user ? "/dashboard" : chatGPTSignInPath("/onboarding"));
+  const loginHref = companyUrl(user ? "/dashboard" : chatGPTSignInPath("/dashboard"));
   const whatsappHref = "https://wa.me/77765086000?text=%D0%A0%D1%83%D1%81%20%D0%A1%D0%B0%D0%BB%D0%B5%D0%BC%20%D0%B4%D0%B0%D0%B2%D0%B0%D0%B9%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D0%BC%20Relay";
 
   return <main className="lp-shell">

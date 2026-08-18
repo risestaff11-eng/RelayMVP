@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireChatGPTUser } from "../chatgpt-auth";
 import { getCompanyForUser } from "../../db/company";
 import { CompanyRegistrationForm } from "./registration-form";
+import { marketingUrl } from "../../lib/public-origins";
 
 export const metadata: Metadata = { title: "Создание компании" };
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function OnboardingPage() {
   return (
     <main className="auth-page">
       <aside className="auth-aside">
-        <Link className="brand" href="/"><span className="brand-mark">R</span><span>Relay</span></Link>
+        <Link className="brand" href={marketingUrl()}><span className="brand-mark">R</span><span>Relay</span></Link>
         <div className="auth-message">
           <span className="auth-kicker">ШАГ 1 ИЗ 4</span>
           <h1>Начнём с вашей компании.</h1>

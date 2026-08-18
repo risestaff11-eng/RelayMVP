@@ -1,4 +1,5 @@
 import { clearAuthSession } from "../../../../lib/account-auth";
+import { marketingUrl } from "../../../../lib/public-origins";
 
 function destination(request: Request) {
   const value = new URL(request.url).searchParams.get("returnTo") ?? "/";
@@ -7,5 +8,6 @@ function destination(request: Request) {
 
 export async function GET(request: Request) {
   await clearAuthSession();
-  return Response.redirect(new URL(destination(request), request.url), 303);
+  const returnTo = destination(request);
+  return Response.redirect(returnTo === "/" ? marketingUrl() : new URL(returnTo, request.url), 303);
 }

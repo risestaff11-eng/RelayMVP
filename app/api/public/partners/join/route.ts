@@ -5,6 +5,7 @@ import { getPublicProgramBySlug } from "../../../../../db/programs";
 import { companies, legalAcceptances, partnerAccessLinks, partnerProfiles, partners, userRoles, users } from "../../../../../db/schema";
 import { createPartnerToken, hashPartnerToken } from "../../../../../lib/partner-token";
 import { cleanString, sameOrigin } from "../../../company/_utils";
+import { agentUrl } from "../../../../../lib/public-origins";
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[character] ?? character));
@@ -41,9 +42,8 @@ export async function POST(request: Request) {
     statements.push(db.insert(legalAcceptances).values({ id: crypto.randomUUID(), userId, programId: program.id, documentVersion: "2026-08-06", acceptedAt: now }));
     statements.push(db.insert(partnerAccessLinks).values({ id: crypto.randomUUID(), partnerId, tokenHash, expiresAt, createdAt: now }));
     await db.batch(statements as [typeof statements[number], ...Array<typeof statements[number]>]);
-    const origin = new URL(request.url).origin;
-    const partnerUrl = `${origin}/partner/${rawToken}`;
-    const missionsUrl = `${origin}/p/${program.slug}?access=${rawToken}`;
+    const partnerUrl = agentUrl(`/partner/${rawToken}`);
+    const missionsUrl = agentUrl(`/p/${program.slug}?access=${rawToken}`);
     let emailSent = false;
     const runtime = env as unknown as { RESEND_API_KEY?: string; MAGIC_FROM_EMAIL?: string };
     if (runtime.RESEND_API_KEY && runtime.MAGIC_FROM_EMAIL) {

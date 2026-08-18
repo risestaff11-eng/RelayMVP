@@ -5,6 +5,7 @@ import { getCompanyForUser } from "../../../../db/company";
 import { getProgramForCompany } from "../../../../db/programs";
 import { companies, missions, programs } from "../../../../db/schema";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
+import { agentUrl } from "../../../../lib/public-origins";
 
 const GOALS = new Set(["LEADS", "DEALS", "BRAND", "ENGAGEMENT", "MIXED"]);
 const CURRENCIES = new Set(["KZT", "RUB", "USD", "EUR"]);
@@ -106,7 +107,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       db.update(companies).set({ onboardingStatus: publish ? "PROGRAM_PUBLISHED" : "PROGRAM_DRAFT", updatedAt: now }).where(eq(companies.id, company.id)),
     ]);
     const saved = await getProgramForCompany(company.id, id);
-    return Response.json({ status: nextStatus, publicUrl: nextStatus === "ACTIVE" ? `/p/${current.slug}` : null, program: saved });
+    return Response.json({ status: nextStatus, publicUrl: nextStatus === "ACTIVE" ? agentUrl(`/p/${current.slug}`) : null, program: saved });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Не удалось сохранить программу";
     return Response.json({ error: message }, { status: 400 });

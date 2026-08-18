@@ -3,6 +3,7 @@
 import { SafeLink as Link } from "@/app/safe-link";
 import { useState } from "react";
 import type { MissionRecord, ProgramRecord } from "../../../../db/programs";
+import { agentUrl } from "../../../../lib/public-origins";
 
 const typeNames: Record<string, string> = { LEAD: "Лиды", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
 
@@ -10,7 +11,7 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
   const [program, setProgram] = useState(initialProgram);
   const [pending, setPending] = useState<"save" | "publish" | "pause" | null>(null);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [publicUrl, setPublicUrl] = useState(program.status === "ACTIVE" ? `/p/${program.slug}` : null);
+  const [publicUrl, setPublicUrl] = useState(program.status === "ACTIVE" ? agentUrl(`/p/${program.slug}`) : null);
 
   function updateProgram(field: keyof ProgramRecord, value: string) {
     setProgram((current) => ({ ...current, [field]: value }));
@@ -51,7 +52,7 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
 
   async function copyLink() {
     if (!publicUrl) return;
-    await navigator.clipboard.writeText(new URL(publicUrl, window.location.origin).href);
+    await navigator.clipboard.writeText(publicUrl);
     setNotice({ type: "success", text: "Публичная ссылка скопирована." });
   }
 

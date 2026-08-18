@@ -12,6 +12,32 @@ async function render(pathname = "/") {
   );
 }
 
+async function route(url) {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-${Math.random()}`);
+  const { default: worker } = await import(workerUrl.href);
+  return worker.fetch(
+    new Request(url, { headers: { accept: "text/html" } }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+}
+
+test("routes each product surface to its canonical domain", async () => {
+  const company = await route("https://risestaff.kz/dashboard/programs?view=active");
+  assert.equal(company.status, 308);
+  assert.equal(company.headers.get("location"), "https://company.risestaff.kz/dashboard/programs?view=active");
+
+  const companyRoot = await route("https://company.risestaff.kz/");
+  assert.equal(companyRoot.headers.get("location"), "https://company.risestaff.kz/dashboard");
+
+  const agent = await route("https://relay-agent-sales-rustam.frosty-whale-0805.chatgpt.site/p/demo?access=token");
+  assert.equal(agent.headers.get("location"), "https://agents.risestaff.kz/p/demo?access=token");
+
+  const marketing = await route("https://agents.risestaff.kz/pricing");
+  assert.equal(marketing.headers.get("location"), "https://risestaff.kz/pricing");
+});
+
 test("renders the Relay landing page", async () => {
   const response = await render();
   assert.equal(response.status, 200);

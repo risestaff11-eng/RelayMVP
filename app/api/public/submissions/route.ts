@@ -4,6 +4,7 @@ import { getMissionForPublicSubmission, getPartnerPortal } from "../../../../db/
 import { submissionAttachments, submissionStatusEvents, submissions } from "../../../../db/schema";
 import { getFilesBucket } from "../../../../lib/storage";
 import { cleanString, sameOrigin } from "../../company/_utils";
+import { agentUrl } from "../../../../lib/public-origins";
 
 const allowedTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
 
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     ];
     if (attachmentRows.length) statements.push(db.insert(submissionAttachments).values(attachmentRows));
     await db.batch(statements as [typeof statements[number], ...Array<typeof statements[number]>]);
-    return Response.json({ partnerUrl: `${new URL(request.url).origin}/partner/${token}`, submissionId }, { status: 201 });
+    return Response.json({ partnerUrl: agentUrl(`/partner/${token}`), submissionId }, { status: 201 });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось передать рекомендацию" }, { status: 400 });
   }
