@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
+import { LanguageSwitcher } from "./language-switcher";
 import "./globals.css";
 import "./landing.css";
 import "./landing-extra.css";
@@ -68,17 +70,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = (await cookies()).get("relay_locale")?.value === "kk" ? "kk" : "ru";
   return (
-    <html lang="ru">
+    <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <LanguageSwitcher locale={locale} />
       </body>
     </html>
   );

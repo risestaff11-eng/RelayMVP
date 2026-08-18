@@ -24,6 +24,63 @@ a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 
+.relay-language-switcher {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 10020;
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid rgba(17,18,15,.16);
+  border-radius: 999px;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 10px 32px rgba(17,18,15,.16);
+  backdrop-filter: blur(12px);
+}
+.relay-language-switcher button {
+  min-width: 43px;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  color: #62655c;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+.relay-language-switcher button.active { color: var(--ink); background: var(--lime); }
+.relay-language-switcher button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  .relay-language-switcher { right: 12px; bottom: 82px; }
+  .lp-shell .relay-language-switcher { bottom: 76px; }
+}
+
+html[lang="kk"] .agent-table .brand-table-row > div:nth-child(1)::before,
+html[lang="kk"] .payout-table .brand-table-row > div:nth-child(1)::before,
+html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(1)::before { content: "АГЕНТ"; }
+html[lang="kk"] .agent-table .brand-table-row > div:nth-child(2)::before { content: "ТЕЛЕФОН"; }
+html[lang="kk"] .agent-table .brand-table-row > div:nth-child(3)::before,
+html[lang="kk"] .payout-table .brand-table-row > div:nth-child(3)::before { content: "БАҒДАРЛАМА"; }
+html[lang="kk"] .agent-table .brand-table-row > div:nth-child(4)::before { content: "ҮЛЕС"; }
+html[lang="kk"] .agent-table .brand-table-row > div:nth-child(5)::before { content: "ТӨЛЕМДЕР"; }
+html[lang="kk"] .agent-table .brand-table-row > div:nth-child(6)::before { content: "БАСҚАРУ"; }
+html[lang="kk"] .payout-table .brand-table-row > div:nth-child(2)::before { content: "НЕГІЗ"; }
+html[lang="kk"] .payout-table .brand-table-row > div:nth-child(4)::before { content: "СОМА"; }
+html[lang="kk"] .payout-table .brand-table-row > div:nth-child(5)::before { content: "МЕРЗІМ"; }
+html[lang="kk"] .payout-table .brand-table-row > div:nth-child(6)::before { content: "КОМПАНИЯ"; }
+html[lang="kk"] .payout-table .brand-table-row > div:nth-child(7)::before { content: "АГЕНТ АЛДЫ"; }
+html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(2)::before { content: "НӘТИЖЕЛЕР"; }
+html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(3)::before { content: "ҚАБЫЛДАНДЫ"; }
+html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(4)::before { content: "МӘМІЛЕЛЕР"; }
+html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(5)::before { content: "КОНВЕРСИЯ"; }
+html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(6)::before { content: "ТӨЛЕНЕДІ"; }
+html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(7)::before { content: "ТӨЛЕНДІ"; }
+html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::before { content: "БЕЛСЕНДІЛІК"; }
+
 .landing-shell { min-height: 100vh; overflow: hidden; }
 .landing-nav {
   width: min(1440px, calc(100% - 64px));

@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-async function render(pathname = "/") {
+async function render(pathname = "/", headers = {}) {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
   return worker.fetch(
-    new Request(`http://localhost${pathname}`, { headers: { accept: "text/html" } }),
+    new Request(`http://localhost${pathname}`, { headers: { accept: "text/html", ...headers } }),
     { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
     { waitUntil() {}, passThroughOnException() {} },
   );
@@ -38,11 +38,22 @@ test("routes each product surface to its canonical domain", async () => {
   assert.equal(marketing.headers.get("location"), "https://risestaff.kz/pricing");
 });
 
+test("keeps Russian as default and restores the shared Kazakh preference", async () => {
+  const response = await render("/", { cookie: "relay_locale=kk" });
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /<html lang="kk"/);
+  assert.match(html, /class="active" aria-pressed="true">ҚАЗ/);
+});
+
 test("renders the Relay landing page", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Relay/);
+  assert.match(html, /<html lang="ru"/);
+  assert.match(html, /relay-language-switcher/);
+  assert.match(html, />ҚАЗ</);
   assert.match(html, /Relay — агентские продажи и реферальные программы/);
   assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz"/);
   assert.match(html, /rel="icon" href="\/icon-192\.png"/);
