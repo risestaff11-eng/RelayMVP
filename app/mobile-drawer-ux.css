@@ -344,7 +344,7 @@
   .relay-auth-card label > span { font-size: 14px; }
   .relay-auth-card label small,.relay-auth-check span { color: #3f423b; font-size: 13px !important; }
   .relay-auth-card input:not([type="checkbox"]) { height: 50px; padding: 0 13px; font-size: 16px; }
-  .relay-auth-card form > button,.relay-auth-success button { min-height: 50px; font-size: 16px; }
+  .relay-auth-card form > button,.relay-auth-whatsapp { min-height: 50px; font-size: 16px; }
   .module-heading p,.panel-header p,.dashboard-content p,.setup-step p,.activity p { color: #3f423b; font-size: 14px; font-weight: 550; line-height: 1.45; }
   .partner-portal-topbar { min-height: 72px; height: 72px; padding-top: 7px; padding-bottom: 7px; }
   .partner-top-identity { width: 100%; }
