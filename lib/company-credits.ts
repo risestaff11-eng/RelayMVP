@@ -1,0 +1,1 @@
+export const INITIAL_COMPANY_AI_CREDITS = 50_000;

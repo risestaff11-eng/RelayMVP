@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { INITIAL_COMPANY_AI_CREDITS } from "../lib/company-credits";
 
 export const marketingEvents = sqliteTable("marketing_events", {
   id: text("id").primaryKey(),
@@ -52,7 +53,7 @@ export const companies = sqliteTable("companies", {
   primaryGoal: text("primary_goal").notNull(),
   onboardingStatus: text("onboarding_status").notNull().default("COMPANY_CREATED"),
   planCode: text("plan_code").notNull().default("TRIAL"),
-  aiTokenBalance: integer("ai_token_balance").notNull().default(5000),
+  aiTokenBalance: integer("ai_token_balance").notNull().default(INITIAL_COMPANY_AI_CREDITS),
   aiTokensUsed: integer("ai_tokens_used").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),

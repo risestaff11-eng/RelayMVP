@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { aiCreditLimit, calculateAiCredits } from "../lib/ai-credits.ts";
+import { INITIAL_COMPANY_AI_CREDITS } from "../lib/company-credits.ts";
+
+test("gives every new company a 50,000-credit starting balance", () => {
+  assert.equal(INITIAL_COMPANY_AI_CREDITS, 50_000);
+});
 
 test("does not charge when Gemini was not used", () => {
   assert.equal(calculateAiCredits("PROFILE_ANALYSIS", { inputTokens: 0, outputTokens: 0 }), 0);

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SafeLink as Link } from "@/app/safe-link";
 import { MarketingLogo } from "../marketing-logo";
 
-export const metadata: Metadata = { title: "Тарифы и условия раннего доступа", description: "Условия подключения Relay для запуска и масштабирования агентской программы.", alternates: { canonical: "https://risestaff.kz/pricing" } };
+export const metadata: Metadata = { title: "Варианты подключения", description: "Форматы подключения Relay для запуска и масштабирования агентской программы.", alternates: { canonical: "https://risestaff.kz/pricing" } };
 
 const plans = [
   { code: "01", name: "Старт", label: "ПРОВЕРИТЬ КАНАЛ", text: "Для компании, которая запускает первую агентскую программу и хочет получить первые рекомендации без сложного внедрения.", features: ["Агентские программы и четыре типа заданий", "Публичная ссылка и кабинет агента", "Воронка лидов и история статусов", "Ручная фиксация вознаграждений"] },
@@ -21,8 +21,8 @@ export default function PricingPage() {
     </header>
     <section className="pricing-hero" id="main-content">
       <span>ВАРИАНТЫ ПОДКЛЮЧЕНИЯ</span>
-      <h1>Начните бесплатно, а масштаб подключения обсудим после пилота.</h1>
-      <p>Во время бета-тестирования доступны программы без ограничений, кабинеты компании и агентов и 5 000 AI-кредитов. Банковская карта не нужна.</p>
+      <h1>Начните со стартового формата и масштабируйте агентский канал по мере роста.</h1>
+      <p>Каждая новая компания получает 50 000 AI-кредитов для настройки профиля и первых программ. Подходящий формат подключения подберём по вашим задачам и масштабу сети.</p>
     </section>
     <section className="pricing-grid" aria-label="Варианты подключения Relay">
       {plans.map((plan) => <article key={plan.code}>
@@ -33,6 +33,6 @@ export default function PricingPage() {
         <a href={whatsapp} target="_blank" rel="noreferrer">Задать вопрос о подключении <span aria-hidden="true">↗</span></a>
       </article>)}
     </section>
-    <section className="pricing-note"><strong>Что будет после раннего доступа?</strong><p>Сначала вы проверяете механику на реальном продукте. Условия дальнейшего подключения фиксируем отдельно с учётом количества программ, агентов и нужного сопровождения.</p></section>
+    <section className="pricing-note"><strong>Как выбрать формат?</strong><p>Начните со своей первой программы. Когда появятся агенты и результаты, согласуем подходящий уровень подключения с учётом количества программ, участников и нужного сопровождения.</p></section>
   </main>;
 }

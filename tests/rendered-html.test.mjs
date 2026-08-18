@@ -56,6 +56,8 @@ test("renders the Relay landing page", async () => {
   assert.match(html, /ТЕКУЩИЙ ПИЛОТ RELAY/);
   assert.match(html, /Relay не является биржей агентов/);
   assert.match(html, /ПЛАТФОРМА АГЕНТСКИХ ПРОДАЖ/);
+  assert.match(html, /50 000 AI-кредитов/);
+  assert.doesNotMatch(html, /бесплат|ранний доступ|бета-тест/i);
   assert.match(html, /Вопросы до запуска/);
   assert.match(html, /wa\.me\/77765086000/);
   assert.match(html, /Интеграторам/);
@@ -67,7 +69,9 @@ test("renders pricing without publishing prices", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Варианты подключения/);
-  assert.match(html, /Что будет после раннего доступа/);
+  assert.match(html, /Как выбрать формат/);
+  assert.match(html, /50 000 AI-кредитов/);
+  assert.doesNotMatch(html, /бесплат|ранний доступ|бета-тест/i);
   assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz\/pricing"/);
   assert.doesNotMatch(html, /₸|₽/);
 });
