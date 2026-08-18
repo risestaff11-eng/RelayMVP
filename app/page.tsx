@@ -71,7 +71,12 @@ export default async function Home() {
 
     <section className="lp-how lp-section" id="how">
       <div className="lp-section-intro light"><span>КАК ЭТО РАБОТАЕТ</span><h2>От идеи до первой ссылки для агентов — четыре шага.</h2></div>
-      <div className="lp-steps"><article><b>01</b><small>НЕСКОЛЬКО МИНУТ</small><h3>Создайте программу</h3><p>Опишите продукт, целевого клиента и результат, за который готовы платить.</p></article><article><b>02</b><small>ПРАВИЛА ЗАФИКСИРОВАНЫ</small><h3>Соберите задания</h3><p>Добавьте награду, срок, критерии проверки и материалы для знакомства.</p></article><article><b>03</b><small>ОДНА ВНЕШНЯЯ ССЫЛКА</small><h3>Пригласите агентов</h3><p>Агент входит по email, выбирает задание и передаёт подходящий результат.</p></article><article><b>04</b><small>ПРОЗРАЧНАЯ ВОРОНКА</small><h3>Проверяйте и платите</h3><p>Меняйте статусы, объясняйте решения и фиксируйте начисления без ручной сверки.</p></article></div>
+      <div className="lp-steps">
+        <article><b>01</b><div className="lp-step-visual lp-step-program" aria-hidden="true"><div className="lp-step-window"><span><i /><i /><i /></span><small>НОВАЯ ПРОГРАММА</small><strong>Новые клиенты</strong><em>Создать&nbsp; +</em></div></div><small>НЕСКОЛЬКО МИНУТ</small><h3>Создайте программу</h3><p>Опишите продукт, целевого клиента и результат, за который готовы платить.</p></article>
+        <article><b>02</b><div className="lp-step-visual lp-step-tasks" aria-hidden="true"><div><span>01</span><strong>Найти клиента</strong><em>15 000 ₸</em></div><div><span>02</span><strong>Закрыть сделку</strong><em>15%</em></div></div><small>ПРАВИЛА ЗАФИКСИРОВАНЫ</small><h3>Соберите задания</h3><p>Добавьте награду, срок, критерии проверки и материалы для знакомства.</p></article>
+        <article><b>03</b><div className="lp-step-visual lp-step-invite" aria-hidden="true"><div className="lp-step-link"><span>risestaff.kz/p/...</span><b>↗</b></div><div className="lp-step-avatars"><i>А</i><i>Б</i><i>К</i><em>+12 агентов</em></div></div><small>ОДНА ВНЕШНЯЯ ССЫЛКА</small><h3>Пригласите агентов</h3><p>Агент входит по email, выбирает задание и передаёт подходящий результат.</p></article>
+        <article><b>04</b><div className="lp-step-visual lp-step-result" aria-hidden="true"><div><span>Получен</span><i /><span>Проверен</span><i /><span>Оплачен</span></div><strong>15 000 ₸</strong><small>ВОЗНАГРАЖДЕНИЕ</small></div><small>ПРОЗРАЧНАЯ ВОРОНКА</small><h3>Проверяйте и платите</h3><p>Меняйте статусы, объясняйте решения и фиксируйте начисления без ручной сверки.</p></article>
+      </div>
     </section>
 
     <section className="lp-ai lp-section" id="product"><i className="lp-motion-orbit orbit-gray" aria-hidden="true" />
