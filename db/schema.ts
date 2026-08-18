@@ -1,6 +1,13 @@
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
+export const marketingEvents = sqliteTable("marketing_events", {
+  id: text("id").primaryKey(),
+  event: text("event").notNull(),
+  path: text("path").notNull().default("/"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("idx_marketing_events_event_created").on(table.event, table.createdAt)]);
+
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull(),

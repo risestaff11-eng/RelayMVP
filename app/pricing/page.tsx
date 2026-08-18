@@ -21,8 +21,8 @@ export default function PricingPage() {
     </header>
     <section className="pricing-hero" id="main-content">
       <span>ВАРИАНТЫ ПОДКЛЮЧЕНИЯ</span>
-      <h1>Тариф зависит от задачи, а не от красивой таблицы цен.</h1>
-      <p>Сначала определим, сколько программ и агентов вам действительно нужно. После этого зафиксируем понятный состав продукта и условия подключения.</p>
+      <h1>Начните бесплатно, а масштаб подключения обсудим после пилота.</h1>
+      <p>Во время бета-тестирования доступны программы без ограничений, кабинеты компании и агентов и 5 000 AI-кредитов. Банковская карта не нужна.</p>
     </section>
     <section className="pricing-grid" aria-label="Варианты подключения Relay">
       {plans.map((plan) => <article key={plan.code}>
@@ -30,9 +30,9 @@ export default function PricingPage() {
         <h2>{plan.name}</h2>
         <p>{plan.text}</p>
         <ul>{plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}</ul>
-        <a href={whatsapp} target="_blank" rel="noreferrer">Обсудить условия <span aria-hidden="true">↗</span></a>
+        <a href={whatsapp} target="_blank" rel="noreferrer">Задать вопрос о подключении <span aria-hidden="true">↗</span></a>
       </article>)}
     </section>
-    <section className="pricing-note"><strong>Почему без цен?</strong><p>На этапе раннего доступа Relay подключается под конкретный сценарий. Мы не будем продавать лишние лимиты до того, как поймём реальный объём агентского канала.</p></section>
+    <section className="pricing-note"><strong>Что будет после раннего доступа?</strong><p>Сначала вы проверяете механику на реальном продукте. Условия дальнейшего подключения фиксируем отдельно с учётом количества программ, агентов и нужного сопровождения.</p></section>
   </main>;
 }

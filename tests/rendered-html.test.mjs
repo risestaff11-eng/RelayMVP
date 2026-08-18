@@ -47,11 +47,13 @@ test("renders the Relay landing page", async () => {
   assert.match(html, /рекомендации/);
   assert.match(html, /4 ЗАДАНИЯ/);
   assert.doesNotMatch(html, /Northstar CRM/);
-  assert.match(html, /Потому что знает, сколько ему должны/);
+  assert.match(html, /Условия, статус и выплата — всегда перед глазами/);
+  assert.match(html, /ТЕКУЩИЙ ПИЛОТ RELAY/);
+  assert.match(html, /Relay не является биржей агентов/);
   assert.match(html, /ПЛАТФОРМА АГЕНТСКИХ ПРОДАЖ/);
   assert.match(html, /Вопросы до запуска/);
   assert.match(html, /wa\.me\/77765086000/);
-  assert.match(html, /Стать интегратором/);
+  assert.match(html, /Интеграторам/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
 });
 
@@ -60,7 +62,7 @@ test("renders pricing without publishing prices", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Варианты подключения/);
-  assert.match(html, /Почему без цен/);
+  assert.match(html, /Что будет после раннего доступа/);
   assert.doesNotMatch(html, /₸|₽/);
 });
 

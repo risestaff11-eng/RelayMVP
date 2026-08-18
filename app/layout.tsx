@@ -31,11 +31,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = "Создавайте агентские программы, запускайте задания и прозрачно работайте с внешними продавцами.";
 
   return {
+    metadataBase: new URL("https://risestaff.kz"),
     title: {
       default: "Relay — агентские продажи по одной ссылке",
       template: "%s · Relay",
     },
     description,
+    alternates: { canonical: "https://risestaff.kz/" },
     icons: {
       icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
       shortcut: "/favicon.svg",
@@ -47,6 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "Relay — агентские продажи по одной ссылке",
       description,
       type: "website",
+      url: "https://risestaff.kz/",
       images: [{ url: `${origin}/og.png`, width: 1731, height: 909, alt: "Relay — агентские продажи по одной ссылке" }],
     },
     twitter: {
