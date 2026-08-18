@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SafeLink as Link } from "@/app/safe-link";
 import { MarketingLogo } from "../marketing-logo";
 
-export const metadata: Metadata = { title: "Тарифы", description: "Варианты подключения Relay для проверки и масштабирования агентского канала." };
+export const metadata: Metadata = { title: "Тарифы и условия раннего доступа", description: "Условия подключения Relay для запуска и масштабирования агентской программы.", alternates: { canonical: "https://risestaff.kz/pricing" } };
 
 const plans = [
   { code: "01", name: "Старт", label: "ПРОВЕРИТЬ КАНАЛ", text: "Для компании, которая запускает первую агентскую программу и хочет получить первые рекомендации без сложного внедрения.", features: ["Агентские программы и четыре типа заданий", "Публичная ссылка и кабинет агента", "Воронка лидов и история статусов", "Ручная фиксация вознаграждений"] },

@@ -43,6 +43,11 @@ test("renders the Relay landing page", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Relay/);
+  assert.match(html, /Relay — агентские продажи и реферальные программы/);
+  assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz"/);
+  assert.match(html, /rel="icon" href="\/icon-192\.png"/);
+  assert.match(html, /"@type":"WebSite"/);
+  assert.match(html, /"alternateName":\["RiseStaff","Relay by RiseStaff"\]/);
   assert.match(html, /lp-color-word/);
   assert.match(html, /рекомендации/);
   assert.match(html, /4 ЗАДАНИЯ/);
@@ -63,6 +68,7 @@ test("renders pricing without publishing prices", async () => {
   const html = await response.text();
   assert.match(html, /Варианты подключения/);
   assert.match(html, /Что будет после раннего доступа/);
+  assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz\/pricing"/);
   assert.doesNotMatch(html, /₸|₽/);
 });
 

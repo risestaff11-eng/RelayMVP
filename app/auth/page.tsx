@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getAccountUser } from "../../lib/account-auth";
 import { AuthFlow } from "./auth-flow";
 
-export const metadata: Metadata = { title: "Вход в Relay" };
+export const metadata: Metadata = { title: "Вход в Relay", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function AuthPage({ searchParams }: { searchParams: Promise<{ returnTo?: string }> }) {

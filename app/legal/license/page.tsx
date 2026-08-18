@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SafeLink as Link } from "@/app/safe-link";
 import { MarketingLogo } from "@/app/marketing-logo";
 
-export const metadata: Metadata = { title: "Лицензионное соглашение" };
+export const metadata: Metadata = { title: "Лицензионное соглашение", description: "Условия использования платформы Relay компаниями и агентами.", alternates: { canonical: "https://risestaff.kz/legal/license" } };
 
 export default function LicensePage() {
   return <main className="legal-page"><article className="legal-document">

@@ -6,7 +6,7 @@ import { getCompanyForUser } from "../../db/company";
 import { CompanyRegistrationForm } from "./registration-form";
 import { marketingUrl } from "../../lib/public-origins";
 
-export const metadata: Metadata = { title: "Создание компании" };
+export const metadata: Metadata = { title: "Создание компании", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {

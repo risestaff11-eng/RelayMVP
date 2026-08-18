@@ -6,8 +6,9 @@ import { MarketingLogo } from "./marketing-logo";
 import { companyUrl } from "../lib/public-origins";
 
 export const metadata: Metadata = {
-  title: "Relay — запустите агентский канал продаж",
-  description: "Создайте программу, пригласите агентов по одной ссылке и прозрачно ведите каждую рекомендацию от передачи до выплаты.",
+  title: { absolute: "Relay — агентские продажи и реферальные программы" },
+  description: "Запустите агентскую программу: создайте задания, пригласите агентов по одной ссылке и отслеживайте каждую рекомендацию до выплаты.",
+  alternates: { canonical: "https://risestaff.kz/" },
 };
 
 export const dynamic = "force-dynamic";
@@ -31,10 +32,25 @@ const faqs = [
 ];
 
 const structuredData = {
-  "@context": "https://schema.org", "@type": "SoftwareApplication", name: "Relay", url: "https://risestaff.kz/",
-  applicationCategory: "BusinessApplication", operatingSystem: "Web",
-  description: "Платформа для запуска и управления агентскими программами по одной ссылке.",
-  featureList: ["Программы и задания для агентов", "Фиксация владельца рекомендации", "Статусы результатов и выплат", "Кабинет агента без установки приложения"],
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite", "@id": "https://risestaff.kz/#website", url: "https://risestaff.kz/", name: "Relay",
+      alternateName: ["RiseStaff", "Relay by RiseStaff"], inLanguage: "ru-KZ",
+      publisher: { "@id": "https://risestaff.kz/#organization" },
+    },
+    {
+      "@type": "Organization", "@id": "https://risestaff.kz/#organization", name: "Relay", alternateName: "RiseStaff",
+      url: "https://risestaff.kz/", logo: { "@type": "ImageObject", url: "https://risestaff.kz/icon-512.png", width: 512, height: 512 },
+    },
+    {
+      "@type": "SoftwareApplication", "@id": "https://risestaff.kz/#software", name: "Relay", url: "https://risestaff.kz/",
+      applicationCategory: "BusinessApplication", operatingSystem: "Web", inLanguage: "ru-KZ",
+      description: "Платформа для запуска и управления агентскими и реферальными программами по одной ссылке.",
+      featureList: ["Программы и задания для агентов", "Фиксация владельца рекомендации", "Статусы результатов и выплат", "Кабинет агента без установки приложения"],
+      provider: { "@id": "https://risestaff.kz/#organization" },
+    },
+  ],
 };
 
 export default async function Home() {

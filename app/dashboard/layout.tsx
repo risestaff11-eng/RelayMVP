@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { SafeLink as Link } from "@/app/safe-link";
 import { chatGPTSignOutPath, requireChatGPTUser } from "../chatgpt-auth";
@@ -7,6 +8,7 @@ import { DashboardTour } from "./_components/dashboard-tour";
 import { AccountMenu } from "./_components/account-menu";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 function initials(value: string) {
   return value.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "R";

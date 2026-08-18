@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SafeLink as Link } from "@/app/safe-link";
 import { MarketingLogo } from "@/app/marketing-logo";
 
-export const metadata: Metadata = { title: "Политика конфиденциальности" };
+export const metadata: Metadata = { title: "Политика конфиденциальности", description: "Как Relay обрабатывает и защищает данные компаний и агентов.", alternates: { canonical: "https://risestaff.kz/legal/privacy" } };
 
 export default function PrivacyPage() {
   return <main className="legal-page"><article className="legal-document">
