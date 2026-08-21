@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireChatGPTUser } from "../../chatgpt-auth";
 import { getCompanyForUser } from "../../../db/company";
-import { getCompanyKnowledge } from "../../../db/knowledge";
+import { getCompanyKnowledge, getCompanyMethodologyBrief } from "../../../db/knowledge";
+import { getConfirmedCompanyProfile, getLatestCompanyProfile } from "../../../db/profile";
 import { MethodologistEditor } from "./methodologist-editor";
 
 export const metadata: Metadata = { title: "AI-Методолог" };
@@ -12,6 +13,11 @@ export default async function MethodologistPage() {
   const user = await requireChatGPTUser("/dashboard/methodologist");
   const company = await getCompanyForUser(user.userId);
   if (!company) redirect("/onboarding");
-  const items = await getCompanyKnowledge(company.id);
-  return <MethodologistEditor initialItems={items} tokenBalance={company.aiTokenBalance} />;
+  const [items, brief, confirmedProfile, latestProfile] = await Promise.all([
+    getCompanyKnowledge(company.id),
+    getCompanyMethodologyBrief(company.id),
+    getConfirmedCompanyProfile(company.id),
+    getLatestCompanyProfile(company.id),
+  ]);
+  return <MethodologistEditor initialItems={items} initialBrief={brief} tokenBalance={company.aiTokenBalance} profileStatus={confirmedProfile ? "CONFIRMED" : latestProfile ? "DRAFT" : "MISSING"} />;
 }

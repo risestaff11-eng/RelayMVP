@@ -34,12 +34,14 @@ export async function generateStructuredJson<T>({
   schema,
   maxOutputTokens = 3500,
   thinkingLevel = "minimal",
+  temperature,
 }: {
   systemInstruction: string;
   prompt: string;
   schema: JsonSchema;
   maxOutputTokens?: number;
   thinkingLevel?: "minimal" | "low" | "medium" | "high";
+  temperature?: number;
 }): Promise<StructuredAiResult<T>> {
   const runtime = env as unknown as { AI_PROVIDER?: string; GEMINI_API_KEY?: string; GEMINI_MODEL?: string };
   if (runtime.AI_PROVIDER && runtime.AI_PROVIDER !== "gemini") throw new Error("AI-провайдер настроен неверно");
@@ -59,6 +61,7 @@ export async function generateStructuredJson<T>({
         responseJsonSchema: schema,
         maxOutputTokens,
         thinkingConfig: { thinkingLevel },
+        ...(typeof temperature === "number" ? { temperature: Math.max(0, Math.min(1, temperature)) } : {}),
       },
     }),
   });

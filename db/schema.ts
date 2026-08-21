@@ -67,7 +67,14 @@ export const companyKnowledgeItems = sqliteTable(
     companyId: text("company_id").notNull().references(() => companies.id),
     kind: text("kind").notNull().default("SCRIPT"),
     title: text("title").notNull(),
+    summary: text("summary").notNull().default(""),
     content: text("content").notNull().default(""),
+    agentAction: text("agent_action").notNull().default(""),
+    channel: text("channel").notNull().default("ALL"),
+    salesStage: text("sales_stage").notNull().default("PREPARE"),
+    audience: text("audience").notNull().default(""),
+    sourceBasisJson: text("source_basis_json").notNull().default("[]"),
+    warningsJson: text("warnings_json").notNull().default("[]"),
     externalUrl: text("external_url"),
     objectKey: text("object_key"),
     fileName: text("file_name"),
@@ -80,6 +87,23 @@ export const companyKnowledgeItems = sqliteTable(
   },
   (table) => [index("idx_company_knowledge_company_status").on(table.companyId, table.status, table.sortOrder)],
 );
+
+export const companyMethodologyBriefs = sqliteTable("company_methodology_briefs", {
+  companyId: text("company_id").primaryKey().references(() => companies.id),
+  offer: text("offer").notNull().default(""),
+  idealCustomer: text("ideal_customer").notNull().default(""),
+  decisionMakers: text("decision_makers").notNull().default(""),
+  customerProblems: text("customer_problems").notNull().default(""),
+  salesGoal: text("sales_goal").notNull().default(""),
+  nextStep: text("next_step").notNull().default(""),
+  channelsJson: text("channels_json").notNull().default("[]"),
+  tone: text("tone").notNull().default("Деловой и человеческий"),
+  proofPoints: text("proof_points").notNull().default(""),
+  mustSay: text("must_say").notNull().default(""),
+  mustNotSay: text("must_not_say").notNull().default(""),
+  language: text("language").notNull().default("Русский"),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
 
 export const companyMembers = sqliteTable(
   "company_members",
