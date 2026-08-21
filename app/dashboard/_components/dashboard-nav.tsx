@@ -14,6 +14,7 @@ const items = [
   { href: "/dashboard/assistant", label: "AI-агент", hint: "Советы и изменения в сервисе", icon: "✦" },
   { href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для AI и заданий", icon: "□" },
   { href: "/dashboard/settings", label: "Настройки", hint: "Контакты, тариф и AI-кредиты", icon: "⚙" },
+  { href: "/dashboard/methodologist", label: "AI-Методолог", hint: "Скрипты и материалы для агентов", icon: "▤" },
 ] as const;
 
 export function DashboardNav() {
@@ -32,7 +33,7 @@ export function DashboardNav() {
   return <>
     <nav className="sidebar-nav" aria-label="Навигация кабинета компании">
       <small className="sidebar-nav-label">УПРАВЛЕНИЕ</small>
-      {items.slice(0, 6).map((item) => <Link key={item.href} data-tour={item.exact ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i aria-hidden="true">{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
+      {items.slice(0, 6).map((item) => <Link key={item.href} data-tour={("exact" in item && item.exact) ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i aria-hidden="true">{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
       <small className="sidebar-nav-label">НАСТРОЙКА</small>
       {items.slice(6).map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i aria-hidden="true">{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
     </nav>

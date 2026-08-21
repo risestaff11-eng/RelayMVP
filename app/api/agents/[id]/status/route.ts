@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { getChatGPTUser } from "../../../../chatgpt-auth";
 import { getDb } from "../../../../../db";
 import { getCompanyForUser } from "../../../../../db/company";
@@ -15,8 +15,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const payload = await request.json() as { status?: string };
   const status = payload.status === "BLOCKED" ? "BLOCKED" : payload.status === "ACTIVE" ? "ACTIVE" : "";
   if (!status) return Response.json({ error: "Некорректный статус агента" }, { status: 400 });
-  const agent = (await getDb().select({ id: partners.id }).from(partners).where(and(eq(partners.id, id), eq(partners.companyId, company.id))).limit(1))[0];
+  const agent = (await getDb().select().from(partners).where(and(eq(partners.id, id), eq(partners.companyId, company.id))).limit(1))[0];
   if (!agent) return Response.json({ error: "Агент не найден" }, { status: 404 });
-  await getDb().update(partners).set({ status, lastActiveAt: new Date().toISOString() }).where(and(eq(partners.id, id), eq(partners.companyId, company.id)));
+  await getDb().update(partners).set({ status, lastActiveAt: new Date().toISOString() }).where(and(eq(partners.companyId, company.id), agent.userId ? or(eq(partners.userId, agent.userId), eq(partners.email, agent.email)) : eq(partners.email, agent.email)));
   return Response.json({ ok: true, status });
 }

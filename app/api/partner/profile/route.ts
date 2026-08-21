@@ -1,4 +1,4 @@
-import { and, eq, ne } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { getPartnerPortal } from "../../../../db/partner";
 import { partnerProfiles, partners } from "../../../../db/schema";
@@ -25,8 +25,8 @@ export async function POST(request: Request) {
     if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Проверьте email");
     if (phone.length < 7) throw new Error("Проверьте телефон");
     const db = getDb();
-    const duplicates = await db.select({ id: partners.id }).from(partners).where(and(eq(partners.programId, portal.program.id), eq(partners.email, email), ne(partners.id, portal.partner.id))).limit(1);
-    if (duplicates.length) throw new Error("Этот email уже используется другим агентом программы");
+    if (email !== portal.partner.email) throw new Error("Email входа нельзя изменить в профиле");
+    const partnerIds = portal.partners.map((item) => item.id);
     const avatar = form.get("avatar");
     let avatarObjectKey = portal.profile.avatarObjectKey;
     if (avatar instanceof File && avatar.size > 0) {
@@ -39,11 +39,13 @@ export async function POST(request: Request) {
     }
     const now = new Date().toISOString();
     const profileValues = { firstName, lastName, middleName, instagram, avatarObjectKey, skillsJson: JSON.stringify(list(form.get("skills"))), industriesJson: JSON.stringify(list(form.get("industries"))), geographiesJson: JSON.stringify(list(form.get("geographies"))), preferredTypesJson: JSON.stringify(form.getAll("preferredTypes").map((item) => cleanString(item, 30)).filter(Boolean).slice(0, 4)), ...(phone === portal.partner.phone ? {} : { whatsappVerifiedAt: null }), updatedAt: now };
-    const existing = await db.select().from(partnerProfiles).where(eq(partnerProfiles.partnerId, portal.partner.id)).limit(1);
-    await db.batch([
-      db.update(partners).set({ name: [firstName, middleName, lastName].filter(Boolean).join(" "), email, phone, lastActiveAt: now }).where(eq(partners.id, portal.partner.id)),
-      existing[0] ? db.update(partnerProfiles).set(profileValues).where(eq(partnerProfiles.partnerId, portal.partner.id)) : db.insert(partnerProfiles).values({ partnerId: portal.partner.id, ...profileValues }),
-    ]);
+    const existing = await db.select({ partnerId: partnerProfiles.partnerId }).from(partnerProfiles).where(inArray(partnerProfiles.partnerId, partnerIds));
+    const existingIds = new Set(existing.map((item) => item.partnerId));
+    await db.update(partners).set({ name: [firstName, middleName, lastName].filter(Boolean).join(" "), phone, lastActiveAt: now }).where(inArray(partners.id, partnerIds));
+    for (const partnerId of partnerIds) {
+      if (existingIds.has(partnerId)) await db.update(partnerProfiles).set(profileValues).where(eq(partnerProfiles.partnerId, partnerId));
+      else await db.insert(partnerProfiles).values({ partnerId, ...profileValues });
+    }
     return Response.json({ ok: true, avatarUrl: avatarObjectKey ? `/api/partner/avatar?token=${token}` : null });
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Не удалось сохранить профиль" }, { status: 400 }); }
 }

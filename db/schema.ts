@@ -40,16 +40,38 @@ export const companies = sqliteTable("companies", {
   website: text("website").notNull(),
   contactWhatsapp: text("contact_whatsapp").notNull().default(""),
   contactInstagram: text("contact_instagram").notNull().default(""),
+  logoObjectKey: text("logo_object_key"),
   industry: text("industry").notNull(),
   teamSize: text("team_size").notNull(),
   primaryGoal: text("primary_goal").notNull(),
   onboardingStatus: text("onboarding_status").notNull().default("COMPANY_CREATED"),
   planCode: text("plan_code").notNull().default("TRIAL"),
-  aiTokenBalance: integer("ai_token_balance").notNull().default(5000),
+  aiTokenBalance: integer("ai_token_balance").notNull().default(50000),
   aiTokensUsed: integer("ai_tokens_used").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const companyKnowledgeItems = sqliteTable(
+  "company_knowledge_items",
+  {
+    id: text("id").primaryKey(),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    kind: text("kind").notNull().default("SCRIPT"),
+    title: text("title").notNull(),
+    content: text("content").notNull().default(""),
+    externalUrl: text("external_url"),
+    objectKey: text("object_key"),
+    fileName: text("file_name"),
+    mimeType: text("mime_type").notNull().default("application/octet-stream"),
+    size: integer("size").notNull().default(0),
+    status: text("status").notNull().default("PUBLISHED"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_company_knowledge_company_status").on(table.companyId, table.status, table.sortOrder)],
+);
 
 export const companyMembers = sqliteTable(
   "company_members",

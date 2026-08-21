@@ -11,6 +11,7 @@ export async function getCompanyForUser(userId: string) {
       website: companies.website,
       contactWhatsapp: companies.contactWhatsapp,
       contactInstagram: companies.contactInstagram,
+      logoObjectKey: companies.logoObjectKey,
       industry: companies.industry,
       teamSize: companies.teamSize,
       primaryGoal: companies.primaryGoal,
