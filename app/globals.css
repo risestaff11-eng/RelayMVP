@@ -1247,6 +1247,53 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .system-token-cell input { min-width: 0; width: 90px; height: 28px; padding: 0 6px; border: 1px solid #bbb; }
 .system-token-cell button { width: 28px; height: 28px; border: 0; color: white; background: #222; cursor: pointer; }
 
+/* Company identity, knowledge base and operational states */
+.metric-link { color: inherit; text-decoration: none; }
+.metric-link:hover { transform: translateY(-2px); border-color: #aeb0a7; box-shadow: 0 10px 28px rgba(20,21,18,.08); }
+.company-white-label-brand-wrap { position: relative; }
+.company-white-label-brand { display: flex; align-items: center; gap: 11px; }
+.company-white-label-brand > a { min-width: 0; color: inherit; text-decoration: none; }
+.company-white-label-brand > a strong,.company-white-label-brand > a small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.company-logo-button,.company-logo { position: relative; width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; border: 0; border-radius: 12px; color: var(--ink); background: var(--lime); font-weight: 900; }
+.company-logo-button { cursor: pointer; }
+.company-logo-button img,.company-logo img { width: 100%; height: 100%; object-fit: cover; }
+.company-logo-button i { position: absolute; right: 1px; bottom: 1px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--ink); font-size: 10px; font-style: normal; opacity: 0; transition: opacity .18s ease; }
+.company-logo-button:hover i,.company-logo-button:focus-visible i { opacity: 1; }
+.company-logo-notice { position: absolute; top: 100%; left: 0; color: #aeb1a7; font-size: 9px; white-space: nowrap; }
+.mobile-relay-mark.company-logo { border-radius: 12px; }
+.partner-company-chip .company-logo { margin-bottom: 12px; }
+.opportunity-program-name { display: block; margin: 10px 0 0; color: #565950; font-weight: 800; }
+.assistant-help-trigger { width: 100%; padding: 0; display: block; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.assistant-help-trigger:hover { transform: translateY(-2px); }
+.methodologist-grid { margin-top: 24px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; }
+.methodologist-form,.knowledge-drafts,.knowledge-drafts article { display: grid; gap: 12px; }
+.methodologist-form label { display: grid; gap: 7px; }
+.methodologist-form label > span { color: #4d5048; font-size: 12px; font-weight: 800; }
+.methodologist-form input,.methodologist-form select,.methodologist-form textarea,.knowledge-drafts input,.knowledge-drafts select,.knowledge-drafts textarea { width: 100%; padding: 12px 14px; border: 1px solid #d5d6cf; border-radius: 12px; color: var(--ink); background: white; font: inherit; }
+.knowledge-drafts { margin-top: 16px; }
+.knowledge-drafts article { padding: 14px; border: 1px solid #dfe0d8; border-radius: 15px; background: #fafaf6; }
+.knowledge-library { margin-top: 16px; }
+.knowledge-library > div:last-child { display: grid; gap: 8px; }
+.knowledge-library article { padding: 14px 0; display: grid; grid-template-columns: 90px minmax(0,1fr) auto; gap: 14px; align-items: start; border-top: 1px solid #e2e3dc; }
+.knowledge-library article > span { color: #696c63; font-size: 10px; font-weight: 900; }
+.knowledge-library article p { margin: 5px 0 0; color: #565950; white-space: pre-wrap; }
+.knowledge-library article button { border: 0; color: #8c2f28; background: transparent; cursor: pointer; }
+.company-knowledge-grid { margin: 18px 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.company-knowledge-grid article { padding: 22px; border: 1px solid #dfe0d8; border-radius: 20px; background: white; }
+.company-knowledge-grid article > span { color: #666960; font-size: 10px; font-weight: 900; letter-spacing: .08em; }
+.company-knowledge-grid h2 { margin: 10px 0; font-size: 20px; }
+.company-knowledge-grid p { color: #3d4039; line-height: 1.6; white-space: pre-wrap; }
+.company-knowledge-grid article > div { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+.company-knowledge-grid a,.company-knowledge-grid button { min-height: 40px; padding: 0 13px; display: inline-flex; align-items: center; border: 1px solid #d6d7d0; border-radius: 10px; color: var(--ink); background: white; font-weight: 800; text-decoration: none; }
+.system-status { padding: 4px 8px; display: inline-block; border-radius: 999px; }
+.system-status.status-active { color: #176232; background: #dff4e6; }
+.system-status.status-pending { color: #9c211b; background: #ffe5e2; }
+.system-status.status-blocked { color: #725300; background: #fff0b8; }
+.system-actions button.needs-activation { color: #a5221c; border-color: #e2a7a2; background: #fff0ee; }
+.system-actions button.is-active { color: #176232; border-color: #a8d8b8; background: #e2f6e8; opacity: 1; }
+.system-actions button.is-blocked { color: #6c5000; border-color: #e0c365; background: #fff0b8; opacity: 1; }
+@media (max-width: 760px) { .methodologist-grid,.company-knowledge-grid { grid-template-columns: 1fr; } .knowledge-library article { grid-template-columns: 1fr; } }
+
 @media (max-width: 1180px) {
   .dashboard-shell { grid-template-columns: 248px 1fr; }
   .metrics { grid-template-columns: repeat(3,1fr); }

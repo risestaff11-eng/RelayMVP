@@ -17,27 +17,35 @@ export async function POST(request: Request) {
     const payload = await request.json() as Record<string, unknown>;
     const slug = cleanString(payload.programSlug, 80);
     const email = cleanString(payload.email, 180).toLowerCase();
+    const submittedName = cleanString(payload.name, 100);
+    const submittedPhone = cleanString(payload.phone, 40);
     if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Укажите корректный email");
     if (payload.acceptedTerms !== true && payload.acceptedTerms !== "on") throw new Error("Примите лицензионное соглашение и политику конфиденциальности");
     const program = await getPublicProgramBySlug(slug);
     if (!program) return Response.json({ error: "Программа недоступна" }, { status: 404 });
     const db = getDb();
     const userRows = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const identityRows = await db.select().from(partners).where(and(eq(partners.companyId, program.companyId), eq(partners.email, email))).limit(1);
     const existingRows = await db.select().from(partners).where(and(eq(partners.programId, program.id), eq(partners.email, email))).limit(1);
-    const userId = userRows[0]?.id ?? crypto.randomUUID();
+    if (!identityRows[0] && (!submittedName || !submittedPhone)) return Response.json({ needsProfile: true });
+    if (!identityRows[0] && submittedName.length < 2) throw new Error("Укажите имя");
+    if (!identityRows[0] && submittedPhone.replace(/\D/g, "").length < 7) throw new Error("Укажите корректный номер телефона");
+    const userId = identityRows[0]?.userId ?? userRows[0]?.id ?? crypto.randomUUID();
     const partnerId = existingRows[0]?.id ?? crypto.randomUUID();
     const rawToken = createPartnerToken();
     const tokenHash = await hashPartnerToken(rawToken);
     const now = new Date().toISOString();
     const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
-    const displayName = userRows[0]?.displayName || email.split("@")[0] || "Партнёр";
+    const displayName = identityRows[0]?.name || submittedName || userRows[0]?.displayName || email.split("@")[0] || "Агент";
+    const phone = identityRows[0]?.phone || submittedPhone || userRows[0]?.phone || "";
     const statements = [];
-    if (!userRows[0]) statements.push(db.insert(users).values({ id: userId, email, displayName, createdAt: now, updatedAt: now }));
+    if (!userRows[0]) statements.push(db.insert(users).values({ id: userId, email, displayName, phone, createdAt: now, updatedAt: now }));
+    else if (!identityRows[0]) statements.push(db.update(users).set({ displayName, phone, updatedAt: now }).where(eq(users.id, userId)));
     statements.push(db.insert(userRoles).values({ userId, role: "PARTNER", createdAt: now }).onConflictDoNothing());
-    if (existingRows[0]) statements.push(db.update(partners).set({ userId, lastActiveAt: now }).where(eq(partners.id, partnerId)));
+    if (existingRows[0]) statements.push(db.update(partners).set({ userId, name: displayName, phone, lastActiveAt: now }).where(eq(partners.id, partnerId)));
     else statements.push(
-      db.insert(partners).values({ id: partnerId, userId, companyId: program.companyId, programId: program.id, name: displayName, email, phone: "", status: "ACTIVE", joinedAt: now, lastActiveAt: now }),
-      db.insert(partnerProfiles).values({ partnerId, firstName: "", lastName: "", updatedAt: now }),
+      db.insert(partners).values({ id: partnerId, userId, companyId: program.companyId, programId: program.id, name: displayName, email, phone, status: "ACTIVE", joinedAt: now, lastActiveAt: now }),
+      db.insert(partnerProfiles).values({ partnerId, firstName: displayName.split(/\s+/)[0] || "", lastName: displayName.split(/\s+/).slice(1).join(" "), updatedAt: now }),
     );
     statements.push(db.insert(legalAcceptances).values({ id: crypto.randomUUID(), userId, programId: program.id, documentVersion: "2026-08-06", acceptedAt: now }));
     statements.push(db.insert(partnerAccessLinks).values({ id: crypto.randomUUID(), partnerId, tokenHash, expiresAt, createdAt: now }));

@@ -1,8 +1,9 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { getDb } from ".";
 import { hashPartnerToken } from "../lib/partner-token";
 import {
   companies,
+  companyKnowledgeItems,
   companyProfileVersions,
   missions,
   partnerAccessLinks,
@@ -21,9 +22,7 @@ function parseList(value: string | null | undefined) {
   try {
     const parsed = JSON.parse(value || "[]");
     return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
 function parsePayload(value: string) {
@@ -33,48 +32,58 @@ function parsePayload(value: string) {
       partnerComment: typeof parsed.partnerComment === "string" ? parsed.partnerComment : "",
       externalLinks: Array.isArray(parsed.externalLinks) ? parsed.externalLinks.filter((item): item is string => typeof item === "string") : [],
     };
-  } catch {
-    return { partnerComment: "", externalLinks: [] as string[] };
-  }
+  } catch { return { partnerComment: "", externalLinks: [] as string[] }; }
 }
 
 export async function getPartnerPortal(token: string) {
   if (!/^[a-f0-9]{64}$/i.test(token)) return null;
   const tokenHash = await hashPartnerToken(token);
   const db = getDb();
-  const accessRows = await db.select().from(partnerAccessLinks).where(eq(partnerAccessLinks.tokenHash, tokenHash)).limit(1);
-  const access = accessRows[0];
+  const access = (await db.select().from(partnerAccessLinks).where(eq(partnerAccessLinks.tokenHash, tokenHash)).limit(1))[0];
   if (!access || new Date(access.expiresAt).getTime() < Date.now()) return null;
-
-  const partnerRows = await db.select().from(partners).where(eq(partners.id, access.partnerId)).limit(1);
-  const partner = partnerRows[0];
+  const partner = (await db.select().from(partners).where(eq(partners.id, access.partnerId)).limit(1))[0];
   if (!partner || partner.status === "BLOCKED") return null;
 
-  const [programRows, companyRows, missionRows, submissionRows, rewardRows, profileRows, acceptanceRows, disputeRows, companyProfileRows] = await Promise.all([
-    db.select().from(programs).where(eq(programs.id, partner.programId)).limit(1),
+  const identityCondition = partner.userId
+    ? or(eq(partners.userId, partner.userId), eq(partners.email, partner.email))
+    : eq(partners.email, partner.email);
+  const identityRows = (await db.select().from(partners).where(and(eq(partners.companyId, partner.companyId), identityCondition))).filter((item) => item.status !== "BLOCKED");
+  const partnerIds = identityRows.map((item) => item.id);
+  const programIds = [...new Set(identityRows.map((item) => item.programId))];
+
+  const [programRows, companyRows, missionRows, submissionRows, rewardRows, profileRows, acceptanceRows, disputeRows, companyProfileRows, knowledgeRows] = await Promise.all([
+    db.select().from(programs).where(inArray(programs.id, programIds)).orderBy(desc(programs.updatedAt)),
     db.select().from(companies).where(eq(companies.id, partner.companyId)).limit(1),
-    db.select().from(missions).where(eq(missions.programId, partner.programId)).orderBy(asc(missions.sortOrder)),
-    db.select().from(submissions).where(eq(submissions.partnerId, partner.id)).orderBy(desc(submissions.createdAt)),
-    db.select().from(rewards).where(eq(rewards.partnerId, partner.id)).orderBy(desc(rewards.createdAt)),
-    db.select().from(partnerProfiles).where(eq(partnerProfiles.partnerId, partner.id)).limit(1),
-    db.select().from(partnerMissionAcceptances).where(eq(partnerMissionAcceptances.partnerId, partner.id)).orderBy(desc(partnerMissionAcceptances.acceptedAt)),
-    db.select().from(submissionDisputes).where(eq(submissionDisputes.partnerId, partner.id)).orderBy(desc(submissionDisputes.createdAt)),
+    db.select().from(missions).where(inArray(missions.programId, programIds)).orderBy(asc(missions.sortOrder)),
+    db.select().from(submissions).where(inArray(submissions.partnerId, partnerIds)).orderBy(desc(submissions.createdAt)),
+    db.select().from(rewards).where(inArray(rewards.partnerId, partnerIds)).orderBy(desc(rewards.createdAt)),
+    db.select().from(partnerProfiles).where(inArray(partnerProfiles.partnerId, partnerIds)),
+    db.select().from(partnerMissionAcceptances).where(inArray(partnerMissionAcceptances.partnerId, partnerIds)).orderBy(desc(partnerMissionAcceptances.acceptedAt)),
+    db.select().from(submissionDisputes).where(inArray(submissionDisputes.partnerId, partnerIds)).orderBy(desc(submissionDisputes.createdAt)),
     db.select().from(companyProfileVersions).where(and(eq(companyProfileVersions.companyId, partner.companyId), eq(companyProfileVersions.status, "CONFIRMED"))).orderBy(desc(companyProfileVersions.versionNumber)).limit(1),
+    db.select().from(companyKnowledgeItems).where(and(eq(companyKnowledgeItems.companyId, partner.companyId), eq(companyKnowledgeItems.status, "PUBLISHED"))).orderBy(asc(companyKnowledgeItems.sortOrder), desc(companyKnowledgeItems.updatedAt)),
   ]);
-  const program = programRows[0];
   const company = companyRows[0];
-  if (!program || !company) return null;
+  const currentProgram = programRows.find((item) => item.id === partner.programId);
+  if (!currentProgram || !company) return null;
   const submissionIds = submissionRows.map((item) => item.id);
   const [eventRows, attachmentRows] = submissionIds.length ? await Promise.all([
     db.select().from(submissionStatusEvents).where(inArray(submissionStatusEvents.submissionId, submissionIds)).orderBy(desc(submissionStatusEvents.createdAt)),
     db.select().from(submissionAttachments).where(inArray(submissionAttachments.submissionId, submissionIds)).orderBy(asc(submissionAttachments.createdAt)),
   ]) : [[], []];
 
-  const serializedMissions = missionRows.map((mission) => ({
-    ...mission,
-    instructions: parseList(mission.instructionsJson),
-    proofRequirements: parseList(mission.proofRequirementsJson),
-  }));
+  const serializedMissions = missionRows.map((mission) => {
+    const missionProgram = programRows.find((item) => item.id === mission.programId)!;
+    return {
+      ...mission,
+      instructions: parseList(mission.instructionsJson),
+      proofRequirements: parseList(mission.proofRequirementsJson),
+      programName: missionProgram.name,
+      programSlug: missionProgram.slug,
+      programExpiresAt: missionProgram.expiresAt,
+      currency: missionProgram.currency,
+    };
+  });
   const serializedSubmissions = submissionRows.map((submission) => ({
     ...submission,
     ...parsePayload(submission.payloadJson),
@@ -84,17 +93,20 @@ export async function getPartnerPortal(token: string) {
     reward: rewardRows.find((reward) => reward.submissionId === submission.id) ?? null,
     dispute: disputeRows.find((dispute) => dispute.submissionId === submission.id && dispute.status === "OPEN") ?? null,
   }));
-  const profile = profileRows[0];
+  const profile = profileRows.find((item) => item.firstName || item.avatarObjectKey) ?? profileRows.find((item) => item.partnerId === partner.id);
 
   return {
     token,
     partner,
+    partners: identityRows,
     company,
-    program,
+    program: currentProgram,
+    programs: programRows,
     missions: serializedMissions,
     submissions: serializedSubmissions,
     rewards: rewardRows,
     acceptances: acceptanceRows,
+    knowledgeItems: knowledgeRows,
     profile: {
       firstName: profile?.firstName || partner.name.split(/\s+/)[0] || "",
       lastName: profile?.lastName || partner.name.split(/\s+/).slice(1).join(" "),
@@ -121,15 +133,19 @@ export async function getPartnerPortal(token: string) {
 export async function getPartnerAttachment(token: string, attachmentId: string) {
   const portal = await getPartnerPortal(token);
   if (!portal) return null;
-  const rows = await getDb().select().from(submissionAttachments).where(eq(submissionAttachments.id, attachmentId)).limit(1);
-  const attachment = rows[0];
+  const attachment = (await getDb().select().from(submissionAttachments).where(eq(submissionAttachments.id, attachmentId)).limit(1))[0];
   if (!attachment || !portal.submissions.some((submission) => submission.id === attachment.submissionId)) return null;
   return attachment;
 }
 
+export async function getPartnerKnowledgeFile(token: string, itemId: string) {
+  const portal = await getPartnerPortal(token);
+  if (!portal) return null;
+  return portal.knowledgeItems.find((item) => item.id === itemId && item.objectKey) ?? null;
+}
+
 export async function getMissionForPublicSubmission(programSlug: string, missionId: string) {
-  const db = getDb();
-  const rows = await db.select({ program: programs, mission: missions, company: companies })
+  const rows = await getDb().select({ program: programs, mission: missions, company: companies })
     .from(missions)
     .innerJoin(programs, eq(missions.programId, programs.id))
     .innerJoin(companies, eq(programs.companyId, companies.id))

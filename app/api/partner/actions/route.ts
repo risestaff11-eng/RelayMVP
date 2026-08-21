@@ -17,10 +17,13 @@ export async function POST(request: Request) {
 
     if (action === "ACCEPT_MISSION") {
       const missionId = cleanString(payload.missionId, 80);
-      if (!portal.missions.some((mission) => mission.id === missionId)) throw new Error("Миссия не найдена");
-      const existing = await db.select().from(partnerMissionAcceptances).where(and(eq(partnerMissionAcceptances.partnerId, portal.partner.id), eq(partnerMissionAcceptances.missionId, missionId))).limit(1);
+      const mission = portal.missions.find((item) => item.id === missionId);
+      if (!mission) throw new Error("Задание не найдено");
+      const missionPartner = portal.partners.find((item) => item.programId === mission.programId);
+      if (!missionPartner) throw new Error("Сначала откройте программу по приглашению компании");
+      const existing = await db.select().from(partnerMissionAcceptances).where(and(eq(partnerMissionAcceptances.partnerId, missionPartner.id), eq(partnerMissionAcceptances.missionId, missionId))).limit(1);
       if (existing[0]) await db.update(partnerMissionAcceptances).set({ status: "ACTIVE", completedAt: null }).where(eq(partnerMissionAcceptances.id, existing[0].id));
-      else await db.insert(partnerMissionAcceptances).values({ id: crypto.randomUUID(), partnerId: portal.partner.id, missionId, status: "ACTIVE", acceptedAt: now });
+      else await db.insert(partnerMissionAcceptances).values({ id: crypto.randomUUID(), partnerId: missionPartner.id, missionId, status: "ACTIVE", acceptedAt: now });
       return Response.json({ ok: true });
     }
 
@@ -31,14 +34,15 @@ export async function POST(request: Request) {
       if (!portal.submissions.some((submission) => submission.id === submissionId)) throw new Error("Рекомендация не найдена");
       const existing = await db.select().from(submissionDisputes).where(and(eq(submissionDisputes.submissionId, submissionId), eq(submissionDisputes.status, "OPEN"))).limit(1);
       if (existing.length) throw new Error("По этой рекомендации уже открыт спор");
-      await db.insert(submissionDisputes).values({ id: crypto.randomUUID(), submissionId, partnerId: portal.partner.id, reason, status: "OPEN", createdAt: now });
+      const submission = portal.submissions.find((item) => item.id === submissionId)!;
+      await db.insert(submissionDisputes).values({ id: crypto.randomUUID(), submissionId, partnerId: submission.partnerId, reason, status: "OPEN", createdAt: now });
       return Response.json({ ok: true });
     }
 
     if (action === "CONFIRM_REWARD") {
       const rewardId = cleanString(payload.rewardId, 80);
       const confirmed = payload.confirmed === true;
-      const reward = (await db.select().from(rewards).where(and(eq(rewards.id, rewardId), eq(rewards.partnerId, portal.partner.id))).limit(1))[0];
+      const reward = portal.rewards.find((item) => item.id === rewardId);
       if (!reward) throw new Error("Начисление не найдено");
       if (reward.status !== "PAID") throw new Error("Компания ещё не отметила выплату");
       await db.update(rewards).set({ partnerConfirmedAt: confirmed ? now : null, updatedAt: now }).where(eq(rewards.id, rewardId));

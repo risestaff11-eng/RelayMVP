@@ -46,7 +46,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
       if (applying.current) return;
       applying.current = true;
       observer.disconnect();
-      translateTree(document.body);
+      translateTree(document.body as unknown as ParentNode);
       document.title = translateToKazakh(document.title);
       document.querySelectorAll<HTMLMetaElement>('meta[name="description"], meta[property="og:title"], meta[property="og:description"], meta[name="twitter:title"], meta[name="twitter:description"]').forEach((meta) => {
         if (meta.content) meta.content = translateToKazakh(meta.content);

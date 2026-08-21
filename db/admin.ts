@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getDb } from ".";
-import { companies, userRoles, users } from "./schema";
+import { companies, users } from "./schema";
 
 export async function listCompanyUsers() {
   return getDb().select({
@@ -13,9 +13,8 @@ export async function listCompanyUsers() {
     createdAt: users.createdAt,
     status: users.status,
     tokenBalance: companies.aiTokenBalance,
-  }).from(users)
-    .innerJoin(userRoles, and(eq(userRoles.userId, users.id), eq(userRoles.role, "COMPANY")))
-    .leftJoin(companies, eq(companies.ownerUserId, users.id))
+  }).from(companies)
+    .innerJoin(users, eq(companies.ownerUserId, users.id))
     .orderBy(desc(users.createdAt));
 }
 
@@ -35,6 +34,7 @@ export async function deleteCompanyUser(userId: string) {
     "DELETE FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM missions WHERE program_id IN (SELECT id FROM programs WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM programs WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM company_knowledge_items WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM company_profile_versions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM company_members WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?) OR user_id = ?",
     "DELETE FROM companies WHERE owner_user_id = ?",
