@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getDb } from ".";
-import { companies, users } from "./schema";
+import { companies, userRoles, users } from "./schema";
 
 export async function listCompanyUsers() {
   return getDb().select({
@@ -13,8 +13,9 @@ export async function listCompanyUsers() {
     createdAt: users.createdAt,
     status: users.status,
     tokenBalance: companies.aiTokenBalance,
-  }).from(companies)
-    .innerJoin(users, eq(companies.ownerUserId, users.id))
+  }).from(users)
+    .innerJoin(userRoles, and(eq(userRoles.userId, users.id), eq(userRoles.role, "COMPANY")))
+    .leftJoin(companies, eq(companies.ownerUserId, users.id))
     .orderBy(desc(users.createdAt));
 }
 
