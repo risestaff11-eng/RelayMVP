@@ -22,7 +22,7 @@ export default async function SubmitLeadPage({ params, searchParams }: { params:
       </header>
       <div className="partner-submit-layout">
         <aside>
-          <span className="module-kicker">ПЕРЕДАЧА ЛИДА</span>
+          <span className="module-kicker">{["LEAD", "DEAL"].includes(target.mission.type) ? "ПЕРЕДАЧА КОНТАКТА" : "ПЕРЕДАЧА РЕЗУЛЬТАТА"}</span>
           <h1>{target.mission.title}</h1>
           <p>{target.mission.description}</p>
           <div className="submit-mission-facts">
@@ -32,7 +32,7 @@ export default async function SubmitLeadPage({ params, searchParams }: { params:
             <div><small>ВЫПЛАТА</small><strong>{target.program.payoutTerms || "После подтверждения результата"}</strong></div>
           </div>
         </aside>
-        <LeadSubmissionForm programSlug={slug} missionId={missionId} token={access} />
+        <LeadSubmissionForm programSlug={slug} missionId={missionId} missionType={target.mission.type} token={access} />
       </div>
     </main>
   );

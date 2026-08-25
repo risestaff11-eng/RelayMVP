@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 
 type JsonSchema = Record<string, unknown>;
 
-type GeminiResponse = {
+type AiProviderResponse = {
   candidates?: Array<{
     finishReason?: string;
     finishMessage?: string;
@@ -45,10 +45,10 @@ export async function generateStructuredJson<T>({
 }): Promise<StructuredAiResult<T>> {
   const runtime = env as unknown as { AI_PROVIDER?: string; GEMINI_API_KEY?: string; GEMINI_MODEL?: string };
   if (runtime.AI_PROVIDER && runtime.AI_PROVIDER !== "gemini") throw new Error("AI-провайдер настроен неверно");
-  if (!runtime.GEMINI_API_KEY) throw new Error("Gemini ещё не подключён администратором");
+  if (!runtime.GEMINI_API_KEY) throw new Error("Rela ещё не подключена администратором");
 
   const model = runtime.GEMINI_MODEL || "gemini-3.6-flash";
-  if (!/^[a-z0-9._-]+$/i.test(model)) throw new Error("Некорректное имя Gemini-модели");
+  if (!/^[a-z0-9._-]+$/i.test(model)) throw new Error("Некорректная настройка AI-модели Rela");
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
     signal: AbortSignal.timeout(60000),
@@ -65,9 +65,9 @@ export async function generateStructuredJson<T>({
       },
     }),
   });
-  const result = (await response.json()) as GeminiResponse;
-  if (!response.ok) throw new Error(result.error?.message || `Gemini API вернул HTTP ${response.status}`);
-  if (result.promptFeedback?.blockReason) throw new Error(`Gemini заблокировал запрос: ${result.promptFeedback.blockReason}`);
+  const result = (await response.json()) as AiProviderResponse;
+  if (!response.ok) throw new Error(result.error?.message || `Rela временно недоступна (HTTP ${response.status})`);
+  if (result.promptFeedback?.blockReason) throw new Error(`Rela не может обработать запрос: ${result.promptFeedback.blockReason}`);
 
   const candidate = result.candidates?.[0];
   const text = candidate?.content?.parts
@@ -75,13 +75,13 @@ export async function generateStructuredJson<T>({
     .map((part) => part.text)
     .join("")
     .trim();
-  if (!text) throw new Error(candidate?.finishMessage || `Gemini не вернул результат (${candidate?.finishReason || "без причины"})`);
+  if (!text) throw new Error(candidate?.finishMessage || `Rela не подготовила результат (${candidate?.finishReason || "без причины"})`);
 
   let data: T;
   try {
     data = JSON.parse(text) as T;
   } catch {
-    throw new Error("Gemini вернул ответ, который не удалось прочитать как JSON");
+    throw new Error("Rela подготовила ответ в неверном формате. Повторите запрос");
   }
 
   const inputTokens = result.usageMetadata?.promptTokenCount ?? 0;

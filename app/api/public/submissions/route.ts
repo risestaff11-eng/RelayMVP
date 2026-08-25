@@ -26,12 +26,13 @@ export async function POST(request: Request) {
     const target = await getMissionForPublicSubmission(programSlug, missionId);
     if (!target || !portal.programs.some((item) => item.id === target.program.id)) return Response.json({ error: "Задание недоступно" }, { status: 404 });
     if (!portal.acceptances.some((item) => item.missionId === missionId && item.status === "ACTIVE")) throw new Error("Сначала возьмите задание");
-    if (contactName.length < 2) throw new Error("Укажите имя потенциального клиента");
-    if (contactPhone.replace(/\D/g, "").length < 7) throw new Error("Укажите корректный телефон потенциального клиента");
+    const requiresContact = target.mission.type === "LEAD" || target.mission.type === "DEAL";
+    if (contactName.length < 2) throw new Error(requiresContact ? "Укажите имя потенциального клиента" : "Укажите название результата");
+    if (requiresContact && contactPhone.replace(/\D/g, "").length < 7) throw new Error("Укажите корректный телефон потенциального клиента");
     if (externalLinks.some((value) => { try { return !["http:", "https:"].includes(new URL(value).protocol); } catch { return true; } })) throw new Error("Проверьте ссылки в подтверждении результата");
 
     const db = getDb();
-    const duplicateRows = await db.select({ id: submissions.id }).from(submissions).where(and(eq(submissions.programId, target.program.id), contactEmail ? eq(submissions.contactEmail, contactEmail) : eq(submissions.contactPhone, contactPhone))).limit(1);
+    const duplicateRows = requiresContact ? await db.select({ id: submissions.id }).from(submissions).where(and(eq(submissions.programId, target.program.id), contactEmail ? eq(submissions.contactEmail, contactEmail) : eq(submissions.contactPhone, contactPhone))).limit(1) : [];
     if (duplicateRows.length) return Response.json({ error: "Такой контакт уже закреплён в этой программе. Полные данные существующей рекомендации не раскрываются." }, { status: 409 });
     const submissionId = crypto.randomUUID();
     const now = new Date().toISOString();

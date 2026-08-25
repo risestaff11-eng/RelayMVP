@@ -1,6 +1,6 @@
 import { and, asc, count, countDistinct, desc, eq, inArray, isNotNull, sum } from "drizzle-orm";
 import { getDb } from ".";
-import { missions, partners, programs, rewards, submissionAttachments, submissions } from "./schema";
+import { missionResources, missions, partners, programs, rewards, submissionAttachments, submissions } from "./schema";
 
 function parseList(value: string) {
   try {
@@ -33,6 +33,7 @@ export type MissionRecord = {
   verificationRules: string;
   status: string;
   sortOrder: number;
+  resources: Array<{ id: string; fileName: string; mimeType: string; size: number }>;
 };
 
 export type ProgramRecord = {
@@ -55,7 +56,7 @@ export type ProgramRecord = {
   resultCount: number;
 };
 
-function serializeMission(row: typeof missions.$inferSelect): MissionRecord {
+function serializeMission(row: typeof missions.$inferSelect, resources: Array<typeof missionResources.$inferSelect> = []): MissionRecord {
   return {
     id: row.id,
     type: row.type,
@@ -69,14 +70,16 @@ function serializeMission(row: typeof missions.$inferSelect): MissionRecord {
     verificationRules: row.verificationRules,
     status: row.status,
     sortOrder: row.sortOrder,
+    resources: resources.filter((resource) => resource.missionId === row.id).map(({ id, fileName, mimeType, size }) => ({ id, fileName, mimeType, size })),
   };
 }
 
 async function attachMissions(programRows: Array<typeof programs.$inferSelect>) {
   if (programRows.length === 0) return [];
   const ids = programRows.map((program) => program.id);
-  const [missionRows, agentRows, resultRows] = await Promise.all([
+  const [missionRows, resourceRows, agentRows, resultRows] = await Promise.all([
     getDb().select().from(missions).where(inArray(missions.programId, ids)).orderBy(asc(missions.sortOrder)),
+    getDb().select().from(missionResources).where(inArray(missionResources.companyId, programRows.map((program) => program.companyId))).orderBy(asc(missionResources.createdAt)),
     getDb().select({ id: partners.id, programId: partners.programId }).from(partners).where(inArray(partners.programId, ids)),
     getDb().select({ id: submissions.id, programId: submissions.programId }).from(submissions).where(inArray(submissions.programId, ids)),
   ]);
@@ -95,7 +98,7 @@ async function attachMissions(programRows: Array<typeof programs.$inferSelect>) 
     publishedAt: program.publishedAt,
     createdAt: program.createdAt,
     updatedAt: program.updatedAt,
-    missions: missionRows.filter((mission) => mission.programId === program.id).map(serializeMission),
+    missions: missionRows.filter((mission) => mission.programId === program.id).map((mission) => serializeMission(mission, resourceRows)),
     agentCount: agentRows.filter((agent) => agent.programId === program.id).length,
     resultCount: resultRows.filter((result) => result.programId === program.id).length,
   }));

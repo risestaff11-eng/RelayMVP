@@ -5,6 +5,7 @@ import {
   companies,
   companyKnowledgeItems,
   companyProfileVersions,
+  missionResources,
   missions,
   partnerAccessLinks,
   partnerMissionAcceptances,
@@ -51,10 +52,11 @@ export async function getPartnerPortal(token: string) {
   const partnerIds = identityRows.map((item) => item.id);
   const programIds = [...new Set(identityRows.map((item) => item.programId))];
 
-  const [programRows, companyRows, missionRows, submissionRows, rewardRows, profileRows, acceptanceRows, disputeRows, companyProfileRows, knowledgeRows] = await Promise.all([
+  const [programRows, companyRows, missionRows, resourceRows, submissionRows, rewardRows, profileRows, acceptanceRows, disputeRows, companyProfileRows, knowledgeRows] = await Promise.all([
     db.select().from(programs).where(inArray(programs.id, programIds)).orderBy(desc(programs.updatedAt)),
     db.select().from(companies).where(eq(companies.id, partner.companyId)).limit(1),
     db.select().from(missions).where(inArray(missions.programId, programIds)).orderBy(asc(missions.sortOrder)),
+    db.select().from(missionResources).where(eq(missionResources.companyId, partner.companyId)).orderBy(asc(missionResources.createdAt)),
     db.select().from(submissions).where(inArray(submissions.partnerId, partnerIds)).orderBy(desc(submissions.createdAt)),
     db.select().from(rewards).where(inArray(rewards.partnerId, partnerIds)).orderBy(desc(rewards.createdAt)),
     db.select().from(partnerProfiles).where(inArray(partnerProfiles.partnerId, partnerIds)),
@@ -82,6 +84,7 @@ export async function getPartnerPortal(token: string) {
       programSlug: missionProgram.slug,
       programExpiresAt: missionProgram.expiresAt,
       currency: missionProgram.currency,
+      resources: resourceRows.filter((resource) => resource.missionId === mission.id).map(({ id, fileName, mimeType, size }) => ({ id, fileName, mimeType, size })),
     };
   });
   const serializedSubmissions = submissionRows.map((submission) => ({
@@ -142,6 +145,14 @@ export async function getPartnerKnowledgeFile(token: string, itemId: string) {
   const portal = await getPartnerPortal(token);
   if (!portal) return null;
   return portal.knowledgeItems.find((item) => item.id === itemId && item.objectKey) ?? null;
+}
+
+export async function getPartnerMissionResource(token: string, resourceId: string) {
+  const portal = await getPartnerPortal(token);
+  if (!portal) return null;
+  const resource = (await getDb().select().from(missionResources).where(eq(missionResources.id, resourceId)).limit(1))[0];
+  if (!resource || resource.companyId !== portal.company.id || !portal.missions.some((mission) => mission.id === resource.missionId)) return null;
+  return resource;
 }
 
 export async function getMissionForPublicSubmission(programSlug: string, missionId: string) {

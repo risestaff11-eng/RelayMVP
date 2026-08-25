@@ -147,7 +147,7 @@ export async function POST(request: Request) {
     });
 
     const items = normalizeDrafts(ai.data.items, requested);
-    if (items.length !== requested.length) throw new Error("Gemini подготовил неполный комплект. Уточните бриф и попробуйте ещё раз.");
+    if (items.length !== requested.length) throw new Error("Rela подготовила неполный комплект. Уточните бриф и попробуйте ещё раз.");
     const spent = Math.min(company.aiTokenBalance, calculateAiCredits("KNOWLEDGE_GENERATION", ai));
     await getDb().update(companies).set({ aiTokenBalance: sql`max(${companies.aiTokenBalance} - ${spent}, 0)`, aiTokensUsed: sql`${companies.aiTokensUsed} + ${spent}`, updatedAt: new Date().toISOString() }).where(eq(companies.id, company.id));
     return Response.json({

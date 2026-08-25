@@ -11,7 +11,7 @@ import { formatDate } from "@/lib/format-display";
 export const metadata: Metadata = { title: "Агентские программы" };
 export const dynamic = "force-dynamic";
 
-const typeNames: Record<string, string> = { LEAD: "Лиды", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
+const typeNames: Record<string, string> = { LEAD: "Люди", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
 const statusNames: Record<string, string> = { DRAFT: "Черновик", ACTIVE: "Опубликована", PAUSED: "На паузе", ARCHIVED: "В архиве" };
 
 export default async function ProgramsPage() {
@@ -28,7 +28,7 @@ export default async function ProgramsPage() {
         <Link className="button button-primary compact-button" href="/dashboard/programs/new">Создать программу<span>＋</span></Link>
       </div>
 
-      {!confirmedProfile && <div className="inline-notice">Создание доступно без ограничений. Gemini использует {profile ? "последний черновик профиля" : "данные регистрации"}; подтвердить профиль можно позже для более точных заданий.</div>}
+      {!confirmedProfile && <div className="inline-notice">Создание доступно без ограничений. Rela использует {profile ? "последний черновик профиля" : "данные регистрации"}; подтвердить профиль можно позже для более точных заданий.</div>}
 
       <section className="program-summary-strip">
         <div><small>ВСЕГО</small><strong>{programList.length}</strong></div>
@@ -39,7 +39,7 @@ export default async function ProgramsPage() {
 
       {programList.length === 0 ? (
         <section className="panel program-zero-state">
-          <div className="program-zero-copy"><span className="module-kicker">ПЕРВЫЙ ЗАПУСК</span><h2>Создайте программу из четырёх типов заданий</h2><p>Выберите лиды, сделки, имидж или вовлечение. Gemini подготовит редактируемые карточки, а вы установите вознаграждение, проверку и сроки выплаты.</p><Link className="button button-primary" href="/dashboard/programs/new">Начать создание<span>→</span></Link></div>
+          <div className="program-zero-copy"><span className="module-kicker">ПЕРВЫЙ ЗАПУСК</span><h2>Создайте программу из четырёх типов заданий</h2><p>Выберите людей, сделки, имидж или вовлечение. Rela подготовит редактируемые задания, а вы установите вознаграждение, проверку и сроки выплаты.</p><Link className="button button-primary" href="/dashboard/programs/new">Начать создание<span>→</span></Link></div>
           <div className="mission-type-preview">{Object.entries(typeNames).map(([type, label], index) => <div className={`type-preview type-${type.toLowerCase()}`} key={type}><span>0{index + 1}</span><strong>{label}</strong><small>{type === "LEAD" ? "Квалифицированный контакт" : type === "DEAL" ? "Подтверждённая продажа" : type === "IMAGE" ? "Публикация или кейс" : "Обучение и комьюнити"}</small></div>)}</div>
         </section>
       ) : (

@@ -182,7 +182,7 @@ export function CompanyProfileEditor({
       <div className="profile-status-row">
         <div><small>ТЕКУЩАЯ ВЕРСИЯ</small><strong>{statusLabel}</strong></div>
         {profile && <div><small>ИСТОЧНИК</small><strong>{profile.sourceWebsite}</strong></div>}
-        {profile && <div><small>ТЕХНИЧЕСКИЙ ОБЪЁМ</small><strong>{formatInteger(profile.inputTokens + profile.outputTokens)} токенов Gemini</strong></div>}
+        {profile && <div><small>ТЕХНИЧЕСКИЙ ОБЪЁМ</small><strong>{formatInteger(profile.inputTokens + profile.outputTokens)} токенов Rela</strong></div>}
       </div>
 
       {!profile ? (

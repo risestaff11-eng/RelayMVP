@@ -8,7 +8,7 @@ export const statusNames: Record<string, string> = {
   REJECTED: "Отклонён",
 };
 
-export const typeNames: Record<string, string> = { LEAD: "Лид", DEAL: "Сделка", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
+export const typeNames: Record<string, string> = { LEAD: "Люди", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
 
 export function money(value: number, currency: string) {
   return `${value.toLocaleString("ru-RU")} ${currency === "KZT" ? "₸" : currency}`;

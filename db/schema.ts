@@ -196,6 +196,24 @@ export const missions = sqliteTable(
   (table) => [index("idx_missions_program_sort").on(table.programId, table.sortOrder)],
 );
 
+export const missionResources = sqliteTable(
+  "mission_resources",
+  {
+    id: text("id").primaryKey(),
+    missionId: text("mission_id").notNull().references(() => missions.id),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    objectKey: text("object_key").notNull(),
+    fileName: text("file_name").notNull(),
+    mimeType: text("mime_type").notNull().default("application/octet-stream"),
+    size: integer("size").notNull().default(0),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_mission_resources_mission").on(table.missionId, table.createdAt),
+    index("idx_mission_resources_company").on(table.companyId),
+  ],
+);
+
 export const partners = sqliteTable(
   "partners",
   {

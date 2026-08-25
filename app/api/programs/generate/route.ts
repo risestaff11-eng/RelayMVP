@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     if (name.length < 3) throw new Error("Название программы должно содержать минимум 3 символа");
     if (!GOALS.has(goal)) throw new Error("Выберите цель программы");
     if (!CURRENCIES.has(currency)) throw new Error("Выберите валюту вознаграждений");
-    if (selectedTypes.length < 1 || selectedTypes.length > 4 || selectedTypes.some((type) => !MISSION_TYPES.has(type))) throw new Error("Выберите от одного до четырёх типов миссий");
+    if (selectedTypes.length < 1 || selectedTypes.length > 4 || selectedTypes.some((type) => !MISSION_TYPES.has(type))) throw new Error("Выберите от одного до четырёх типов заданий");
     if (company.aiTokenBalance < minimumAiCredits("PROGRAM_GENERATION")) throw new Error("Недостаточно AI-кредитов для генерации программы");
 
     const db = getDb();
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     });
 
     const byType = new Map(ai.data.missions.map((mission) => [mission.type, mission]));
-    if (selectedTypes.some((type) => !byType.has(type)) || byType.size !== selectedTypes.length) throw new Error("Gemini вернул неполный набор миссий. Повторите генерацию.");
+    if (selectedTypes.some((type) => !byType.has(type)) || byType.size !== selectedTypes.length) throw new Error("Rela подготовила неполный набор заданий. Повторите генерацию.");
 
     const programId = crypto.randomUUID();
     const slug = `${slugPart(name)}-${crypto.randomUUID().slice(0, 7)}`;

@@ -33,6 +33,7 @@ export async function deleteCompanyUser(userId: string) {
     "DELETE FROM partner_profiles WHERE partner_id IN (SELECT id FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM legal_acceptances WHERE user_id = ? OR program_id IN (SELECT id FROM programs WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM mission_resources WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM missions WHERE program_id IN (SELECT id FROM programs WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM programs WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM company_knowledge_items WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",

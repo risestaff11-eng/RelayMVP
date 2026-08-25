@@ -3,7 +3,8 @@ import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
 import { getProgramForCompany } from "../../../../db/programs";
-import { companies, missions, programs } from "../../../../db/schema";
+import { companies, missionResources, missions, programs, submissions } from "../../../../db/schema";
+import { getFilesBucket } from "../../../../lib/storage";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
 import { agentUrl } from "../../../../lib/public-origins";
 
@@ -53,9 +54,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       const rewardValue = Math.max(0, Math.min(100000000, Math.round(Number(mission.rewardValue) || 0)));
       const rewardLabel = cleanString(mission.rewardLabel, 120);
       const verificationRules = cleanString(mission.verificationRules, 1200);
-      if (!title || !missionDescription || instructions.length < 1 || proofRequirements.length < 1 || !verificationRules) throw new Error("Заполните описание, шаги, подтверждение и правила каждой миссии");
+      if (!title || !missionDescription || instructions.length < 1 || proofRequirements.length < 1 || !verificationRules) throw new Error("Заполните описание, шаги, подтверждение и правила каждого задания");
       if (!REWARD_MODES.has(rewardMode)) throw new Error("Выберите корректный тип вознаграждения");
-      if (rewardMode !== "NON_MONETARY" && rewardValue <= 0) throw new Error("Укажите размер вознаграждения для каждой денежной миссии");
+      if (rewardMode !== "NON_MONETARY" && rewardValue <= 0) throw new Error("Укажите размер вознаграждения для каждого денежного задания");
       if (!rewardLabel) throw new Error("Укажите понятное название вознаграждения");
       return { id: missionId, type, title, description: missionDescription, instructions, proofRequirements, rewardMode, rewardValue, rewardLabel, verificationRules, sortOrder: index, isNew };
     });
@@ -112,4 +113,29 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const message = error instanceof Error ? error.message : "Не удалось сохранить программу";
     return Response.json({ error: message }, { status: 400 });
   }
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
+  const user = await getChatGPTUser();
+  if (!user) return Response.json({ error: "Сначала войдите в аккаунт" }, { status: 401 });
+  const company = await getCompanyForUser(user.userId);
+  if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  const { id } = await params;
+  const current = await getProgramForCompany(company.id, id);
+  if (!current) return Response.json({ error: "Программа не найдена" }, { status: 404 });
+  const payload = await request.json() as { missionId?: string };
+  const missionId = cleanString(payload.missionId, 80);
+  const mission = current.missions.find((item) => item.id === missionId);
+  if (!mission) return Response.json({ error: "Задание не найдено" }, { status: 404 });
+  if (current.missions.length <= 1) return Response.json({ error: "В программе должно остаться хотя бы одно задание" }, { status: 400 });
+  const linked = await getDb().select({ id: submissions.id }).from(submissions).where(eq(submissions.missionId, missionId)).limit(1);
+  if (linked[0]) return Response.json({ error: "Нельзя удалить задание с результатами агентов. Поставьте программу на паузу и сохраните историю." }, { status: 409 });
+  const resources = await getDb().select().from(missionResources).where(eq(missionResources.missionId, missionId));
+  await Promise.all(resources.map((resource) => getFilesBucket().delete(resource.objectKey)));
+  await getDb().batch([
+    getDb().delete(missionResources).where(eq(missionResources.missionId, missionId)),
+    getDb().delete(missions).where(and(eq(missions.id, missionId), eq(missions.programId, id))),
+  ]);
+  return Response.json({ ok: true });
 }
