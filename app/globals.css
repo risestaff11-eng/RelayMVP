@@ -2356,3 +2356,73 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
   .opportunity-focus-head { flex-direction: column; }
   .opportunity-focus-columns { grid-template-columns: 1fr; }
 }
+
+/* Readable mission editor: the work area should feel like a tool, not a scaled-down preview. */
+.mission-type-cascade > button {
+  min-height: 136px;
+  padding: 19px;
+  grid-template-columns: 42px minmax(0, 1fr) 28px;
+  gap: 13px;
+}
+.mission-type-cascade i { width: 42px; height: 42px; font-size: 19px; }
+.mission-type-cascade strong { font-size: 17px; line-height: 1.2; }
+.mission-type-cascade small { margin-top: 8px; font-size: 13px; line-height: 1.45; }
+.mission-type-cascade b { width: 28px; height: 28px; font-size: 12px; }
+.mission-workspace > header { min-height: 144px; padding: 29px 34px; }
+.mission-workspace > header span { font-size: 12px; }
+.mission-workspace > header h2 { max-width: 760px; margin-top: 9px; font-size: clamp(32px, 3.4vw, 44px); line-height: 1.06; }
+.mission-workspace > header button { min-height: 52px; padding: 0 20px; font-size: 15px; }
+.mission-tabs { padding: 15px 18px; gap: 10px; }
+.mission-tabs button { min-width: 240px; padding: 14px 16px; font-size: 14px; line-height: 1.3; }
+.mission-tabs span { font-size: 11px; }
+.mission-focus-editor { padding: 34px; gap: 24px 26px; }
+.mission-focus-head small { font-size: 11px; }
+.mission-focus-head strong { margin-top: 7px; font-size: 22px; line-height: 1.25; }
+.mission-delete-button { width: 48px; height: 48px; font-size: 27px; }
+.mission-focus-editor .builder-field { gap: 9px; }
+.mission-focus-editor .builder-field > span { font-size: 13px; line-height: 1.4; }
+.mission-focus-editor input,
+.mission-focus-editor select,
+.mission-focus-editor textarea {
+  padding-right: 16px;
+  padding-left: 16px;
+  border-radius: 13px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.mission-focus-editor input,
+.mission-focus-editor select { min-height: 56px; }
+.mission-focus-editor textarea { min-height: 132px; padding-top: 15px; padding-bottom: 15px; }
+.mission-focus-editor > label:nth-of-type(3) textarea,
+.mission-focus-editor > label:nth-of-type(4) textarea,
+.mission-focus-editor > label:last-child textarea { min-height: 154px; }
+.mission-resource-box { padding: 20px; gap: 12px 18px; }
+.mission-resource-box strong { font-size: 16px; }
+.mission-resource-box p { margin-top: 6px; font-size: 13px; line-height: 1.45; }
+.mission-resource-box > button { min-height: 46px; padding: 0 17px; font-size: 14px; }
+.mission-resource-box li a { font-size: 14px; }
+
+@media (max-width: 1050px) {
+  .mission-focus-editor { grid-template-columns: 1fr; }
+  .mission-focus-head,
+  .mission-focus-editor > .mission-resource-box,
+  .mission-focus-editor > .reward-editor,
+  .mission-focus-editor > label:nth-of-type(3),
+  .mission-focus-editor > label:nth-of-type(4),
+  .mission-focus-editor > label:last-child { grid-column: auto; }
+}
+
+@media (max-width: 760px) {
+  .mission-type-cascade > button { min-width: 265px; min-height: 132px; }
+  .mission-workspace > header { padding: 22px; }
+  .mission-workspace > header h2 { font-size: clamp(29px, 9vw, 38px); }
+  .mission-tabs button { min-width: 220px; }
+  .mission-focus-editor { padding: 21px; gap: 21px; }
+  .mission-focus-editor input,
+  .mission-focus-editor select,
+  .mission-focus-editor textarea { font-size: 16px; }
+  .mission-focus-editor textarea,
+  .mission-focus-editor > label:nth-of-type(3) textarea,
+  .mission-focus-editor > label:nth-of-type(4) textarea,
+  .mission-focus-editor > label:last-child textarea { min-height: 138px; }
+}
