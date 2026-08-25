@@ -1,6 +1,7 @@
 import { and, asc, count, countDistinct, desc, eq, inArray, isNotNull, sum } from "drizzle-orm";
 import { getDb } from ".";
 import { missionResources, missions, partners, programs, rewards, submissionAttachments, submissions } from "./schema";
+import { parseSubmissionFormFields, type SubmissionFormField } from "../lib/submission-form";
 
 function parseList(value: string) {
   try {
@@ -11,12 +12,15 @@ function parseList(value: string) {
   }
 }
 
-function parsePartnerComment(value: string) {
+function parseSubmissionPayload(value: string) {
   try {
-    const parsed = JSON.parse(value) as { partnerComment?: unknown };
-    return typeof parsed.partnerComment === "string" ? parsed.partnerComment : "";
+    const parsed = JSON.parse(value) as { partnerComment?: unknown; customAnswers?: unknown };
+    return {
+      partnerComment: typeof parsed.partnerComment === "string" ? parsed.partnerComment : "",
+      customAnswers: Array.isArray(parsed.customAnswers) ? parsed.customAnswers.filter((item): item is { fieldId: string; label: string; type: string; value: string | string[] } => Boolean(item && typeof item === "object" && typeof (item as { label?: unknown }).label === "string")) : [],
+    };
   } catch {
-    return "";
+    return { partnerComment: "", customAnswers: [] as Array<{ fieldId: string; label: string; type: string; value: string | string[] }> };
   }
 }
 
@@ -46,6 +50,7 @@ export type ProgramRecord = {
   currency: string;
   payoutTerms: string;
   legalTerms: string;
+  formFields: SubmissionFormField[];
   expiresAt: string | null;
   status: string;
   publishedAt: string | null;
@@ -93,6 +98,7 @@ async function attachMissions(programRows: Array<typeof programs.$inferSelect>) 
     currency: program.currency,
     payoutTerms: program.payoutTerms,
     legalTerms: program.legalTerms,
+    formFields: parseSubmissionFormFields(program.submissionFormJson),
     expiresAt: program.expiresAt,
     status: program.status,
     publishedAt: program.publishedAt,
@@ -166,7 +172,7 @@ export async function getSubmissionsForCompany(companyId: string) {
     rewardLabel: row.mission.rewardLabel,
     currency: row.program.currency,
     programName: row.program.name,
-    partnerComment: parsePartnerComment(row.submission.payloadJson),
+    ...parseSubmissionPayload(row.submission.payloadJson),
     attachments: attachmentRows.filter((attachment) => attachment.submissionId === row.submission.id),
   }));
 }

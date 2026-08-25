@@ -132,6 +132,7 @@ export const programs = sqliteTable(
     currency: text("currency").notNull().default("KZT"),
     payoutTerms: text("payout_terms").notNull().default(""),
     legalTerms: text("legal_terms").notNull().default(""),
+    submissionFormJson: text("submission_form_json").notNull().default("[]"),
     expiresAt: text("expires_at"),
     status: text("status").notNull().default("DRAFT"),
     publishedAt: text("published_at"),

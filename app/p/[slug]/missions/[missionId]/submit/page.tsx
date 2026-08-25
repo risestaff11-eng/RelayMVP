@@ -32,7 +32,7 @@ export default async function SubmitLeadPage({ params, searchParams }: { params:
             <div><small>ВЫПЛАТА</small><strong>{target.program.payoutTerms || "После подтверждения результата"}</strong></div>
           </div>
         </aside>
-        <LeadSubmissionForm programSlug={slug} missionId={missionId} missionType={target.mission.type} token={access} />
+        <LeadSubmissionForm programSlug={slug} missionId={missionId} missionType={target.mission.type} token={access} formFields={target.program.formFields} />
       </div>
     </main>
   );

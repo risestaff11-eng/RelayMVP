@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { getDb } from ".";
 import { hashPartnerToken } from "../lib/partner-token";
+import { parseSubmissionFormFields } from "../lib/submission-form";
 import {
   companies,
   companyKnowledgeItems,
@@ -32,8 +33,9 @@ function parsePayload(value: string) {
     return {
       partnerComment: typeof parsed.partnerComment === "string" ? parsed.partnerComment : "",
       externalLinks: Array.isArray(parsed.externalLinks) ? parsed.externalLinks.filter((item): item is string => typeof item === "string") : [],
+      customAnswers: Array.isArray(parsed.customAnswers) ? parsed.customAnswers.filter((item) => item && typeof item === "object") : [],
     };
-  } catch { return { partnerComment: "", externalLinks: [] as string[] }; }
+  } catch { return { partnerComment: "", externalLinks: [] as string[], customAnswers: [] as unknown[] }; }
 }
 
 export async function getPartnerPortal(token: string) {
@@ -162,5 +164,6 @@ export async function getMissionForPublicSubmission(programSlug: string, mission
     .innerJoin(companies, eq(programs.companyId, companies.id))
     .where(and(eq(programs.slug, programSlug), eq(programs.status, "ACTIVE"), eq(missions.id, missionId), eq(missions.status, "ACTIVE")))
     .limit(1);
-  return rows[0] ?? null;
+  const row = rows[0];
+  return row ? { ...row, program: { ...row.program, formFields: parseSubmissionFormFields(row.program.submissionFormJson) } } : null;
 }

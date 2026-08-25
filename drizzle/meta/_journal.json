@@ -141,6 +141,13 @@
       "when": 1787683678346,
       "tag": "0019_big_mother_askani",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1787699530791,
+      "tag": "0020_fine_mandrill",
+      "breakpoints": true
     }
   ]
 }

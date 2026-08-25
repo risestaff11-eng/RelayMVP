@@ -7,6 +7,7 @@ import { companies, missionResources, missions, programs, submissions } from "..
 import { getFilesBucket } from "../../../../lib/storage";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
 import { agentUrl } from "../../../../lib/public-origins";
+import { normalizeSubmissionFormFields } from "../../../../lib/submission-form";
 
 const GOALS = new Set(["LEADS", "DEALS", "BRAND", "ENGAGEMENT", "MIXED"]);
 const CURRENCIES = new Set(["KZT", "RUB", "USD", "EUR"]);
@@ -35,6 +36,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const publish = payload.publish === true;
     const pause = payload.pause === true;
     const missionPayloads = Array.isArray(payload.missions) ? payload.missions as Array<Record<string, unknown>> : [];
+    const formFields = normalizeSubmissionFormFields(payload.formFields);
     if (name.length < 3 || !description) throw new Error("Заполните название и описание программы");
     if (!GOALS.has(goal) || !CURRENCIES.has(currency)) throw new Error("Проверьте цель и валюту программы");
     if (missionPayloads.length < current.missions.length || missionPayloads.length === 0 || missionPayloads.length > 12) throw new Error("В программе должно быть от 1 до 12 заданий");
@@ -102,7 +104,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       updatedAt: now,
     }));
     await db.batch([
-      db.update(programs).set({ name, description, goal, currency, payoutTerms, legalTerms, expiresAt, status: nextStatus, publishedAt: publish ? current.publishedAt ?? now : current.publishedAt, updatedAt: now }).where(and(eq(programs.id, id), eq(programs.companyId, company.id))),
+      db.update(programs).set({ name, description, goal, currency, payoutTerms, legalTerms, submissionFormJson: JSON.stringify(formFields), expiresAt, status: nextStatus, publishedAt: publish ? current.publishedAt ?? now : current.publishedAt, updatedAt: now }).where(and(eq(programs.id, id), eq(programs.companyId, company.id))),
       ...missionUpdates,
       ...missionInserts,
       db.update(companies).set({ onboardingStatus: publish ? "PROGRAM_PUBLISHED" : "PROGRAM_DRAFT", updatedAt: now }).where(eq(companies.id, company.id)),

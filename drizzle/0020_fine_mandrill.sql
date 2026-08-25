@@ -1,0 +1,1 @@
+ALTER TABLE `programs` ADD `submission_form_json` text DEFAULT '[]' NOT NULL;
