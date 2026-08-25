@@ -14,7 +14,7 @@ const typeCopy: Record<string, { summary: string; result: string; proof: string;
   ENGAGEMENT: { summary: "Обучение, мероприятие, тест или активность", result: "Какое полезное действие должен выполнить агент", proof: "Результат теста, скриншот или подтверждение участия", template: { type: "ENGAGEMENT", title: "Выполните полезную продуктовую активность", description: "Пройдите обучение, посетите событие или выполните действие, которое помогает лучше работать с продуктом.", instructions: ["Откройте материал или событие", "Выполните указанную активность", "Передайте подтверждение через Relay"], proofRequirements: ["Скриншот результата или подтверждение участия"], rewardMode: "NON_MONETARY", rewardValue: 0, rewardLabel: "Откройте доступ к новым заданиям", verificationRules: "Компания проверит завершение активности по указанному подтверждению.", status: "ACTIVE" } },
 };
 
-function downloadBlob(blob: Blob, name: string) { const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click(); URL.revokeObjectURL(url); }
+function downloadBlob(blob: Blob, name: string) { const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; document.body.appendChild(anchor); anchor.click(); anchor.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1_000); }
 
 export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecord }) {
   const [program, setProgram] = useState(initialProgram);

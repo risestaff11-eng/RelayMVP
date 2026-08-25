@@ -5,7 +5,7 @@ import { formatDate, formatInteger } from "@/lib/format-display";
 
 type Agent = { id: string; name: string; email: string; phone: string; programName: string; results: number; accepted: number; deals: number; acceptanceRate: number; dealRate: number; due: number; paid: number; lastActivity: string; score: number };
 
-function downloadBlob(blob: Blob, name: string) { const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url); }
+function downloadBlob(blob: Blob, name: string) { const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1_000); }
 
 export function AnalyticsReport({ agents, periodLabel, totals }: { agents: Agent[]; periodLabel: string; totals: { agents: number; active: number; results: number; deals: number; paid: number } }) {
   const [sort, setSort] = useState("score"); const [query, setQuery] = useState("");
