@@ -2602,7 +2602,7 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .mission-type-choice button strong { font-size: 15px; }
 .mission-type-choice button small { margin-top: 5px; color: #5a5d54; font-size: 10px; line-height: 1.4; }
 .mission-type-choice button > b { font-size: 18px; }
-.program-drawer-backdrop { position: fixed; inset: 0; z-index: 130; display: flex; justify-content: flex-end; background: rgba(14,15,12,.62); backdrop-filter: blur(5px); }
+.program-drawer-backdrop { position: fixed; inset: 0; z-index: 2200; display: flex; justify-content: flex-end; background: rgba(14,15,12,.62); backdrop-filter: blur(5px); }
 .program-drawer-backdrop > button { position: absolute; inset: 0; width: 100%; border: 0; background: transparent; }
 .program-drawer { position: relative; width: min(760px,94vw); height: 100dvh; display: grid; grid-template-rows: auto auto minmax(0,1fr) auto; color: #171914; background: #f7f6f1; box-shadow: -30px 0 80px rgba(0,0,0,.25); animation: relay-drawer-in .2s ease-out both; }
 @keyframes relay-drawer-in { from { transform: translate3d(40px,0,0); opacity: .7; } to { transform: translate3d(0,0,0); opacity: 1; } }
