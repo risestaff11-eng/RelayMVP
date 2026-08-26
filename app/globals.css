@@ -2547,13 +2547,12 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .mission-list-summary p { margin: 0; color: #55584f; font-size: 11px; }
 .program-settings-stage { display: grid; gap: 14px; }
 .program-advanced-settings { max-width: 920px; width: 100%; margin: 0 auto; overflow: hidden; padding: 0; }
-.program-advanced-settings > summary { padding: 19px 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; cursor: pointer; list-style: none; }
-.program-advanced-settings > summary::-webkit-details-marker { display: none; }
-.program-advanced-settings summary b,.program-advanced-settings summary small { display: block; }
-.program-advanced-settings summary b { font-size: 15px; }
-.program-advanced-settings summary small { margin-top: 4px; color: #65685f; font-size: 11px; }
-.program-advanced-settings summary i { font-style: normal; transition: transform .16s ease; }
-.program-advanced-settings[open] summary i { transform: rotate(180deg); }
+.program-advanced-toggle { width: 100%; padding: 19px 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.program-advanced-toggle b,.program-advanced-toggle small { display: block; }
+.program-advanced-toggle b { font-size: 15px; }
+.program-advanced-toggle small { margin-top: 4px; color: #65685f; font-size: 11px; }
+.program-advanced-toggle i { font-style: normal; transition: transform .16s ease; }
+.program-advanced-settings.open .program-advanced-toggle i { transform: rotate(180deg); }
 .program-advanced-content { padding: 0 22px 22px; display: grid; gap: 18px; border-top: 1px solid #e1e1da; }
 .program-advanced-content > .builder-field { margin-top: 18px; }
 .result-form-summary { padding: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #d7d8cf; border-radius: 14px; background: #f7f6f1; }
