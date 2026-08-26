@@ -2647,7 +2647,7 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
   .builder-stepper:has(span:nth-child(4)) span { min-width: 150px; }
   .new-program-actions { width: 100%; flex-direction: column-reverse; }
   .new-program-actions .button { width: 100%; }
-  .program-flow-page { padding-bottom: 430px; }
+  .dashboard-content.program-flow-page { padding-bottom: 300px; }
   .program-flow-heading h1 { font-size: 38px; }
   .program-flow-stepper { margin-right: -13px; padding-right: 13px; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 72%; scroll-snap-type: x proximity; }
   .program-flow-stepper button { min-width: 0; scroll-snap-align: start; }
