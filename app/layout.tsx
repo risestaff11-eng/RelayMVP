@@ -24,17 +24,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const description = "Запускайте агентские программы, приглашайте агентов по одной ссылке и прозрачно ведите рекомендации от передачи до выплаты.";
+const description = "Запускайте и управляйте каналом амбассадоров: задавайте результат, условия, вознаграждение и контролируйте путь рекомендации до выплаты.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://risestaff.kz"),
   applicationName: "Relay",
   title: {
-    default: "Relay — агентские продажи и реферальные программы",
+    default: "Relay — канал продаж через амбассадоров",
     template: "%s · Relay",
   },
   description,
-  keywords: ["агентские продажи", "агентская программа", "реферальная программа", "партнёрские продажи", "внешние агенты", "Relay", "RiseStaff"],
+  keywords: ["канал амбассадоров", "программа для амбассадоров", "управление рекомендациями", "партнёрские продажи", "внешние продажи", "Relay", "RiseStaff"],
   creator: "Relay",
   publisher: "Relay",
   category: "business",
@@ -56,15 +56,15 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: "Relay",
     locale: "ru_KZ",
-    title: "Relay — агентские продажи и реферальные программы",
+    title: "Relay — канал продаж через амбассадоров",
     description,
     type: "website",
     url: "https://risestaff.kz/",
-    images: [{ url: "https://risestaff.kz/og.png", width: 1731, height: 909, alt: "Relay — агентские продажи по одной ссылке" }],
+    images: [{ url: "https://risestaff.kz/og.png", width: 1731, height: 909, alt: "Relay — канал продаж через амбассадоров" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Relay — агентские продажи и реферальные программы",
+    title: "Relay — канал продаж через амбассадоров",
     description,
     images: ["https://risestaff.kz/og.png"],
   },
