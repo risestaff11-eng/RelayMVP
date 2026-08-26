@@ -18,33 +18,33 @@ export function NewProgramForm({ companyName, tokenBalance, profileVersion, prof
   const [goal, setGoal] = useState("MIXED");
   const [currency, setCurrency] = useState("KZT");
   const [selected, setSelected] = useState(["LEAD", "DEAL"]);
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState<"ai" | "manual" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function toggle(type: string) {
     setSelected((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]);
   }
 
-  async function generate(event: React.FormEvent) {
+  async function generate(event: React.FormEvent, mode: "ai" | "manual" = "ai") {
     event.preventDefault();
-    setPending(true);
+    setPending(mode);
     setError(null);
     try {
-      const response = await fetch("/api/programs/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, goal, currency, missionTypes: selected }) });
+      const response = await fetch("/api/programs/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, goal, currency, missionTypes: selected, mode }) });
       const data = await response.json() as { programId?: string; error?: string };
       if (!response.ok || !data.programId) throw new Error(data.error || "Не удалось сгенерировать программу");
       router.push(`/dashboard/programs/${data.programId}`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Не удалось сгенерировать программу");
-      setPending(false);
+      setPending(null);
     }
   }
 
   return (
     <div className="dashboard-content module-content program-builder-page">
       <div className="builder-back"><Link href="/dashboard/programs">← Все программы</Link><span>{profileVersion ? `AI-профиль v${profileVersion}${profileStatus === "CONFIRMED" ? " · подтверждён" : " · черновик"}` : "AI-профиль не заполнен"} · {formatInteger(tokenBalance)} AI-кредитов</span></div>
-      <div className="module-heading"><div><span className="module-kicker">НОВАЯ ПРОГРАММА · ШАГ 1 ИЗ 3</span><h1>Задайте рамки программы</h1><p>Rela использует доступные данные компании и создаст редактируемый черновик каждого выбранного задания. Подтверждение профиля не обязательно.</p></div></div>
-      <div className="builder-stepper"><span className="active"><b>1</b>Основа</span><span><b>2</b>Задания и награды</span><span><b>3</b>Правила и публикация</span></div>
+      <div className="module-heading"><div><span className="module-kicker">НОВАЯ ПРОГРАММА · ШАГ 1 ИЗ 4</span><h1>Что вы хотите запустить?</h1><p>Выберите направление. На следующем экране вы настроите задания по одному — без длинной формы.</p></div></div>
+      <div className="builder-stepper"><span className="active"><b>1</b>Основное</span><span><b>2</b>Задания</span><span><b>3</b>Условия</span><span><b>4</b>Проверка</span></div>
 
       <form className="program-create-layout" onSubmit={generate}>
         <section className="panel program-basics-card">
@@ -59,7 +59,7 @@ export function NewProgramForm({ companyName, tokenBalance, profileVersion, prof
         </section>
 
         {error && <div className="inline-notice error builder-error" role="alert">{error}</div>}
-        <div className="builder-submit-bar"><div><strong>Что сделает Rela</strong><p>Предложит действия, доказательства результата, правила проверки и стартовую награду. Списание — по факту, не более {300 + selected.length * 150} AI-кредитов.</p></div><button className="button button-primary" type="submit" disabled={pending || selected.length === 0}>{pending ? "Rela создаёт задания…" : "Сгенерировать черновик"}<span>✦</span></button></div>
+        <div className="builder-submit-bar"><div><strong>Выберите удобный старт</strong><p>Rela может заполнить задания за вас, либо вы начнёте с простых шаблонов и настроите всё вручную.</p></div><div className="new-program-actions"><button className="button button-ghost" type="button" onClick={(event) => void generate(event, "manual")} disabled={pending !== null || selected.length === 0}>{pending === "manual" ? "Создаём…" : "Настроить вручную"}</button><button className="button button-primary" type="submit" disabled={pending !== null || selected.length === 0}>{pending === "ai" ? "Rela создаёт задания…" : "Создать черновик с Rela"}<span>✦</span></button></div></div>
       </form>
     </div>
   );

@@ -56,10 +56,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       const rewardValue = Math.max(0, Math.min(100000000, Math.round(Number(mission.rewardValue) || 0)));
       const rewardLabel = cleanString(mission.rewardLabel, 120);
       const verificationRules = cleanString(mission.verificationRules, 1200);
-      if (!title || !missionDescription || instructions.length < 1 || proofRequirements.length < 1 || !verificationRules) throw new Error("Заполните описание, шаги, подтверждение и правила каждого задания");
       if (!REWARD_MODES.has(rewardMode)) throw new Error("Выберите корректный тип вознаграждения");
-      if (rewardMode !== "NON_MONETARY" && rewardValue <= 0) throw new Error("Укажите размер вознаграждения для каждого денежного задания");
-      if (!rewardLabel) throw new Error("Укажите понятное название вознаграждения");
+      if (publish && (!title || !missionDescription || instructions.length < 1 || proofRequirements.length < 1 || !verificationRules)) throw new Error("Перед публикацией заполните описание, шаги, подтверждение и правила каждого задания");
+      if (publish && rewardMode !== "NON_MONETARY" && rewardValue <= 0) throw new Error("Перед публикацией укажите размер вознаграждения для каждого денежного задания");
+      if (publish && !rewardLabel) throw new Error("Перед публикацией укажите понятное название вознаграждения");
       return { id: missionId, type, title, description: missionDescription, instructions, proofRequirements, rewardMode, rewardValue, rewardLabel, verificationRules, sortOrder: index, isNew };
     });
     if (current.missions.some((mission) => !missionPayloads.some((payload) => cleanString(payload.id, 80) === mission.id))) throw new Error("Удаление действующих заданий пока недоступно: они могут быть связаны с результатами агентов");

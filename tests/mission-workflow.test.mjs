@@ -25,17 +25,28 @@ test("image and engagement submissions do not require client contact details", a
   assert.match(form, /missionType === "LEAD" \|\| missionType === "DEAL"/);
 });
 
-test("program editor supports unique AI variants, configurable form fields and publish confirmation", async () => {
+test("program editor uses guided stages, compact missions and safe drawers", async () => {
   const editor = await readFile(new URL("../app/dashboard/programs/[id]/program-editor.tsx", import.meta.url), "utf8");
   const aiRoute = await readFile(new URL("../app/api/programs/[id]/ai/route.ts", import.meta.url), "utf8");
   const schema = await readFile(new URL("../db/schema.ts", import.meta.url), "utf8");
-  assert.match(editor, /Новый вариант с Rela/);
-  assert.match(editor, /ШАГ 4/);
+  assert.match(editor, /compact-mission-list/);
+  assert.match(editor, /program-drawer/);
+  assert.match(editor, /Что увидит агент/);
+  assert.match(editor, /Применить задание/);
   assert.match(editor, /moveFormField/);
   assert.match(editor, /window\.confirm\(`Опубликовать программу/);
   assert.match(aiRoute, /variationSeed/);
   assert.match(aiRoute, /existing/);
   assert.match(schema, /submission_form_json/);
+});
+
+test("program creation keeps AI optional and draft saves allow incomplete missions", async () => {
+  const form = await readFile(new URL("../app/dashboard/programs/new/new-program-form.tsx", import.meta.url), "utf8");
+  const createRoute = await readFile(new URL("../app/api/programs/generate/route.ts", import.meta.url), "utf8");
+  const updateRoute = await readFile(new URL("../app/api/programs/[id]/route.ts", import.meta.url), "utf8");
+  assert.match(form, /Настроить вручную/);
+  assert.match(createRoute, /mode === "manual"/);
+  assert.match(updateRoute, /publish && \(!title/);
 });
 
 test("public submission saves dynamic answers and files", async () => {
