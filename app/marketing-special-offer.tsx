@@ -58,7 +58,7 @@ export function MarketingSpecialOffer() {
     <button className="lp-special-offer-dismiss" type="button" onClick={() => setOpen(false)} aria-label="Закрыть спецпредложение" />
     <section className="lp-special-offer" role="dialog" aria-modal="true" aria-labelledby="special-offer-title" aria-describedby="special-offer-copy">
       <button ref={closeButtonRef} className="lp-special-offer-close" type="button" onClick={() => setOpen(false)} aria-label="Закрыть">×</button>
-      <span>5 МЕСТ НА БЛИЖАЙШИЙ ПЕРСОНАЛЬНЫЙ ЗАПУСК</span>
+      <span>ТОЛЬКО 20 КОМПАНИЙ НА БЛИЖАЙШИЙ ПЕРСОНАЛЬНЫЙ ЗАПУСК</span>
       <h2 id="special-offer-title">Соберём первую программу Relay вместе с вами.</h2>
       <p id="special-offer-copy">За одну рабочую встречу разберём продукт и подготовим основу программы к публикации.</p>
       <ul className="lp-special-offer-kit">
@@ -66,7 +66,7 @@ export function MarketingSpecialOffer() {
         <li><b>02</b><span><strong>Форма передачи результата</strong>Поля и подтверждения для агента</span></li>
         <li><b>03</b><span><strong>Правила проверки</strong>Статусы, награды и причины отказа</span></li>
       </ul>
-      <div className="lp-special-offer-limit"><b>05</b><span><strong>Только пять компаний</strong>Набор закроется после заполнения мест</span></div>
+      <div className="lp-special-offer-limit"><b>20</b><span><strong>Только 20 компаний</strong>Набор закроется после заполнения двадцати мест</span></div>
       <a href={whatsappHref} target="_blank" rel="noreferrer" data-track="special_offer_whatsapp">Оставить заявку <span aria-hidden="true">↗</span></a>
       <button className="lp-special-offer-later" type="button" onClick={() => setOpen(false)}>Продолжить знакомство с Relay</button>
     </section>
