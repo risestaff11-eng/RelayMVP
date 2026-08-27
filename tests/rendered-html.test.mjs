@@ -54,7 +54,7 @@ test("renders the Relay landing page", async () => {
   assert.match(html, /<html lang="ru"/);
   assert.match(html, /relay-language-switcher/);
   assert.match(html, />ҚАЗ</);
-  assert.match(html, /Relay — B2B-продажи через агентов и амбассадоров/);
+  assert.match(html, /Relay — продажи через агентов и амбассадоров/);
   assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz"/);
   assert.match(html, /rel="icon" href="\/icon-192\.png"/);
   assert.match(html, /"@type":"WebSite"/);
@@ -66,7 +66,8 @@ test("renders the Relay landing page", async () => {
   assert.match(html, /Агент сразу видит, кого искать и сколько заработает/);
   assert.match(html, /ТЕКУЩИЙ ПИЛОТ RELAY/);
   assert.match(html, /Relay не является биржей амбассадоров/);
-  assert.match(html, /ДЛЯ B2B-КОМПАНИЙ, КОТОРЫМ НУЖНЫ ЛИДЫ ПО РЕКОМЕНДАЦИИ/);
+  assert.match(html, /ДЛЯ КОМПАНИЙ, КОТОРЫМ НУЖНЫ КЛИЕНТЫ ПО РЕКОМЕНДАЦИИ/);
+  assert.doesNotMatch(html, /B2B-клиент|B2B-лид|B2B-продаж/i);
   assert.match(html, /50 000 AI-кредитов/);
   assert.doesNotMatch(html, /бесплат|ранний доступ|бета-тест/i);
   assert.match(html, /Что нужно знать перед запуском/);

@@ -24,13 +24,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const description = "Создавайте задания для внешних агентов, получайте B2B-лиды по одной ссылке и отслеживайте каждый результат до выплаты.";
+const description = "Создавайте задания для внешних агентов, получайте новых клиентов по одной ссылке и отслеживайте каждый результат до выплаты.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://risestaff.kz"),
   applicationName: "Relay",
   title: {
-    default: "Relay — B2B-продажи через агентов и амбассадоров",
+    default: "Relay — продажи через агентов и амбассадоров",
     template: "%s · Relay",
   },
   description,
@@ -56,15 +56,15 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: "Relay",
     locale: "ru_KZ",
-    title: "Relay — B2B-продажи через агентов и амбассадоров",
+    title: "Relay — продажи через агентов и амбассадоров",
     description,
     type: "website",
     url: "https://risestaff.kz/",
-    images: [{ url: "https://risestaff.kz/og.png", width: 1731, height: 909, alt: "Relay — B2B-продажи через агентов и амбассадоров" }],
+    images: [{ url: "https://risestaff.kz/og.png", width: 1731, height: 909, alt: "Relay — продажи через агентов и амбассадоров" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Relay — B2B-продажи через агентов и амбассадоров",
+    title: "Relay — продажи через агентов и амбассадоров",
     description,
     images: ["https://risestaff.kz/og.png"],
   },

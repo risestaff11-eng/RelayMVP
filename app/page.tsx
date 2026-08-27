@@ -3,11 +3,12 @@ import { SafeLink as Link } from "@/app/safe-link";
 import { chatGPTSignInPath, getChatGPTUser } from "./chatgpt-auth";
 import { MarketingAnalytics } from "./marketing-analytics";
 import { MarketingLogo } from "./marketing-logo";
+import { MarketingSpecialOffer } from "./marketing-special-offer";
 import { companyUrl } from "../lib/public-origins";
 
 export const metadata: Metadata = {
-  title: { absolute: "Relay — B2B-продажи через агентов и амбассадоров" },
-  description: "Создавайте задания для внешних агентов, получайте B2B-лиды по одной ссылке и отслеживайте каждый результат до выплаты.",
+  title: { absolute: "Relay — продажи через агентов и амбассадоров" },
+  description: "Создавайте задания для внешних агентов, получайте новых клиентов по одной ссылке и отслеживайте каждый результат до выплаты.",
   alternates: { canonical: "https://risestaff.kz/" },
 };
 
@@ -21,8 +22,8 @@ const missionCards = [
 ];
 
 const faqs = [
-  ["Что такое Relay?", "Relay — сервис для B2B-компаний, которые продают через рекомендации. Компания публикует задания и награды, агенты передают лиды или другие результаты, а обе стороны видят статус и сумму вознаграждения."],
-  ["Кому подходит Relay?", "Собственникам, руководителям продаж и маркетинга в B2B. Особенно тем, у кого клиенты, партнёры, консультанты или отраслевые эксперты уже готовы рекомендовать продукт."],
+  ["Что такое Relay?", "Relay — сервис для компаний, которые продают через рекомендации. Компания публикует задания и награды, агенты передают лиды или другие результаты, а обе стороны видят статус и сумму вознаграждения."],
+  ["Кому подходит Relay?", "Собственникам, руководителям продаж и маркетинга. Особенно тем, у кого клиенты, партнёры, консультанты или отраслевые эксперты уже готовы рекомендовать продукт."],
   ["Кто может стать агентом?", "Клиент, партнёр, консультант, сотрудник или знакомый, у которого есть контакт с вашей целевой аудиторией. Вы сами решаете, кого пригласить и какие задания ему показать."],
   ["Где найти первых агентов?", "Пригласите людей, которые уже знают ваш продукт: действующих клиентов, партнёров, экспертов и сотрудников. Relay не является биржей амбассадоров и не подбирает агентов за компанию."],
   ["Что увидит агент по ссылке?", "Описание компании, доступные задания, критерии результата, размер награды и срок проверки. Агент выбирает задание, передаёт результат и затем следит за его статусом."],
@@ -50,7 +51,7 @@ const structuredData = {
     {
       "@type": "SoftwareApplication", "@id": "https://risestaff.kz/#software", name: "Relay", url: "https://risestaff.kz/",
       applicationCategory: "BusinessApplication", operatingSystem: "Web", inLanguage: "ru-KZ",
-      description: "Сервис для B2B-продаж через внешних агентов и амбассадоров.",
+      description: "Сервис для продаж через внешних агентов и амбассадоров.",
       featureList: ["Задания и награды для агентов", "Фиксация автора рекомендации", "Статусы результатов и выплат", "Кабинет агента без установки приложения"],
       provider: { "@id": "https://risestaff.kz/#organization" },
     },
@@ -76,8 +77,8 @@ export default async function Home() {
     <section className="lp-hero" id="main-content">
       <div className="lp-orbit lp-orbit-one" aria-hidden="true" /><div className="lp-orbit lp-orbit-two" aria-hidden="true" />
       <div className="lp-hero-copy">
-        <div className="lp-kicker"><span>●</span> ДЛЯ B2B-КОМПАНИЙ, КОТОРЫМ НУЖНЫ ЛИДЫ ПО РЕКОМЕНДАЦИИ</div>
-        <h1>Привлекайте B2B-клиентов через <span className="lp-color-word">агентов и амбассадоров.</span></h1>
+        <div className="lp-kicker"><span>●</span> ДЛЯ КОМПАНИЙ, КОТОРЫМ НУЖНЫ КЛИЕНТЫ ПО РЕКОМЕНДАЦИИ</div>
+        <h1>Привлекайте новых клиентов через <span className="lp-color-word">агентов и амбассадоров.</span></h1>
         <p>Создайте задания с наградой и отправьте одну ссылку клиентам, партнёрам и экспертам. Relay покажет, кто передал контакт, что с ним происходит и сколько нужно выплатить.</p>
         <div className="lp-mobile-audience" aria-label="Для кого и какую задачу решает Relay"><span><b>КТО ПОЛЬЗУЕТСЯ</b>Собственник, продажи и маркетинг</span><span><b>ЧТО ПОЛУЧАЕТ</b>Лиды, сделки и учёт наград</span></div>
         <div className="lp-hero-actions"><a className="lp-primary" href={dashboardHref} data-track="hero_primary">{user ? "Открыть кабинет" : "Создать первую программу"}<span>↗</span></a><a className="lp-secondary" href="#how" data-track="hero_secondary">Посмотреть четыре шага <span>↓</span></a></div>
@@ -122,14 +123,15 @@ export default async function Home() {
     <section className="lp-audience lp-section"><div className="lp-section-intro"><span>КТО РАБОТАЕТ С RELAY</span><h2>Три роли, которым нужен общий учёт рекомендаций.</h2></div><span className="lp-swipe-hint">Листайте сценарии →</span><div className="lp-audience-grid">
       <article><b>01</b><div className="lp-role-visual lp-role-sales" aria-hidden="true"><div><span>АГЕНТЫ</span><strong>14</strong><i>в текущем пилоте</i></div><div><span>РЕЗУЛЬТАТЫ</span><strong>6</strong><i>3 на проверке</i></div><footer><em /><em /><em /><em /></footer></div><h3>Руководитель продаж</h3><p>Видит, кто привёл клиента, на каком этапе результат и кому начислить награду.</p></article>
       <article><b>02</b><div className="lp-role-visual lp-role-marketing" aria-hidden="true"><header><span>ПРОГРАММА</span><i>● активна</i></header><strong>Амбассадоры бренда</strong><div><span>единые правила</span><span>видимые статусы</span></div><footer><i /><i /><i /><i /><i /></footer></div><h3>Руководитель маркетинга</h3><p>Публикует имиджевые задания и проверяет материалы по заданным критериям.</p></article>
-      <article><b>03</b><div className="lp-role-visual lp-role-founder" aria-hidden="true"><header><span>АГЕНТСКИЙ КАНАЛ</span><strong>1 ссылка</strong></header><div className="lp-role-bars"><i /><i /><i /><i /><i /><i /></div><footer><span>ПРОГРАММЫ</span><span>АГЕНТЫ</span></footer></div><h3>Собственник компании</h3><p>Запускает дополнительный источник B2B-лидов через клиентов, партнёров и знакомых.</p></article>
+      <article><b>03</b><div className="lp-role-visual lp-role-founder" aria-hidden="true"><header><span>АГЕНТСКИЙ КАНАЛ</span><strong>1 ссылка</strong></header><div className="lp-role-bars"><i /><i /><i /><i /><i /><i /></div><footer><span>ПРОГРАММЫ</span><span>АГЕНТЫ</span></footer></div><h3>Собственник компании</h3><p>Получает дополнительный источник лидов через клиентов, партнёров и знакомых.</p></article>
     </div></section>
 
     <section className="lp-offer lp-section" id="offer"><div className="lp-offer-copy"><span>ПЕРВУЮ ПРОГРАММУ МОЖНО ПОДГОТОВИТЬ ПРИМЕРНО ЗА 10 МИНУТ</span><h2>Опубликуйте задания и отправьте ссылку агентам.</h2><p>Вы указываете результат, критерии проверки и сумму награды. Relay собирает ответы агентов и показывает, что требует решения.</p><ul><li>Четыре типа заданий: люди, сделки, имидж и вовлечение</li><li>Одна публичная ссылка для приглашённых агентов</li><li>Контакт, автор, статус и награда по каждому результату</li><li>50 000 AI-кредитов для черновиков заданий и материалов</li></ul><div className="lp-offer-actions"><a className="lp-primary" href={dashboardHref} data-track="offer_primary">{user ? "Перейти к программам" : "Создать первую программу"}<span>↗</span></a><Link href="/pricing" data-track="pricing_link">Выбрать формат подключения →</Link></div></div><ol className="lp-offer-steps"><li><b>01</b><span><strong>Укажите данные компании</strong>Добавьте продукт и целевого клиента.</span></li><li><b>02</b><span><strong>Создайте программу</strong>Выберите результат и награду.</span></li><li><b>03</b><span><strong>Проверьте задания</strong>Отредактируйте черновики перед публикацией.</span></li><li><b>04</b><span><strong>Отправьте ссылку</strong>Пригласите клиентов, партнёров и экспертов.</span></li></ol></section>
 
+    <MarketingSpecialOffer />
     <section className="lp-faq lp-section" id="faq"><div className="lp-section-intro"><span>ВОПРОСЫ И ОТВЕТЫ</span><h2>Что нужно знать перед запуском.</h2></div><div className="lp-faq-list">{faqs.map(([question, answer], index) => <details key={question}><summary><span>{String(index + 1).padStart(2, "0")}</span><strong>{question}</strong><i>+</i></summary><p>{answer}</p></details>)}</div></section>
     <section className="lp-final"><div className="lp-final-tiles" aria-hidden="true">{missionCards.map((card) => <i className={`lp-${card.tone}`} key={card.index}>{card.icon}</i>)}</div><span>ПЕРВАЯ ПРОГРАММА</span><h2>Опишите результат, назначьте награду и пригласите первых агентов.</h2><p>Relay сохранит каждого участника, переданный контакт, решение компании и отметку о выплате.</p><a className="lp-primary" href={dashboardHref} data-track="final_primary">{user ? "Открыть кабинет" : "Создать первую программу"}<span>↗</span></a></section>
     <a className="lp-mobile-sticky-cta" href={dashboardHref} data-track="mobile_sticky">{user ? "Открыть кабинет" : "Создать программу"}<span>↗</span></a>
-    <footer className="lp-footer"><div><Link className="lp-brand" href="/"><MarketingLogo /><span>Relay</span></Link><p>Задания, лиды и награды для B2B-продаж через агентов.<br />Казахстан · <a href={whatsappHref} target="_blank" rel="noreferrer">WhatsApp +7 776 508 6000</a></p></div><nav><a href="#product">Продукт</a><a href="#offer">Условия</a><Link href="/integrators">Интеграторам</Link><a href="#faq">FAQ</a><Link href="/legal/privacy">Конфиденциальность</Link><Link href="/legal/license">Соглашение</Link></nav><span>© 2026 Relay</span></footer>
+    <footer className="lp-footer"><div><Link className="lp-brand" href="/"><MarketingLogo /><span>Relay</span></Link><p>Задания, лиды и награды для продаж через агентов.<br />Казахстан · <a href={whatsappHref} target="_blank" rel="noreferrer">WhatsApp +7 776 508 6000</a></p></div><nav><a href="#product">Продукт</a><a href="#offer">Условия</a><Link href="/integrators">Интеграторам</Link><a href="#faq">FAQ</a><Link href="/legal/privacy">Конфиденциальность</Link><Link href="/legal/license">Соглашение</Link></nav><span>© 2026 Relay</span></footer>
   </main>;
 }
