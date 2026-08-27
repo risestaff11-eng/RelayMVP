@@ -54,7 +54,7 @@ test("renders the Relay landing page", async () => {
   assert.match(html, /<html lang="ru"/);
   assert.match(html, /relay-language-switcher/);
   assert.match(html, />ҚАЗ</);
-  assert.match(html, /Relay — канал продаж через амбассадоров/);
+  assert.match(html, /Relay — B2B-продажи через агентов и амбассадоров/);
   assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz"/);
   assert.match(html, /rel="icon" href="\/icon-192\.png"/);
   assert.match(html, /"@type":"WebSite"/);
@@ -63,13 +63,13 @@ test("renders the Relay landing page", async () => {
   assert.match(html, /рекомендации/);
   assert.match(html, /4 ЗАДАНИЯ/);
   assert.doesNotMatch(html, /Northstar CRM/);
-  assert.match(html, /Амбассадор знает, что делать\. Компания — за что платит/);
+  assert.match(html, /Агент сразу видит, кого искать и сколько заработает/);
   assert.match(html, /ТЕКУЩИЙ ПИЛОТ RELAY/);
   assert.match(html, /Relay не является биржей амбассадоров/);
-  assert.match(html, /ПЛАТФОРМА ДЛЯ КАНАЛА ПРОДАЖ ЧЕРЕЗ АМБАССАДОРОВ/);
+  assert.match(html, /ДЛЯ B2B-КОМПАНИЙ, КОТОРЫМ НУЖНЫ ЛИДЫ ПО РЕКОМЕНДАЦИИ/);
   assert.match(html, /50 000 AI-кредитов/);
   assert.doesNotMatch(html, /бесплат|ранний доступ|бета-тест/i);
-  assert.match(html, /Вопросы до запуска/);
+  assert.match(html, /Что нужно знать перед запуском/);
   assert.match(html, /wa\.me\/77765086000/);
   assert.match(html, /Интеграторам/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
@@ -80,7 +80,7 @@ test("renders pricing without publishing prices", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Варианты подключения/);
-  assert.match(html, /Как выбрать формат/);
+  assert.match(html, /С чего начать/);
   assert.match(html, /50 000 AI-кредитов/);
   assert.doesNotMatch(html, /бесплат|ранний доступ|бета-тест/i);
   assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz\/pricing"/);
@@ -91,7 +91,7 @@ test("renders the integrator one-screen offer", async () => {
   const response = await render("/integrators");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Станьте интегратором агентских продаж/);
-  assert.match(html, /Зарабатывайте на запуске/);
-  assert.match(html, /Получайте повторные проекты/);
+  assert.match(html, /Запускайте Relay клиентам и зарабатывайте на настройке/);
+  assert.match(html, /Настройте первую программу/);
+  assert.match(html, /Обновляйте программы клиента/);
 });
