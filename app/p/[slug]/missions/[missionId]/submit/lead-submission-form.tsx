@@ -29,6 +29,7 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
   const [voicePending, setVoicePending] = useState(false);
   const [includeVoice, setIncludeVoice] = useState(true);
   const [voiceNotice, setVoiceNotice] = useState("");
+  const [editingReviewField, setEditingReviewField] = useState<string | null>(null);
   const commercial = missionType === "LEAD" || missionType === "DEAL";
   const visible = useMemo(() => visibleSubmissionFormFields(formFields, missionType), [formFields, missionType]);
   const contactFields = visible.filter((field) => field.stage === "CONTACT");
@@ -56,6 +57,23 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
       if (field.type === "FILE") {
         if (field.required && !(files[field.id]?.length)) { setError(`Прикрепите файл: «${field.label}»`); return false; }
         continue;
+      }
+      const value = values[field.id];
+      if (field.required && (field.type === "CHECKBOX" ? !value : !String(value ?? "").trim())) {
+        setError(`Заполните обязательное поле: «${field.label}»`);
+        return false;
+      }
+      const textValue = String(value ?? "").trim();
+      if (textValue && field.type === "PHONE" && textValue.replace(/\D/g, "").length < 7) {
+        setError(`Укажите корректный телефон в поле «${field.label}»`);
+        return false;
+      }
+      if (textValue && field.type === "EMAIL" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(textValue)) {
+        setError(`Укажите корректный email в поле «${field.label}»`);
+        return false;
+      }
+      if (textValue && field.type === "URL") {
+        try { new URL(textValue); } catch { setError(`Укажите полную ссылку в поле «${field.label}»`); return false; }
       }
       const element = form.elements.namedItem(fieldName(field));
       if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
@@ -96,6 +114,14 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
     form.set("programSlug", programSlug); form.set("missionId", missionId); form.set("token", token);
     form.set("audioTranscript", voiceTranscript);
     form.set("audioDurationSeconds", String(voiceDurationSeconds));
+    for (const field of visible) {
+      if (field.type === "FILE") continue;
+      const value = values[field.id];
+      if (field.type === "CHECKBOX") {
+        if (value) form.set(fieldName(field), "yes");
+        else form.delete(fieldName(field));
+      } else form.set(fieldName(field), String(value ?? ""));
+    }
     for (const [fieldId, selected] of Object.entries(files)) for (const file of selected) form.append(`file__${fieldId}`, file);
     if (voiceFile && includeVoice) form.set("voiceNote", voiceFile);
     try {
@@ -220,8 +246,6 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
   }
 
   const reviewFields = visible.filter((field) => field.type !== "FILE");
-  const selectedFiles = Object.values(files).flat();
-
   return <form ref={formRef} className="lead-submission-form agent-dialog-form" onSubmit={submit}>
     <div className="lead-form-stepper"><span className={step === 1 ? "active" : "done"}><b>{step > 1 ? "✓" : "1"}</b> Контакт</span><i /><span className={step === 2 ? "active" : step > 2 ? "done" : ""}><b>{step > 2 ? "✓" : "2"}</b> Контекст</span><i /><span className={step === 3 ? "active" : ""}><b>3</b> Проверка</span></div>
 
@@ -231,6 +255,6 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
 
     {step === 2 && <div className="lead-step-panel active"><div className="dialog-system-message"><span>R</span><div><strong>Добавьте контекст и подтверждения</strong><p>Компания увидит эти ответы вместе с контактом, файлами и ожидаемой наградой.</p></div></div><section className="dialog-answer-card"><div className="partner-form-stack dynamic-result-fields">{contextFields.map(renderField)}</div></section>{error && <div className="inline-notice error" role="alert">{error}</div>}<div className="lead-final-actions"><button type="button" onClick={() => { setStep(1); setError(""); }}>← Назад</button><button className="button button-primary partner-submit-button" type="button" onClick={reviewResult}>Проверить ответы <span>→</span></button></div></div>}
 
-    {step === 3 && <div className="lead-step-panel active"><div className="dialog-system-message"><span>R</span><div><strong>Проверьте результат перед отправкой</strong><p>Ничего не будет отправлено, пока вы не подтвердите данные.</p></div></div><section className="submission-review-card">{reviewFields.map((field) => <div key={field.id}><small>{field.label}</small><strong>{field.type === "CHECKBOX" ? values[field.id] ? "Да" : "Нет" : String(values[field.id] || "Не заполнено")}</strong><button type="button" onClick={() => setStep(field.stage === "CONTACT" ? 1 : 2)}>Изменить</button></div>)}{selectedFiles.length > 0 && <div><small>Файлы</small><strong>{selectedFiles.map((file) => file.name).join(", ")}</strong><button type="button" onClick={() => setStep(2)}>Изменить</button></div>}{voiceTranscript && <div><small>Голосовая расшифровка</small><strong>{includeVoice ? "Текст и оригинал записи" : "Только подтверждённый текст"}</strong><button type="button" onClick={() => setStep(2)}>Изменить</button></div>}</section><p className="privacy-note">Relay зафиксирует дату, автора, выбранное задание и историю проверки результата.</p>{error && <div className="inline-notice error" role="alert">{error}</div>}<div className="lead-final-actions"><button type="button" onClick={() => { setStep(2); setError(""); }}>← Назад</button><button className="button button-primary partner-submit-button" disabled={pending} type="submit">{pending ? "Передаём результат…" : "Подтвердить и отправить"}<span>→</span></button></div></div>}
+    {step === 3 && <div className="lead-step-panel active"><div className="dialog-system-message"><span>R</span><div><strong>Проверьте результат перед отправкой</strong><p>Ничего не будет отправлено, пока вы не подтвердите данные.</p></div></div><section className="submission-review-card">{reviewFields.map((field) => <div key={field.id} className={editingReviewField === field.id ? "editing" : ""}><small>{field.label}</small>{editingReviewField === field.id ? <div className="review-inline-editor">{renderField(field)}</div> : <strong>{field.type === "CHECKBOX" ? values[field.id] ? "Да" : "Нет" : String(values[field.id] || "Не заполнено")}</strong>}<button type="button" onClick={() => { setEditingReviewField((current) => current === field.id ? null : field.id); setError(""); }}>{editingReviewField === field.id ? "Готово" : "Изменить"}</button></div>)}{visible.filter((field) => field.type === "FILE").map((field) => <div key={field.id} className={editingReviewField === `file:${field.id}` ? "editing" : ""}><small>{field.label || "Файлы"}</small>{editingReviewField === `file:${field.id}` ? <div className="review-inline-editor">{renderField(field)}</div> : <strong>{files[field.id]?.length ? files[field.id].map((file) => file.name).join(", ") : "Не прикреплены"}</strong>}<button type="button" onClick={() => setEditingReviewField((current) => current === `file:${field.id}` ? null : `file:${field.id}`)}>{editingReviewField === `file:${field.id}` ? "Готово" : "Изменить"}</button></div>)}{voiceTranscript && <div className={editingReviewField === "voice" ? "editing" : ""}><small>Голосовая расшифровка</small>{editingReviewField === "voice" ? <div className="review-inline-editor review-voice-editor"><textarea rows={5} value={voiceTranscript} onChange={(event) => setVoiceTranscript(event.target.value)} /><label><input type="checkbox" checked={includeVoice} onChange={(event) => setIncludeVoice(event.target.checked)} /> Передать оригинал записи компании</label></div> : <strong>{includeVoice ? "Текст и оригинал записи" : "Только подтверждённый текст"}</strong>}<button type="button" onClick={() => setEditingReviewField((current) => current === "voice" ? null : "voice")}>{editingReviewField === "voice" ? "Готово" : "Изменить"}</button></div>}</section><p className="privacy-note">Relay зафиксирует дату, автора, выбранное задание и историю проверки результата.</p>{error && <div className="inline-notice error" role="alert">{error}</div>}<div className="lead-final-actions"><button type="button" onClick={() => { setStep(2); setError(""); setEditingReviewField(null); }}>← Назад</button><button className="button button-primary partner-submit-button" disabled={pending} type="submit">{pending ? "Передаём результат…" : "Подтвердить и отправить"}<span>→</span></button></div></div>}
   </form>;
 }

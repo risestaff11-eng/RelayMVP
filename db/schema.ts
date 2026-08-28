@@ -261,6 +261,23 @@ export const partnerAccessLinks = sqliteTable(
   (table) => [index("idx_partner_access_links_partner").on(table.partnerId)],
 );
 
+export const partnerReferralLinks = sqliteTable(
+  "partner_referral_links",
+  {
+    id: text("id").primaryKey(),
+    partnerId: text("partner_id").notNull().references(() => partners.id),
+    missionId: text("mission_id").notNull().references(() => missions.id),
+    tokenHash: text("token_hash").notNull().unique(),
+    status: text("status").notNull().default("ACTIVE"),
+    expiresAt: text("expires_at").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_partner_referral_links_partner").on(table.partnerId, table.status),
+    index("idx_partner_referral_links_mission").on(table.missionId),
+  ],
+);
+
 export const partnerProfiles = sqliteTable("partner_profiles", {
   partnerId: text("partner_id").primaryKey().references(() => partners.id),
   firstName: text("first_name").notNull().default(""),

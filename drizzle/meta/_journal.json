@@ -148,6 +148,13 @@
       "when": 1787699530791,
       "tag": "0020_fine_mandrill",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1787899021362,
+      "tag": "0021_omniscient_squirrel_girl",
+      "breakpoints": true
     }
   ]
 }

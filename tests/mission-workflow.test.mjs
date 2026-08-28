@@ -75,6 +75,27 @@ test("agent result flow supports confirmed voice drafts and removable multi-file
   assert.match(companyReview, /result-audio-player/);
 });
 
+test("review step serializes controlled values and edits answers inline", async () => {
+  const form = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/lead-submission-form.tsx", import.meta.url), "utf8");
+  assert.match(form, /form\.set\(fieldName\(field\), String\(value \?\? ""\)\)/);
+  assert.match(form, /editingReviewField/);
+  assert.match(form, /review-inline-editor/);
+  assert.doesNotMatch(form, /onClick=\{\(\) => setStep\(field\.stage === "CONTACT" \? 1 : 2\)\}/);
+});
+
+test("agent referrals use isolated tokens and client-origin markers", async () => {
+  const schema = await readFile(new URL("../db/schema.ts", import.meta.url), "utf8");
+  const createRoute = await readFile(new URL("../app/api/partner/referrals/route.ts", import.meta.url), "utf8");
+  const submitRoute = await readFile(new URL("../app/api/public/referrals/submit/route.ts", import.meta.url), "utf8");
+  const navigation = await readFile(new URL("../app/partner/_components/partner-nav.tsx", import.meta.url), "utf8");
+  assert.match(schema, /partner_referral_links/);
+  assert.match(createRoute, /createPartnerToken/);
+  assert.match(createRoute, /partnerReferralLinks/);
+  assert.match(submitRoute, /submittedByClient: true/);
+  assert.match(submitRoute, /actorType: "CLIENT"/);
+  assert.match(navigation, /Реферальная ссылка/);
+});
+
 test("legacy public submission route continues inside the agent cabinet", async () => {
   const legacyPage = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/page.tsx", import.meta.url), "utf8");
   const partnerPage = await readFile(new URL("../app/partner/[token]/submit/[missionId]/page.tsx", import.meta.url), "utf8");

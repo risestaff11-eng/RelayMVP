@@ -477,6 +477,58 @@
 .submission-review-card small { color: #777b70; font-size: 9px; font-weight: 900; }
 .submission-review-card strong { grid-column: 1 / 2; font-size: 12px; line-height: 1.45; white-space: pre-wrap; }
 .submission-review-card button { grid-column: 2 / 3; grid-row: 1 / 3; align-self: center; border: 0; color: #315000; background: transparent; font-size: 10px; font-weight: 900; cursor: pointer; }
+.submission-review-card > div.editing { grid-template-columns: minmax(0,1fr) auto; background: #f7f8f2; }
+.review-inline-editor { grid-column: 1 / 2; min-width: 0; }
+.review-inline-editor .dialog-field { margin: 0; }
+.review-inline-editor .dialog-field > span,.review-inline-editor .dialog-field > small { display: none; }
+.review-inline-editor input,.review-inline-editor textarea,.review-inline-editor select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #aeb2a5; border-radius: 10px; color: #171914; background: #fff; font: inherit; font-size: 14px; }
+.review-inline-editor textarea { min-height: 96px; line-height: 1.5; resize: vertical; }
+.review-inline-editor .dynamic-checkbox-field { min-height: 44px; display: flex; align-items: center; }
+.review-inline-editor .dynamic-checkbox-field input { width: 20px; min-height: 20px; height: 20px; }
+.review-voice-editor { display: grid; gap: 9px; }
+.review-voice-editor label { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 750; }
+
+.referral-builder { max-width: 840px; padding: 24px; }
+.referral-explainer { display: flex; align-items: flex-start; gap: 13px; }
+.referral-explainer > span { width: 38px; height: 38px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 11px; color: #171914; background: var(--lime); font-size: 11px; font-weight: 950; }
+.referral-explainer strong { font-size: 18px; }
+.referral-explainer p { margin: 6px 0 0; max-width: 590px; color: #4f524a; font-size: 13px; line-height: 1.5; }
+.referral-builder > label { margin-top: 22px; display: grid; gap: 8px; }
+.referral-builder > label > span { font-size: 10px; font-weight: 900; letter-spacing: .06em; }
+.referral-builder select { min-height: 52px; padding: 0 14px; border: 1px solid #cfd1c8; border-radius: 12px; color: #171914; background: #fff; font: inherit; font-size: 14px; font-weight: 750; }
+.referral-create-button { margin-top: 14px; }
+.referral-ready { margin-top: 18px; padding: 18px; display: grid; gap: 10px; border: 1px solid #b7d775; border-radius: 15px; background: #efffd1; }
+.referral-ready > small { font-size: 9px; font-weight: 950; letter-spacing: .08em; }
+.referral-ready > a { overflow-wrap: anywhere; color: #171914; font-size: 13px; font-weight: 800; text-decoration: underline; }
+.referral-ready > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.referral-ready button { min-height: 42px; padding: 0 14px; border: 1px solid #171914; border-radius: 10px; color: #fff; background: #171914; font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
+.referral-ready button:first-child { color: #171914; background: transparent; }
+.referral-ready p,.referral-notice { margin: 0; color: #41443c; font-size: 11px; line-height: 1.45; }
+.client-submitted-badge { margin-top: 9px; padding: 6px 9px; display: inline-flex; border-radius: 999px; color: #294400; background: #dfffaa; font-size: 9px; letter-spacing: .05em; }
+
+.client-referral-page { min-height: 100vh; padding: 42px 18px; display: grid; place-items: center; background: #eef1f7; }
+.client-referral-shell { width: min(100%,560px); overflow: hidden; border-radius: 24px; background: #fff; box-shadow: 0 24px 70px rgba(18,25,38,.14); }
+.client-referral-shell > header { padding: 28px 30px; color: #fff; background: #112541; }
+.client-referral-shell .brand { color: #fff; }
+.client-referral-shell > header > small { margin-top: 36px; display: block; color: #a8c5e8; font-size: 9px; font-weight: 900; letter-spacing: .11em; }
+.client-referral-shell > header h1 { margin: 9px 0 0; font-size: 30px; line-height: 1.1; }
+.client-referral-shell > header p { margin: 8px 0 0; color: #d7e7fa; font-size: 13px; line-height: 1.45; }
+.client-referral-body { padding: 28px 30px 32px; }
+.client-referral-kicker { color: #5b5f55; font-size: 9px; font-weight: 950; letter-spacing: .1em; }
+.client-referral-body h2 { margin: 8px 0 0; font-size: 28px; }
+.client-referral-body > p { margin: 8px 0 0; color: #4f524a; font-size: 13px; line-height: 1.5; }
+.client-referral-form { margin-top: 22px; display: grid; gap: 15px; }
+.client-referral-form label { display: grid; gap: 7px; }
+.client-referral-form label > span { font-size: 11px; font-weight: 850; }
+.client-referral-form input,.client-referral-form textarea { width: 100%; min-height: 50px; padding: 12px 14px; border: 1px solid #cfd2c7; border-radius: 12px; color: #171914; background: #fff; font: inherit; font-size: 16px; line-height: 1.45; }
+.client-referral-form textarea { min-height: 104px; resize: vertical; }
+.client-referral-form input:focus,.client-referral-form textarea:focus { border-color: #171914; outline: 3px solid rgba(184,255,54,.35); }
+.client-referral-form > p { margin: 0; color: #585c52; font-size: 10px; line-height: 1.45; }
+.client-referral-form > button { width: 100%; min-height: 54px; justify-content: space-between; }
+.client-referral-success { padding: 24px 0 4px; text-align: center; }
+.client-referral-success > span { width: 58px; height: 58px; margin: auto; display: grid; place-items: center; border-radius: 17px; color: #171914; background: var(--lime); font-size: 24px; font-weight: 900; }
+.client-referral-success h2 { margin: 17px 0 0; }
+.client-referral-success p { margin: 8px auto 0; max-width: 380px; color: #4f524a; line-height: 1.5; }
 
 .result-audio-transcript,.read-only-transcript { margin-top: 14px; padding: 15px; border: 1px solid #d8dad0; border-radius: 13px; background: #f4f5ef; }
 .result-audio-transcript small { color: #666a60; font-size: 9px; font-weight: 950; }
@@ -524,4 +576,17 @@
   .quick-result-modal > div > a { grid-template-columns: minmax(0,1fr) 18px; }
   .quick-result-modal a b { grid-column: 1 / 2; max-width: none; text-align: left; }
   .quick-result-modal a i { grid-column: 2 / 3; grid-row: 1 / 3; }
+  .submission-review-card { margin-left: 0; }
+  .submission-review-card > div { padding: 14px 12px; }
+  .submission-review-card > div.editing { grid-template-columns: minmax(0,1fr); }
+  .submission-review-card > div.editing > button { grid-column: 1; grid-row: auto; justify-self: start; min-height: 36px; padding: 0; }
+  .review-inline-editor { grid-column: 1; }
+  .referral-builder { padding: 18px 14px; }
+  .referral-builder select { font-size: 16px; }
+  .referral-create-button { width: 100%; justify-content: space-between; }
+  .client-referral-page { padding: 0; align-items: start; background: #fff; }
+  .client-referral-shell { min-height: 100vh; border-radius: 0; box-shadow: none; }
+  .client-referral-shell > header { padding: 22px 20px 24px; }
+  .client-referral-shell > header > small { margin-top: 28px; }
+  .client-referral-body { padding: 24px 20px 30px; }
 }

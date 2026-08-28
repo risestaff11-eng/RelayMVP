@@ -37,8 +37,9 @@ function parsePayload(value: string) {
       audioTranscript: typeof parsed.audioTranscript === "string" ? parsed.audioTranscript : "",
       audioDurationSeconds: typeof parsed.audioDurationSeconds === "number" ? parsed.audioDurationSeconds : 0,
       audioConfirmed: parsed.audioConfirmed === true,
+      submittedByClient: parsed.submittedByClient === true,
     };
-  } catch { return { partnerComment: "", externalLinks: [] as string[], customAnswers: [] as unknown[], audioTranscript: "", audioDurationSeconds: 0, audioConfirmed: false }; }
+  } catch { return { partnerComment: "", externalLinks: [] as string[], customAnswers: [] as unknown[], audioTranscript: "", audioDurationSeconds: 0, audioConfirmed: false, submittedByClient: false }; }
 }
 
 export async function getPartnerPortal(token: string) {

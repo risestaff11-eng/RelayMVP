@@ -34,6 +34,9 @@ test("routes each product surface to its canonical domain", async () => {
   const agent = await route("https://relay-agent-sales-rustam.frosty-whale-0805.chatgpt.site/p/demo?access=token");
   assert.equal(agent.headers.get("location"), "https://agents.risestaff.kz/p/demo?access=token");
 
+  const referral = await route("https://risestaff.kz/ref/client-token");
+  assert.equal(referral.headers.get("location"), "https://agents.risestaff.kz/ref/client-token");
+
   const marketing = await route("https://agents.risestaff.kz/pricing");
   assert.equal(marketing.headers.get("location"), "https://risestaff.kz/pricing");
 });
