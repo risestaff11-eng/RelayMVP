@@ -82,6 +82,13 @@ test("legacy public submission route continues inside the agent cabinet", async 
   assert.match(partnerPage, /LeadSubmissionForm/);
 });
 
+test("public program entry always submits its program slug", async () => {
+  const publicPage = await readFile(new URL("../app/p/[slug]/page.tsx", import.meta.url), "utf8");
+  const partnerEntry = await readFile(new URL("../app/p/[slug]/partner-entry.tsx", import.meta.url), "utf8");
+  assert.match(publicPage, /<PartnerEntry programSlug=\{slug\}/);
+  assert.match(partnerEntry, /JSON\.stringify\(\{ programSlug, email/);
+});
+
 test("user-facing application uses the Rela assistant name", async () => {
   const files = [
     "../app/dashboard/programs/new/new-program-form.tsx",
