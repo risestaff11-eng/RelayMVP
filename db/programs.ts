@@ -14,13 +14,16 @@ function parseList(value: string) {
 
 function parseSubmissionPayload(value: string) {
   try {
-    const parsed = JSON.parse(value) as { partnerComment?: unknown; customAnswers?: unknown };
+    const parsed = JSON.parse(value) as { partnerComment?: unknown; customAnswers?: unknown; audioTranscript?: unknown; audioDurationSeconds?: unknown; audioConfirmed?: unknown };
     return {
       partnerComment: typeof parsed.partnerComment === "string" ? parsed.partnerComment : "",
       customAnswers: Array.isArray(parsed.customAnswers) ? parsed.customAnswers.filter((item): item is { fieldId: string; label: string; type: string; value: string | string[] } => Boolean(item && typeof item === "object" && typeof (item as { label?: unknown }).label === "string")) : [],
+      audioTranscript: typeof parsed.audioTranscript === "string" ? parsed.audioTranscript : "",
+      audioDurationSeconds: typeof parsed.audioDurationSeconds === "number" ? parsed.audioDurationSeconds : 0,
+      audioConfirmed: parsed.audioConfirmed === true,
     };
   } catch {
-    return { partnerComment: "", customAnswers: [] as Array<{ fieldId: string; label: string; type: string; value: string | string[] }> };
+    return { partnerComment: "", customAnswers: [] as Array<{ fieldId: string; label: string; type: string; value: string | string[] }>, audioTranscript: "", audioDurationSeconds: 0, audioConfirmed: false };
   }
 }
 

@@ -59,6 +59,29 @@ test("public submission saves dynamic answers and files", async () => {
   assert.match(form, /reportValidity/);
 });
 
+test("agent result flow supports confirmed voice drafts and removable multi-file evidence", async () => {
+  const form = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/lead-submission-form.tsx", import.meta.url), "utf8");
+  const transcriptionRoute = await readFile(new URL("../app/api/partner/audio/transcribe/route.ts", import.meta.url), "utf8");
+  const submissionRoute = await readFile(new URL("../app/api/public/submissions/route.ts", import.meta.url), "utf8");
+  const companyReview = await readFile(new URL("../app/dashboard/submissions/submission-review-list.tsx", import.meta.url), "utf8");
+  assert.match(form, /multiple/);
+  assert.match(form, /removeFile/);
+  assert.match(form, /currentTotal \+ selected\.length > 5/);
+  assert.match(form, /voiceDurationSeconds/);
+  assert.match(form, /Проверьте результат перед отправкой/);
+  assert.match(transcriptionRoute, /generateStructuredJsonFromAudio/);
+  assert.match(transcriptionRoute, /Аудиозапись должна быть не длиннее 60 секунд/);
+  assert.match(submissionRoute, /audioConfirmed: Boolean\(audioTranscript\)/);
+  assert.match(companyReview, /result-audio-player/);
+});
+
+test("legacy public submission route continues inside the agent cabinet", async () => {
+  const legacyPage = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/page.tsx", import.meta.url), "utf8");
+  const partnerPage = await readFile(new URL("../app/partner/[token]/submit/[missionId]/page.tsx", import.meta.url), "utf8");
+  assert.match(legacyPage, /redirect\(`\/partner\/\$\{access\}\/submit\/\$\{missionId\}`\)/);
+  assert.match(partnerPage, /LeadSubmissionForm/);
+});
+
 test("user-facing application uses the Rela assistant name", async () => {
   const files = [
     "../app/dashboard/programs/new/new-program-form.tsx",

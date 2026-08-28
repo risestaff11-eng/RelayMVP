@@ -1,4 +1,4 @@
-export type AiOperation = "ASSISTANT_REPLY" | "PROFILE_ANALYSIS" | "PROGRAM_GENERATION" | "KNOWLEDGE_GENERATION";
+export type AiOperation = "ASSISTANT_REPLY" | "PROFILE_ANALYSIS" | "PROGRAM_GENERATION" | "KNOWLEDGE_GENERATION" | "AUDIO_TRANSCRIPTION";
 
 export type AiUsage = { inputTokens: number; outputTokens: number; thoughtsTokens?: number };
 
@@ -7,6 +7,7 @@ const POLICIES = {
   PROFILE_ANALYSIS: { inputWeight: 0.04, outputWeight: 0.2, thinkingWeight: 0.06, minimum: 80, maximum: 600 },
   PROGRAM_GENERATION: { inputWeight: 0.04, outputWeight: 0.2, thinkingWeight: 0.06, minimum: 120, maximum: 900 },
   KNOWLEDGE_GENERATION: { inputWeight: 0.04, outputWeight: 0.2, thinkingWeight: 0.06, minimum: 80, maximum: 500 },
+  AUDIO_TRANSCRIPTION: { inputWeight: 0.025, outputWeight: 0.12, thinkingWeight: 0.04, minimum: 20, maximum: 120 },
 } as const;
 
 export function aiCreditLimit(operation: AiOperation, complexity = 1) {

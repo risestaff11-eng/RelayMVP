@@ -8,6 +8,7 @@ import { cleanString, sameOrigin } from "../../company/_utils";
 import { agentUrl } from "../../../../lib/public-origins";
 
 const allowedTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
+const allowedAudioTypes = new Set(["audio/webm", "audio/mp4", "audio/mpeg", "audio/mp3", "audio/ogg", "audio/wav", "audio/x-wav", "audio/aac", "audio/x-m4a"]);
 
 function readValue(form: FormData, field: SubmissionFormField) {
   if (field.type === "CHECKBOX") return form.get(`field__${field.id}`) === "yes" ? "Да" : "Нет";
@@ -49,6 +50,8 @@ export async function POST(request: Request) {
     const contactEmail = semanticValue("CONTACT_EMAIL").toLowerCase();
     const contactPhone = semanticValue("CONTACT_PHONE");
     const partnerComment = semanticValue("COMMENT");
+    const audioTranscript = cleanString(form.get("audioTranscript"), 8000);
+    const audioDurationSeconds = Math.max(0, Math.min(60, Number(form.get("audioDurationSeconds")) || 0));
     const externalLinks = semanticValue("LINKS").split(/[\n,]+/).map((value) => value.trim()).filter(Boolean).slice(0, 5);
     if (externalLinks.some((value) => { try { return !["http:", "https:"].includes(new URL(value).protocol); } catch { return true; } })) throw new Error("Проверьте ссылки в подтверждении результата");
 
@@ -60,6 +63,10 @@ export async function POST(request: Request) {
     const allFiles = fields.flatMap((field) => form.getAll(`file__${field.id}`).filter((item): item is File => item instanceof File && item.size > 0).map((file) => ({ field, file })));
     if (allFiles.length > 5) throw new Error("Можно приложить не более 5 файлов");
     if (allFiles.some(({ file }) => file.size > 10 * 1024 * 1024 || !allowedTypes.has(file.type))) throw new Error("Можно приложить до 5 файлов PDF, DOC, JPG, PNG или WEBP размером до 10 МБ каждый");
+    const voiceValue = form.get("voiceNote");
+    const voiceNote = voiceValue instanceof File && voiceValue.size > 0 ? voiceValue : null;
+    const voiceMime = voiceNote?.type.split(";", 1)[0].toLowerCase() ?? "";
+    if (voiceNote && (voiceNote.size > 10 * 1024 * 1024 || !allowedAudioTypes.has(voiceMime))) throw new Error("Голосовая запись должна быть не больше 10 МБ и в формате WEBM, M4A, MP3, OGG, AAC или WAV");
 
     const submissionId = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -74,8 +81,14 @@ export async function POST(request: Request) {
         attachmentRows.push({ id: crypto.randomUUID(), submissionId, objectKey, fileName: `${field.label}: ${file.name}`.slice(0, 180), mimeType: file.type, size: file.size, createdAt: now });
       }
     }
+    if (voiceNote) {
+      const extension = voiceMime.includes("mp4") || voiceMime.includes("m4a") ? "m4a" : voiceMime.includes("mpeg") || voiceMime.includes("mp3") ? "mp3" : voiceMime.includes("ogg") ? "ogg" : voiceMime.includes("wav") ? "wav" : voiceMime.includes("aac") ? "aac" : "webm";
+      const objectKey = `${target.company.id}/${submissionId}/${crypto.randomUUID()}-voice.${extension}`;
+      await getFilesBucket().put(objectKey, await voiceNote.arrayBuffer(), { httpMetadata: { contentType: voiceMime } });
+      attachmentRows.push({ id: crypto.randomUUID(), submissionId, objectKey, fileName: `Голосовой комментарий.${extension}`, mimeType: voiceMime, size: voiceNote.size, createdAt: now });
+    }
     const customAnswers = fields.filter((field) => field.semantic === "CUSTOM").map((field) => ({ fieldId: field.id, label: field.label, type: field.type, value: values.get(field.id) || (field.type === "FILE" ? allFiles.filter((item) => item.field.id === field.id).map((item) => item.file.name) : "") }));
-    const submissionStatement = db.insert(submissions).values({ id: submissionId, companyId: target.company.id, programId: target.program.id, missionId, partnerId: missionPartner.id, type: target.mission.type, contactName, contactCompany, contactEmail, contactPhone, payloadJson: JSON.stringify({ partnerComment, externalLinks, customAnswers }), status: "SUBMITTED", createdAt: now, updatedAt: now });
+    const submissionStatement = db.insert(submissions).values({ id: submissionId, companyId: target.company.id, programId: target.program.id, missionId, partnerId: missionPartner.id, type: target.mission.type, contactName, contactCompany, contactEmail, contactPhone, payloadJson: JSON.stringify({ partnerComment, externalLinks, customAnswers, audioTranscript, audioDurationSeconds, audioConfirmed: Boolean(audioTranscript) }), status: "SUBMITTED", createdAt: now, updatedAt: now });
     const eventStatement = db.insert(submissionStatusEvents).values({ id: crypto.randomUUID(), submissionId, fromStatus: null, toStatus: "SUBMITTED", actorType: "PARTNER", comment: "Результат отправлен компании", createdAt: now });
     if (attachmentRows.length) await db.batch([submissionStatement, eventStatement, db.insert(submissionAttachments).values(attachmentRows)]);
     else await db.batch([submissionStatement, eventStatement]);

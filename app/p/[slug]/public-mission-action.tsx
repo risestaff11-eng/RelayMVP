@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SafeLink as Link } from "@/app/safe-link";
 
-export function PublicMissionAction({ token, missionId, programSlug, accepted }: { token: string; missionId: string; programSlug: string; accepted: boolean }) {
+export function PublicMissionAction({ token, missionId, accepted }: { token: string; missionId: string; accepted: boolean }) {
   const [state, setState] = useState<"idle" | "pending" | "accepted">(accepted ? "accepted" : "idle");
   const [error, setError] = useState("");
   async function accept() {
@@ -12,6 +12,7 @@ export function PublicMissionAction({ token, missionId, programSlug, accepted }:
     const data = await response.json() as { error?: string };
     if (!response.ok) { setState("idle"); setError(data.error || "Не удалось взять задание"); return; }
     setState("accepted");
+    window.location.assign(`/partner/${token}/submit/${missionId}`);
   }
-  return <div className="public-mission-action">{state === "accepted" ? <Link className="partner-mission-cta" href={`/p/${programSlug}/missions/${missionId}/submit?access=${token}`}>Передать результат <span>→</span></Link> : <button className="partner-mission-cta" type="button" disabled={state === "pending"} onClick={accept}>{state === "pending" ? "Добавляем задание…" : "Взять задание"}<span>＋</span></button>}<small aria-live="polite">{error}</small></div>;
+  return <div className="public-mission-action">{state === "accepted" ? <Link className="partner-mission-cta" href={`/partner/${token}/submit/${missionId}`}>Передать результат <span>→</span></Link> : <button className="partner-mission-cta" type="button" disabled={state === "pending"} onClick={accept}>{state === "pending" ? "Открываем…" : "Передать результат"}<span>→</span></button>}<small aria-live="polite">{error}</small></div>;
 }

@@ -6,6 +6,7 @@ import { PartnerNav } from "../_components/partner-nav";
 import { PartnerEarningStrip } from "../_components/partner-earning-strip";
 import { MarketingLogo } from "../../marketing-logo";
 import { CompanyLogo } from "../../dashboard/_components/company-brand";
+import { QuickResultLauncher } from "../_components/partner-actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false }, referrer: "no-referrer", title: "Кабинет агента" };
@@ -32,6 +33,7 @@ export default async function PartnerLayout({ children, params }: { children: Re
             <div className="partner-mini-avatar">{portal.profile.avatarObjectKey ? <img src={`/api/partner/avatar?token=${token}`} alt="Аватар агента" /> : <span>{initials}</span>}</div>
             <div className="partner-top-copy"><small>АГЕНТ</small><strong>{portal.profile.firstName || portal.partner.email}</strong><PartnerEarningStrip token={token} activeCount={activeMissions.length} bestReward={bestReward?.rewardLabel} /></div>
           </div>
+          <QuickResultLauncher token={token} missions={portal.missions} acceptedMissionIds={portal.acceptances.filter((item) => item.status === "ACTIVE").map((item) => item.missionId)} />
         </header>
         {children}
       </section>

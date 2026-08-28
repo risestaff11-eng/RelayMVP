@@ -9,6 +9,7 @@ interface Env {
   AI_PROVIDER?: string;
   GEMINI_API_KEY?: string;
   GEMINI_MODEL?: string;
+  GEMINI_AUDIO_MODEL?: string;
   ADMIN_SECRET?: string;
   IMAGES: {
     input(stream: ReadableStream): {

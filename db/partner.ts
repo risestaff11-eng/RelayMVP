@@ -34,8 +34,11 @@ function parsePayload(value: string) {
       partnerComment: typeof parsed.partnerComment === "string" ? parsed.partnerComment : "",
       externalLinks: Array.isArray(parsed.externalLinks) ? parsed.externalLinks.filter((item): item is string => typeof item === "string") : [],
       customAnswers: Array.isArray(parsed.customAnswers) ? parsed.customAnswers.filter((item) => item && typeof item === "object") : [],
+      audioTranscript: typeof parsed.audioTranscript === "string" ? parsed.audioTranscript : "",
+      audioDurationSeconds: typeof parsed.audioDurationSeconds === "number" ? parsed.audioDurationSeconds : 0,
+      audioConfirmed: parsed.audioConfirmed === true,
     };
-  } catch { return { partnerComment: "", externalLinks: [] as string[], customAnswers: [] as unknown[] }; }
+  } catch { return { partnerComment: "", externalLinks: [] as string[], customAnswers: [] as unknown[], audioTranscript: "", audioDurationSeconds: 0, audioConfirmed: false }; }
 }
 
 export async function getPartnerPortal(token: string) {

@@ -29,12 +29,12 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
     : !acceptedMission && portal.submissions.length === 0
       ? { step: 2, eyebrow: "ШАГ 2 ИЗ 4", title: "Выберите первое задание", text: "Посмотрите условия, награду и возьмите одно понятное задание.", action: "Выбрать задание", href: `/partner/${token}/opportunities` }
       : acceptedMission && !acceptedMissionResult
-        ? { step: 3, eyebrow: "ШАГ 3 ИЗ 4", title: "Передайте результат", text: `${acceptedMission.title}. Всё необходимое заполняется за два коротких шага.`, action: "Передать результат", href: `/p/${acceptedMission.programSlug}/missions/${acceptedMission.id}/submit?access=${token}` }
+        ? { step: 3, eyebrow: "ШАГ 3 ИЗ 4", title: "Передайте результат", text: `${acceptedMission.title}. Всё необходимое заполняется за два коротких шага.`, action: "Передать результат", href: `/partner/${token}/submit/${acceptedMission.id}` }
         : { step: 4, eyebrow: "ШАГ 4 ИЗ 4", title: "Следите за результатом", text: "Компания проверяет данные. Все изменения статуса и комментарии появятся в одном месте.", action: "Открыть результат", href: `/partner/${token}/submissions` };
   const journey = [
     { title: "Добавьте имя и WhatsApp", text: "Два обязательных поля — и можно сразу переходить к заработку.", href: `/partner/${token}/profile`, action: "Открыть профиль" },
     { title: "Выберите задание", text: "Сравните условия и возьмите одно понятное задание в работу.", href: `/partner/${token}/opportunities`, action: "Выбрать задание" },
-    { title: "Передайте результат", text: acceptedMission ? acceptedMission.title : "Добавьте контакт и контекст, чтобы компания могла быстро всё проверить.", href: acceptedMission ? `/p/${acceptedMission.programSlug}/missions/${acceptedMission.id}/submit?access=${token}` : `/partner/${token}/missions`, action: "Передать результат" },
+    { title: "Передайте результат", text: acceptedMission ? acceptedMission.title : "Добавьте контакт и контекст, чтобы компания могла быстро всё проверить.", href: acceptedMission ? `/partner/${token}/submit/${acceptedMission.id}` : `/partner/${token}/missions`, action: "Передать результат" },
     { title: "Следите за статусом", text: "Решение компании, комментарии и начисление сохраняются в одной истории.", href: `/partner/${token}/submissions`, action: "Открыть результаты" },
   ];
 
@@ -42,7 +42,7 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
     <div className="partner-portal-content partner-home-page">
       <div className="partner-welcome">
         <div><span>ЗАРАБАТЫВАЙТЕ НА РЕКОМЕНДАЦИЯХ</span><h1>{portal.profile.firstName || "Агент"}, знакомьте {portal.company.name} с нужными людьми и получайте вознаграждения</h1><p>Выберите понятное задание, порекомендуйте подходящего клиента и отслеживайте заработок до фактического получения денег.</p></div>
-        <Link className="button button-primary" href={`/partner/${token}/opportunities`}>Передать новый результат <span>↗</span></Link>
+        <Link className="button button-primary" href={`/partner/${token}/opportunities`}>Передать лид или результат <span>↗</span></Link>
       </div>
 
       <section className="mobile-agent-roadmap" aria-label="Путь к первой выплате">

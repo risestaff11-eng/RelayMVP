@@ -8,5 +8,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!attachment?.objectKey) return new Response("Файл не найден", { status: 404 });
   const object = await getFilesBucket().get(attachment.objectKey);
   if (!object) return new Response("Файл не найден", { status: 404 });
-  return new Response(object.body, { headers: { "content-type": attachment.mimeType, "content-disposition": `attachment; filename*=UTF-8''${encodeURIComponent(attachment.fileName)}`, "cache-control": "private, no-store" } });
+  const disposition = new URL(request.url).searchParams.get("inline") === "1" ? "inline" : "attachment";
+  return new Response(object.body, { headers: { "content-type": attachment.mimeType, "content-disposition": `${disposition}; filename*=UTF-8''${encodeURIComponent(attachment.fileName)}`, "cache-control": "private, no-store" } });
 }
