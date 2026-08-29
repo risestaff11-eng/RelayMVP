@@ -30,5 +30,100 @@ export default async function PublicProgramPage({ params, searchParams }: { para
   const authorized = portal?.programs.some((item) => item.id === program.id) ? portal : null;
   if (!authorized) return <PartnerEntry programSlug={slug} companyId={company.id} companyName={company.name} logoObjectKey={company.logoObjectKey} programName={program.name} reward={program.missions[0]?.rewardLabel || "По условиям задания"} />;
 
-  return <main className="partner-program-page"><header className="partner-program-nav"><Link className="brand" href={`/p/${slug}?access=${access}`}><span className="brand-mark">R</span><span>Relay</span></Link><div className="partner-program-nav-actions"><span>Агентская программа · {company.name}</span><Link href={`/partner/${access}`}>Кабинет агента →</Link></div></header><section className="partner-program-hero"><span className="live-pill">● ПРОГРАММА АКТИВНА</span><h1>{program.name}</h1><p>{program.description}</p><div className="partner-program-facts"><div><small>КОМПАНИЯ</small><strong>{company.name}</strong></div><div><small>ЗАДАНИЙ</small><strong>{program.missions.length}</strong></div><div><small>ВАЛЮТА</small><strong>{program.currency}</strong></div><div><small>СРОК</small><strong>{program.expiresAt ? new Date(program.expiresAt).toLocaleDateString("ru-RU") : "Без ограничения"}</strong></div></div><a className="button button-primary" href="#missions">Посмотреть задания <span>↓</span></a></section><section className="partner-missions-section" id="missions"><div className="partner-section-heading"><span className="module-kicker">ШАГ 2 ИЗ 2</span><h2>Выберите и возьмите задание</h2><p>После выбора откроется передача результата. Условия зафиксированы до начала работы.</p></div><div className="partner-mission-grid">{program.missions.map((mission, index) => <article className={`partner-mission-card type-${mission.type.toLowerCase()}`} key={mission.id}><div className="partner-mission-number">0{index + 1} · {typeNames[mission.type]}</div><h3>{mission.title}</h3><p>{mission.description}</p><div className="partner-reward"><small>ВОЗНАГРАЖДЕНИЕ</small><strong>{mission.rewardLabel}</strong></div><div className="partner-mission-block"><strong>Что сделать</strong><ol>{mission.instructions.map((item) => <li key={item}>{item}</li>)}</ol></div><div className="partner-mission-block"><strong>Что приложить</strong><ul>{mission.proofRequirements.map((item) => <li key={item}>{item}</li>)}</ul>{mission.resources.length > 0 && <div className="mission-agent-files"><strong>Файлы компании</strong>{mission.resources.map((resource) => <a href={`/api/partner/mission-files/${resource.id}?token=${access}`} key={resource.id}>↓ {resource.fileName}<small>{Math.max(1, Math.round(resource.size / 1024))} КБ</small></a>)}</div>}</div><div className="partner-verification"><strong>Как проверяется</strong><p>{mission.verificationRules}</p></div><PublicMissionAction token={access} missionId={mission.id} accepted={authorized.acceptances.some((item) => item.missionId === mission.id && item.status === "ACTIVE")} /></article>)}</div></section><section className="partner-terms"><div><span className="module-kicker">ПРОЗРАЧНЫЕ УСЛОВИЯ</span><h2>До начала задания</h2></div><div><article><strong>Сроки выплаты</strong><p>{program.payoutTerms}</p></article><article><strong>Ограничения</strong><p>{program.legalTerms}</p></article></div><p className="partner-beta-note">Relay фиксирует владельца рекомендации, дату отправки и всю историю статусов.</p></section><footer className="partner-program-footer"><span>Работает на Relay</span><a href={company.website} target="_blank" rel="noreferrer" referrerPolicy="no-referrer">Сайт компании ↗</a></footer></main>;
+  return (
+    <main className="partner-program-page">
+      <header className="partner-program-nav">
+        <Link className="brand" href={`/p/${slug}?access=${access}`}>
+          <span className="brand-mark">R</span>
+          <span>Relay</span>
+        </Link>
+        <div className="partner-program-nav-actions">
+          <span>{company.name}</span>
+          <Link href={`/partner/${access}`}>Кабинет агента →</Link>
+        </div>
+      </header>
+
+      <section className="partner-missions-section" id="missions">
+        <div className="partner-section-heading">
+          <span className="module-kicker">{company.name} · ДОСТУПНЫЕ ЗАДАНИЯ</span>
+          <h1>Выберите задание и передайте результат</h1>
+          <p>Сразу видны действия, подтверждение и вознаграждение. Остальная информация о программе находится ниже.</p>
+        </div>
+        <div className="partner-mission-grid">
+          {program.missions.map((mission, index) => (
+            <article className={`partner-mission-card type-${mission.type.toLowerCase()}`} key={mission.id}>
+              <div className="partner-mission-number">{String(index + 1).padStart(2, "0")} · {typeNames[mission.type]}</div>
+              <h2>{mission.title}</h2>
+              <div className="partner-reward">
+                <small>МОЖНО ЗАРАБОТАТЬ</small>
+                <strong>{mission.rewardLabel}</strong>
+              </div>
+              <p>{mission.description}</p>
+              <div className="partner-mission-block">
+                <strong>Что сделать</strong>
+                <ol>{mission.instructions.map((item) => <li key={item}>{item}</li>)}</ol>
+              </div>
+              <div className="partner-mission-block">
+                <strong>Что приложить</strong>
+                <ul>{mission.proofRequirements.map((item) => <li key={item}>{item}</li>)}</ul>
+                {mission.resources.length > 0 && (
+                  <div className="mission-agent-files">
+                    <strong>Файлы компании</strong>
+                    {mission.resources.map((resource) => (
+                      <a href={`/api/partner/mission-files/${resource.id}?token=${access}`} key={resource.id}>
+                        ↓ {resource.fileName}<small>{Math.max(1, Math.round(resource.size / 1024))} КБ</small>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="partner-verification">
+                <strong>Как проверяется</strong>
+                <p>{mission.verificationRules}</p>
+              </div>
+              <PublicMissionAction
+                token={access}
+                missionId={mission.id}
+                accepted={authorized.acceptances.some((item) => item.missionId === mission.id && item.status === "ACTIVE")}
+              />
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="partner-program-details" aria-label="Информация о программе">
+        <details>
+          <summary>
+            <span><small>О ПРОГРАММЕ</small><strong>{program.name}</strong></span>
+            <span aria-hidden="true">＋</span>
+          </summary>
+          <div className="partner-program-details-body">
+            <p>{program.description}</p>
+            <div className="partner-program-facts">
+              <div><small>КОМПАНИЯ</small><strong>{company.name}</strong></div>
+              <div><small>ЗАДАНИЙ</small><strong>{program.missions.length}</strong></div>
+              <div><small>ВАЛЮТА</small><strong>{program.currency}</strong></div>
+              <div><small>СРОК</small><strong>{program.expiresAt ? new Date(program.expiresAt).toLocaleDateString("ru-RU") : "Без ограничения"}</strong></div>
+            </div>
+          </div>
+        </details>
+        <details>
+          <summary>
+            <span><small>УСЛОВИЯ</small><strong>Выплата и ограничения</strong></span>
+            <span aria-hidden="true">＋</span>
+          </summary>
+          <div className="partner-program-details-body partner-terms-grid">
+            <article><strong>Сроки выплаты</strong><p>{program.payoutTerms}</p></article>
+            <article><strong>Ограничения</strong><p>{program.legalTerms}</p></article>
+            <p className="partner-beta-note">Relay фиксирует владельца рекомендации, дату отправки и всю историю статусов.</p>
+          </div>
+        </details>
+      </section>
+
+      <footer className="partner-program-footer">
+        <span>Работает на Relay</span>
+        <a href={company.website} target="_blank" rel="noreferrer" referrerPolicy="no-referrer">Сайт компании ↗</a>
+      </footer>
+    </main>
+  );
 }

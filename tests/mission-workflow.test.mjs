@@ -110,6 +110,17 @@ test("public program entry always submits its program slug", async () => {
   assert.match(partnerEntry, /JSON\.stringify\(\{ programSlug, email/);
 });
 
+test("authorized public program puts tasks first and collapses secondary details", async () => {
+  const publicPage = await readFile(new URL("../app/p/[slug]/page.tsx", import.meta.url), "utf8");
+  const missionSection = publicPage.indexOf('className="partner-missions-section"');
+  const detailsSection = publicPage.indexOf('className="partner-program-details"');
+  assert.ok(missionSection > 0);
+  assert.ok(detailsSection > missionSection);
+  assert.match(publicPage, /<details>/);
+  assert.match(publicPage, /Выберите задание и передайте результат/);
+  assert.doesNotMatch(publicPage, /partner-program-hero/);
+});
+
 test("user-facing application uses the Rela assistant name", async () => {
   const files = [
     "../app/dashboard/programs/new/new-program-form.tsx",

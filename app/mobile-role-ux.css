@@ -242,19 +242,20 @@
   .partner-program-nav,.partner-submit-page > header { position: sticky; z-index: 20; top: 0; min-height: 62px; padding: 0 14px; background: rgba(255,255,252,.96); backdrop-filter: blur(16px); }
   .partner-program-nav-actions > span { display: none; }
   .partner-program-nav-actions a { min-height: 42px; padding: 0 12px; display: flex; align-items: center; border-radius: 11px; background: #eeece4; font-size: 9px; }
-  .partner-program-hero { padding: 42px 14px 36px; }
-  .partner-program-hero h1 { font-size: clamp(39px, 12vw, 56px); }
-  .partner-program-hero > p { font-size: 14px; }
   .partner-program-facts { grid-template-columns: 1fr 1fr; gap: 8px; }
   .partner-program-facts > div { min-height: 82px; padding: 13px; border-radius: 13px; }
-  .partner-program-hero > .button { width: 100%; min-height: 52px; justify-content: center; }
-  .partner-missions-section,.partner-terms { padding-right: 14px; padding-left: 14px; }
-  .partner-section-heading h2,.partner-terms h2 { font-size: 31px; }
+  .partner-missions-section { min-height: calc(100vh - 62px); padding: 30px 14px 38px; }
+  .partner-section-heading h1 { font-size: clamp(35px, 10.5vw, 48px); }
+  .partner-section-heading p { font-size: 13px; }
   .partner-mission-grid { grid-template-columns: 1fr; }
   .partner-mission-card { padding: 20px; border-radius: 18px; }
-  .partner-mission-card h3 { font-size: 27px; }
+  .partner-mission-card h2 { font-size: 27px; }
   .partner-mission-card button,.partner-mission-card > a { width: 100%; min-height: 50px; }
-  .partner-terms > div:nth-child(2) { grid-template-columns: 1fr; }
+  .partner-program-details { width: calc(100% - 28px); padding: 24px 0; }
+  .partner-program-details summary { min-height: 72px; padding: 15px 17px; }
+  .partner-program-details-body { padding: 0 17px 17px; }
+  .partner-terms-grid { grid-template-columns: 1fr; }
+  .partner-terms-grid .partner-beta-note { grid-column: auto; }
   .partner-program-footer { padding: 18px 14px; }
   .partner-submit-page > header > a:last-child { max-width: 62vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .partner-submit-layout { width: min(100% - 28px, 1180px); padding-top: 24px; }
