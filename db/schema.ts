@@ -28,6 +28,13 @@ export const authSessions = sqliteTable("auth_sessions", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("idx_auth_sessions_user").on(table.userId)]);
 
+export const passwordResetAttempts = sqliteTable("password_reset_attempts", {
+  id: text("id").primaryKey(),
+  keyHash: text("key_hash").notNull(),
+  successful: integer("successful", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("idx_password_reset_attempts_key_created").on(table.keyHash, table.createdAt)]);
+
 export const userRoles = sqliteTable(
   "user_roles",
   {

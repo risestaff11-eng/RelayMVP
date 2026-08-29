@@ -1080,11 +1080,17 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .relay-auth-check a { color: #4d6bd2; text-decoration: underline; text-underline-offset: 2px; }
 .relay-auth-error { margin: -5px 0 0; padding: 11px 12px; border-radius: 10px; color: #913b30; background: #fff0ec; font-size: 12px; line-height: 1.4; }
 .relay-auth-back { margin-top: 22px; padding: 0; border: 0; color: #536168; background: none; font-size: 12px; font-weight: 750; cursor: pointer; }
+.relay-auth-card form > .relay-auth-forgot { width: auto; min-height: 0; margin: -7px 0 0; padding: 0; align-self: flex-end; color: #415da8; background: transparent; font-size: 12px; font-weight: 800; }
+.relay-auth-card form > .relay-auth-forgot:hover { transform: none; text-decoration: underline; }
+.relay-auth-recovery-actions { margin-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.relay-auth-recovery-actions .relay-auth-back { margin: 0; }
+.relay-auth-recovery-actions a { color: #315000; font-size: 11px; font-weight: 800; text-align: right; }
 .relay-auth-success { padding-top: 38px; text-align: center; }
 .relay-auth-success > span { width: 56px; height: 56px; margin: 0 auto 24px; display: grid; place-items: center; border-radius: 17px; background: var(--lime); font-size: 23px; font-weight: 950; }
 .relay-auth-home { margin-top: 14px; border: 0; color: #5f645a; background: transparent; font-size: 13px; font-weight: 800; cursor: pointer; }
 .relay-auth-home:hover { color: var(--ink); text-decoration: underline; }
-@media (max-width: 560px) { .relay-auth-page { padding: 20px 12px; align-items: start; }.relay-auth-card { margin-top: 18px; padding: 27px 22px; border-radius: 19px; }.relay-auth-copy { margin-top: 32px; }.relay-auth-copy h1,.relay-auth-success h1 { font-size: 27px; } }
+.relay-auth-primary { width: 100%; min-height: 54px; margin-top: 28px; border: 0; border-radius: 12px; color: #fff; background: #5878e8; font-size: 14px; font-weight: 900; cursor: pointer; }
+@media (max-width: 560px) { .relay-auth-page { padding: 20px 12px; align-items: start; }.relay-auth-card { margin-top: 18px; padding: 27px 22px; border-radius: 19px; }.relay-auth-copy { margin-top: 32px; }.relay-auth-copy h1,.relay-auth-success h1 { font-size: 27px; }.relay-auth-recovery-actions { align-items: flex-start; flex-direction: column; }.relay-auth-recovery-actions a { text-align: left; } }
 .system-gate { min-height: 100vh; display: grid; place-items: center; background: #fff; font: 14px Arial,sans-serif; }.system-gate form { width: min(100% - 32px,360px); display: grid; gap: 12px; }.system-gate label { display: grid; gap: 8px; }.system-gate input { height: 44px; padding: 0 12px; border: 1px solid #bbb; }.system-gate button { height: 42px; border: 0; color: white; background: #222; cursor: pointer; }.system-gate p,.system-error { color: #a1261d; }
 .system-users { min-height: 100vh; padding: 28px; overflow-x: auto; color: #111; background: white; font: 13px Arial,sans-serif; }.system-users h1 { margin: 0 0 24px; font-size: 24px; }.system-table { min-width: 1100px; border: 1px solid #ccc; }.system-row { display: grid; grid-template-columns: 1fr 1.35fr .9fr 1fr 1fr .65fr 2fr; border-top: 1px solid #ddd; }.system-row:first-child { border-top: 0; }.system-row > span { padding: 10px; overflow-wrap: anywhere; }.system-head { background: #eee; font-weight: 700; }.system-actions { display: flex; gap: 5px; }.system-actions button { padding: 6px 8px; border: 1px solid #aaa; background: #fff; cursor: pointer; }.system-actions button:last-child { color: #a1261d; }.system-actions button:disabled { opacity: .45; }
 
