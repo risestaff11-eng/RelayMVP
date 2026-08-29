@@ -7,6 +7,7 @@ import { getConfirmedCompanyProfile } from "../../db/profile";
 import { getCompanyOperations, getProgramsForCompany, getSubmissionsForCompany } from "../../db/programs";
 import { ProgramQuickActions } from "./_components/program-quick-actions";
 import { formatActivityDate, formatInteger } from "@/lib/format-display";
+import { FirstRunGuide } from "./_components/first-run-guide";
 
 export const metadata: Metadata = { title: "Кабинет компании" };
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function DashboardPage() {
   const [profile, stats, programs, submissions] = await Promise.all([getConfirmedCompanyProfile(company.id), getCompanyOperations(company.id), getProgramsForCompany(company.id), getSubmissionsForCompany(company.id)]);
   const hasProgram = programs.length > 0;
   const hasPublished = programs.some((program) => program.status === "ACTIVE");
+  const showFirstRun = !hasPublished || stats.partners === 0 || stats.submissions === 0 || stats.awaitingReview > 0;
   const progress = hasPublished ? 100 : hasProgram ? 75 : profile ? 50 : 25;
   const nextHref = stats.awaitingReview > 0 ? "/dashboard/submissions" : !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
   const nextLabel = stats.awaitingReview > 0 ? `Проверить результаты · ${stats.awaitingReview}` : !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
@@ -44,6 +46,8 @@ export default async function DashboardPage() {
         <Link className="button button-primary" href={nextHref}>{nextLabel} <span>→</span></Link>
       </div>
 
+      {showFirstRun && <FirstRunGuide hasProfile={Boolean(profile)} hasProgram={hasProgram} hasPublished={hasPublished} partnerCount={stats.partners} submissionCount={stats.submissions} awaitingReview={stats.awaitingReview} programId={programs[0]?.id} />}
+
       <section className="metrics" aria-label="Основные показатели">
         <Link className="metric metric-link" href="/dashboard/programs"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>Из {stats.programs} созданных · открыть →</small></Link>
         <Link className="metric metric-link" href="/dashboard/partners"><div className="metric-top"><span>АГЕНТЫ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{stats.activePartners} активных · открыть список →</small></Link>
@@ -54,7 +58,7 @@ export default async function DashboardPage() {
 
       <section className="dashboard-grid">
         <div>
-          <article className="setup-card">
+          {!showFirstRun && <article className="setup-card">
             <div className="setup-card-top"><div><h3>Запуск программы</h3><p>{hasPublished ? "Программа опубликована. Следующий цикл — привлечение агентов, проверка результатов и прозрачные выплаты." : "Relay ведёт от профиля компании до внешней ссылки с понятными заданиями и наградами."}</p></div><span className="progress-badge">{progress}%</span></div>
             <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
             <div className="setup-steps">
@@ -63,9 +67,9 @@ export default async function DashboardPage() {
               <Link className={`setup-step ${profile && !hasProgram ? "next" : hasProgram ? "done" : ""}`} href={hasProgram ? `/dashboard/programs/${programs[0].id}` : "/dashboard/programs/new"}><strong>{hasProgram ? "✓" : "03"} Задания</strong>Лиды, сделки, имидж</Link>
               <Link className={`setup-step ${hasProgram && !hasPublished ? "next" : hasPublished ? "done" : ""}`} href={hasProgram ? `/dashboard/programs/${programs[0].id}` : "/dashboard/programs"}><strong>{hasPublished ? "✓" : "04"} Публикация</strong>Внешняя ссылка</Link>
             </div>
-          </article>
+          </article>}
 
-          <article className="panel" style={{ marginTop: 14 }}>
+          <article className="panel" style={{ marginTop: showFirstRun ? 0 : 14 }}>
             <div className="panel-header"><div><h2>Агентские программы</h2><p>Запускайте, приостанавливайте и архивируйте программы прямо здесь.</p></div><Link href="/dashboard/programs/new">＋ Новая программа</Link></div>
             {programs.length ? <div className="dashboard-campaign-mini-grid">{programs.slice(0, 3).map((program) => <article className={`dashboard-program-mini status-card-${program.status.toLowerCase()}`} key={program.id}><div><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : program.status === "PAUSED" ? "На паузе" : program.status === "ARCHIVED" ? "В архиве" : "Черновик"}</span><Link href={`/dashboard/programs/${program.id}`} aria-label={`Открыть ${program.name}`}>↗</Link></div><Link className="dashboard-program-mini-main" href={`/dashboard/programs/${program.id}`}><h3>{program.name}</h3><p>{program.missions.length} заданий · {program.agentCount} агентов · {program.resultCount} результатов</p></Link><ProgramQuickActions id={program.id} initialStatus={program.status} /></article>)}</div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Создайте её сразу — AI-профиль можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать программу</Link></div></div>}
           </article>

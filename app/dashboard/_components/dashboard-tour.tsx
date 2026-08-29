@@ -35,13 +35,6 @@ export function DashboardTour() {
   }, []);
 
   useEffect(() => {
-    if (localStorage.getItem("relay-dashboard-tour-v1") !== "done") {
-      const timer = window.setTimeout(() => setStep(0), 550);
-      return () => window.clearTimeout(timer);
-    }
-  }, []);
-
-  useEffect(() => {
     const frame = window.requestAnimationFrame(updateRect);
     window.addEventListener("resize", updateRect);
     return () => {
@@ -66,7 +59,7 @@ export function DashboardTour() {
 
   return (
     <>
-      <button className="icon-button tour-launch" type="button" onClick={() => setStep(0)} aria-label="Открыть обучение">?</button>
+      <button className="icon-button tour-launch" type="button" onClick={() => setStep(0)} aria-label="Открыть обзор разделов" title="Обзор разделов">?</button>
       {overlay && createPortal(overlay, document.body)}
     </>
   );

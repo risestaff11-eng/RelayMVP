@@ -12,9 +12,15 @@ test("company cabinet uses a consistent navigation icon system and contextual to
 
 test("company dashboard prioritizes results that require review", async () => {
   const dashboard = await readFile(new URL("../app/dashboard/page.tsx", import.meta.url), "utf8");
+  const startGuide = await readFile(new URL("../app/dashboard/_components/first-run-guide.tsx", import.meta.url), "utf8");
+  const tour = await readFile(new URL("../app/dashboard/_components/dashboard-tour.tsx", import.meta.url), "utf8");
   assert.match(dashboard, /stats\.awaitingReview > 0 \? "\/dashboard\/submissions"/);
   assert.match(dashboard, /Проверить результаты · \$\{stats\.awaitingReview\}/);
   assert.match(dashboard, /href="\/dashboard\/rewards"/);
+  assert.match(dashboard, /<FirstRunGuide/);
+  assert.match(startGuide, /Relay ведёт вас по одному шагу/);
+  assert.match(startGuide, /Выполните действие ниже — следующий шаг появится автоматически/);
+  assert.doesNotMatch(tour, /setTimeout\(\(\) => setStep\(0\)/);
 });
 
 test("company cabinet refinement covers responsive and accessible states", async () => {
