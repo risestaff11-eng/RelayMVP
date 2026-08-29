@@ -8,5 +8,6 @@ test("admin users list includes pending company applicants without a company wor
   assert.match(source, /\.from\(users\)/);
   assert.match(source, /\.innerJoin\(userRoles,[\s\S]*?"COMPANY"/);
   assert.match(source, /\.leftJoin\(companies,/);
+  assert.match(source, /emailVerifiedAt: users\.emailVerifiedAt/);
   assert.doesNotMatch(source, /\.from\(companies\)\s*\.innerJoin\(users,/);
 });

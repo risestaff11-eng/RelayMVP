@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { userRoles, users } from "../../../../db/schema";
+import { companyEmailVerificationCodes, userRoles, users } from "../../../../db/schema";
 import { hashPassword } from "../../../../lib/account-auth";
+import { companyEmailCodeExpiresAt, createCompanyEmailCode, hashCompanyEmailCode, sendCompanyEmailCode } from "../../../../lib/company-email-verification";
 import { cleanString, sameOrigin } from "../../company/_utils";
 
 export async function POST(request: Request) {
@@ -31,16 +32,26 @@ export async function POST(request: Request) {
     const passwordHash = await hashPassword(password);
     if (user) {
       await db.batch([
-        db.update(users).set({ displayName, phone, companyName, passwordHash, status: "pending", updatedAt: now }).where(eq(users.id, userId)),
+        db.update(users).set({ displayName, phone, companyName, passwordHash, status: "pending", emailVerifiedAt: null, updatedAt: now }).where(eq(users.id, userId)),
         db.insert(userRoles).values({ userId, role: "COMPANY", createdAt: now }).onConflictDoNothing(),
       ]);
     } else {
       await db.batch([
-        db.insert(users).values({ id: userId, email, displayName, phone, companyName, passwordHash, status: "pending", createdAt: now, updatedAt: now }),
+        db.insert(users).values({ id: userId, email, displayName, phone, companyName, passwordHash, status: "pending", emailVerifiedAt: null, createdAt: now, updatedAt: now }),
         db.insert(userRoles).values({ userId, role: "COMPANY", createdAt: now }),
       ]);
     }
-    return Response.json({ ok: true }, { status: 201 });
+    const code = createCompanyEmailCode();
+    const verificationId = crypto.randomUUID();
+    let verificationSent = false;
+    try {
+      await db.insert(companyEmailVerificationCodes).values({ id: verificationId, userId, destination: email, codeHash: await hashCompanyEmailCode(userId, code), expiresAt: companyEmailCodeExpiresAt(), createdAt: now });
+      await sendCompanyEmailCode(email, code);
+      verificationSent = true;
+    } catch {
+      await db.delete(companyEmailVerificationCodes).where(eq(companyEmailVerificationCodes.id, verificationId));
+    }
+    return Response.json({ ok: true, verificationSent }, { status: 201 });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось создать аккаунт" }, { status: 400 });
   }

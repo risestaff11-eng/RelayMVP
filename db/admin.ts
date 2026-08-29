@@ -12,6 +12,7 @@ export async function listCompanyUsers() {
     company: users.companyName,
     createdAt: users.createdAt,
     status: users.status,
+    emailVerifiedAt: users.emailVerifiedAt,
     tokenBalance: companies.aiTokenBalance,
   }).from(users)
     .innerJoin(userRoles, and(eq(userRoles.userId, users.id), eq(userRoles.role, "COMPANY")))
@@ -22,6 +23,7 @@ export async function listCompanyUsers() {
 export async function deleteCompanyUser(userId: string) {
   const database = (env as unknown as { DB: D1Database }).DB;
   const statements = [
+    "DELETE FROM company_email_verification_codes WHERE user_id = ?",
     "DELETE FROM contact_verification_codes WHERE partner_id IN (SELECT id FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM submission_disputes WHERE submission_id IN (SELECT id FROM submissions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM submission_status_events WHERE submission_id IN (SELECT id FROM submissions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",

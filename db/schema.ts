@@ -17,9 +17,28 @@ export const users = sqliteTable("users", {
   companyName: text("company_name").notNull().default(""),
   passwordHash: text("password_hash"),
   status: text("status").notNull().default("pending"),
+  emailVerifiedAt: text("email_verified_at"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("idx_users_email").on(table.email)]);
+
+export const companyEmailVerificationCodes = sqliteTable(
+  "company_email_verification_codes",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id),
+    destination: text("destination").notNull(),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    consumedAt: text("consumed_at"),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_company_email_verification_user_created").on(table.userId, table.createdAt),
+    index("idx_company_email_verification_destination_created").on(table.destination, table.createdAt),
+  ],
+);
 
 export const authSessions = sqliteTable("auth_sessions", {
   id: text("id").primaryKey(),

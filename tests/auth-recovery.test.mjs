@@ -14,8 +14,13 @@ test("company users can reset a forgotten password with registration phone", asy
   assert.match(flow, /Не помню телефон — написать в WhatsApp/);
 });
 
-test("registration success explains activation and password recovery without promising email", async () => {
+test("registration offers email-code activation with a manual admin fallback", async () => {
   const flow = await readFile(new URL("../app/auth/auth-flow.tsx", import.meta.url), "utf8");
-  assert.match(flow, /Письмо после регистрации не отправляется/);
-  assert.match(flow, /можно восстановить по email и телефону/);
+  const register = await readFile(new URL("../app/api/auth/register/route.ts", import.meta.url), "utf8");
+  const verification = await readFile(new URL("../app/api/auth/email-verification/route.ts", import.meta.url), "utf8");
+  assert.match(flow, /Введите код из письма/);
+  assert.match(flow, /Запросить ручную активацию/);
+  assert.match(register, /sendCompanyEmailCode/);
+  assert.match(verification, /status: "active"/);
+  assert.match(verification, /createAuthSession/);
 });
