@@ -1,0 +1,27 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+test("company cabinet uses a consistent navigation icon system and contextual topbar", async () => {
+  const navigation = await readFile(new URL("../app/dashboard/_components/dashboard-nav.tsx", import.meta.url), "utf8");
+  const layout = await readFile(new URL("../app/dashboard/layout.tsx", import.meta.url), "utf8");
+  assert.match(navigation, /DashboardIcon name=\{item\.icon\}/);
+  assert.ok(navigation.indexOf('label: "AI-Методолог"') < navigation.indexOf('label: "Данные компании"'));
+  assert.match(layout, /<DashboardContext nextStep=/);
+});
+
+test("company dashboard prioritizes results that require review", async () => {
+  const dashboard = await readFile(new URL("../app/dashboard/page.tsx", import.meta.url), "utf8");
+  assert.match(dashboard, /stats\.awaitingReview > 0 \? "\/dashboard\/submissions"/);
+  assert.match(dashboard, /Проверить результаты · \$\{stats\.awaitingReview\}/);
+  assert.match(dashboard, /href="\/dashboard\/rewards"/);
+});
+
+test("company cabinet refinement covers responsive and accessible states", async () => {
+  const rootLayout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../app/company-premium.css", import.meta.url), "utf8");
+  assert.match(rootLayout, /import "\.\/company-premium\.css"/);
+  assert.match(styles, /:focus-visible/);
+  assert.match(styles, /@media \(max-width: 900px\)/);
+  assert.match(styles, /prefers-reduced-motion/);
+});

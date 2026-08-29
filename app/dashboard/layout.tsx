@@ -7,6 +7,7 @@ import { DashboardNav } from "./_components/dashboard-nav";
 import { DashboardTour } from "./_components/dashboard-tour";
 import { AccountMenu } from "./_components/account-menu";
 import { CompanyBrand, CompanyLogo } from "./_components/company-brand";
+import { DashboardContext } from "./_components/dashboard-context";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -31,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <section className="dashboard-main">
         <header className="dashboard-topbar">
           <div className="mobile-company-identity"><CompanyLogo company={company} className="mobile-relay-mark" /><div><small>РАБОЧЕЕ ПРОСТРАНСТВО</small><strong>{company.name}</strong></div></div>
-          <p>{company.onboardingStatus === "PROGRAM_PUBLISHED" ? "Программа опубликована · отслеживайте агентов и результаты" : company.onboardingStatus === "PROFILE_CONFIRMED" || company.onboardingStatus === "PROGRAM_DRAFT" ? "Профиль подтверждён · создайте и опубликуйте программу" : "Следующий шаг — подтвердить профиль бизнеса"}</p>
+          <DashboardContext nextStep={company.onboardingStatus === "PROGRAM_PUBLISHED" ? "Программа опубликована · отслеживайте агентов и результаты" : company.onboardingStatus === "PROFILE_CONFIRMED" || company.onboardingStatus === "PROGRAM_DRAFT" ? "Профиль подтверждён · создайте и опубликуйте программу" : "Следующий шаг — подтвердить профиль бизнеса"} />
           <div className="top-actions"><DashboardTour /><AccountMenu name={user.displayName} email={user.email} initials={initials(user.displayName)} signOutHref={chatGPTSignOutPath("/")} /></div>
         </header>
         {children}

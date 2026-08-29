@@ -19,8 +19,8 @@ export default async function DashboardPage() {
   const hasProgram = programs.length > 0;
   const hasPublished = programs.some((program) => program.status === "ACTIVE");
   const progress = hasPublished ? 100 : hasProgram ? 75 : profile ? 50 : 25;
-  const nextHref = !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
-  const nextLabel = !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
+  const nextHref = stats.awaitingReview > 0 ? "/dashboard/submissions" : !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
+  const nextLabel = stats.awaitingReview > 0 ? `Проверить результаты · ${stats.awaitingReview}` : !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
   const latestProgram = programs[0];
   const latestResult = submissions[0];
   const activities = latestResult ? [
@@ -45,11 +45,11 @@ export default async function DashboardPage() {
       </div>
 
       <section className="metrics" aria-label="Основные показатели">
-        <article className="metric"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>Из {stats.programs} созданных</small></article>
+        <Link className="metric metric-link" href="/dashboard/programs"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>Из {stats.programs} созданных · открыть →</small></Link>
         <Link className="metric metric-link" href="/dashboard/partners"><div className="metric-top"><span>АГЕНТЫ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{stats.activePartners} активных · открыть список →</small></Link>
         <Link className="metric metric-link" href="/dashboard/submissions"><div className="metric-top"><span>ПОЛУЧЕНО РЕЗУЛЬТАТОВ</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{stats.awaitingReview} ждут проверки · перейти →</small></Link>
-        <article className="metric"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">₸</span></div><strong>{formatInteger(stats.approvedRewards)} ₸</strong><small>Подтверждённые вознаграждения</small></article>
-        <article className={`metric ai-balance-metric ${company.aiTokenBalance < 1000 ? "low" : ""}`}><div className="metric-top"><span>AI-КРЕДИТЫ</span><span className="metric-icon">✦</span></div><strong>{formatInteger(company.aiTokenBalance)}</strong><small>{company.aiTokenBalance < 1000 ? "Требуется пополнение" : "Для анализа, генерации и чата"}</small>{company.aiTokenBalance < 1000 && <a href="https://wa.me/77765086000?text=%D0%97%D0%B0%D0%BA%D0%BE%D0%BD%D1%87%D0%B8%D0%BB%D0%B8%D1%81%D1%8C%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%D1%8B" target="_blank" rel="noreferrer">Пополнить в WhatsApp →</a>}</article>
+        <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">₸</span></div><strong>{formatInteger(stats.approvedRewards)} ₸</strong><small>Подтверждённые вознаграждения · открыть →</small></Link>
+        <Link className={`metric metric-link ai-balance-metric ${company.aiTokenBalance < 1000 ? "low" : ""}`} href="/dashboard/settings"><div className="metric-top"><span>AI-КРЕДИТЫ</span><span className="metric-icon">✦</span></div><strong>{formatInteger(company.aiTokenBalance)}</strong><small>{company.aiTokenBalance < 1000 ? "Требуется пополнение · открыть →" : "Анализ, генерация и чат · подробнее →"}</small></Link>
       </section>
 
       <section className="dashboard-grid">

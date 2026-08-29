@@ -13,6 +13,7 @@ import "./mobile-drawer-ux.css";
 import "./ui-polish.css";
 import "./marketing-polish.css";
 import "./agent-polish.css";
+import "./company-premium.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

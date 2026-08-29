@@ -3,18 +3,19 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SafeLink as Link } from "@/app/safe-link";
+import { DashboardIcon } from "./dashboard-icon";
 
 const items = [
-  { href: "/dashboard", label: "Рабочий стол", hint: "Сводка и следующие действия", icon: "⌂", exact: true },
-  { href: "/dashboard/programs", label: "Программы", hint: "Задания, награды и ссылки", icon: "◇" },
-  { href: "/dashboard/submissions", label: "Результаты", hint: "Проверка работы агентов", icon: "↗" },
-  { href: "/dashboard/partners", label: "Агенты", hint: "Участники и управление доступом", icon: "○" },
-  { href: "/dashboard/rewards", label: "Выплаты", hint: "Начисления и реестр", icon: "₸" },
-  { href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "⌁" },
-  { href: "/dashboard/assistant", label: "AI-агент", hint: "Советы и изменения в сервисе", icon: "✦" },
-  { href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для AI и заданий", icon: "□" },
-  { href: "/dashboard/settings", label: "Настройки", hint: "Контакты, тариф и AI-кредиты", icon: "⚙" },
-  { href: "/dashboard/methodologist", label: "AI-Методолог", hint: "Скрипты и материалы для агентов", icon: "▤" },
+  { href: "/dashboard", label: "Рабочий стол", hint: "Сводка и следующие действия", icon: "home", exact: true },
+  { href: "/dashboard/programs", label: "Программы", hint: "Задания, награды и ссылки", icon: "programs" },
+  { href: "/dashboard/submissions", label: "Результаты", hint: "Проверка работы агентов", icon: "results" },
+  { href: "/dashboard/partners", label: "Агенты", hint: "Участники и управление доступом", icon: "agents" },
+  { href: "/dashboard/rewards", label: "Выплаты", hint: "Начисления и реестр", icon: "rewards" },
+  { href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "analytics" },
+  { href: "/dashboard/assistant", label: "AI-агент", hint: "Советы и изменения в сервисе", icon: "assistant" },
+  { href: "/dashboard/methodologist", label: "AI-Методолог", hint: "Скрипты и материалы для агентов", icon: "methodologist" },
+  { href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для AI и заданий", icon: "company" },
+  { href: "/dashboard/settings", label: "Настройки", hint: "Контакты, тариф и AI-кредиты", icon: "settings" },
 ] as const;
 
 export function DashboardNav() {
@@ -33,9 +34,9 @@ export function DashboardNav() {
   return <>
     <nav className="sidebar-nav" aria-label="Навигация кабинета компании">
       <small className="sidebar-nav-label">УПРАВЛЕНИЕ</small>
-      {items.slice(0, 6).map((item) => <Link key={item.href} data-tour={("exact" in item && item.exact) ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i aria-hidden="true">{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
+      {items.slice(0, 6).map((item) => <Link key={item.href} data-tour={("exact" in item && item.exact) ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i><DashboardIcon name={item.icon} /></i><span>{item.label}<small>{item.hint}</small></span></Link>)}
       <small className="sidebar-nav-label">НАСТРОЙКА</small>
-      {items.slice(6).map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i aria-hidden="true">{item.icon}</i><span>{item.label}<small>{item.hint}</small></span></Link>)}
+      {items.slice(6).map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i><DashboardIcon name={item.icon} /></i><span>{item.label}<small>{item.hint}</small></span></Link>)}
     </nav>
 
     <button className="mobile-menu-trigger company-menu-trigger" type="button" aria-label="Открыть меню" aria-expanded={open} aria-controls="company-mobile-drawer" onClick={() => setOpen(true)}><i /><i /><i /></button>
@@ -43,7 +44,7 @@ export function DashboardNav() {
     <aside className={`mobile-side-drawer company-side-drawer ${open ? "open" : ""}`} id="company-mobile-drawer" aria-hidden={!open} inert={!open} role="dialog" aria-modal="true" aria-label="Меню кабинета компании">
       <header><div className="mobile-drawer-brand"><span>R</span><div><small>RELAY</small><strong>КАБИНЕТ КОМПАНИИ</strong></div></div><button type="button" aria-label="Закрыть меню" onClick={() => setOpen(false)}>×</button></header>
       <nav aria-label="Мобильная навигация компании">
-        {items.map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined} onClick={() => setOpen(false)}><i aria-hidden="true">{item.icon}</i><span><strong>{item.label}</strong><small>{item.hint}</small></span><b aria-hidden="true">→</b></Link>)}
+        {items.map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined} onClick={() => setOpen(false)}><i><DashboardIcon name={item.icon} /></i><span><strong>{item.label}</strong><small>{item.hint}</small></span><b aria-hidden="true">→</b></Link>)}
       </nav>
       <footer><span>RELAY · АГЕНТСКИЕ ПРОДАЖИ</span><p>Все основные разделы доступны из этого меню.</p></footer>
     </aside>
