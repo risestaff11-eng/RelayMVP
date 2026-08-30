@@ -107,7 +107,7 @@ test("public program entry always submits its program slug", async () => {
   const publicPage = await readFile(new URL("../app/p/[slug]/page.tsx", import.meta.url), "utf8");
   const partnerEntry = await readFile(new URL("../app/p/[slug]/partner-entry.tsx", import.meta.url), "utf8");
   assert.match(publicPage, /<PartnerEntry programSlug=\{slug\}/);
-  assert.match(partnerEntry, /JSON\.stringify\(\{ programSlug, email/);
+  assert.match(partnerEntry, /JSON\.stringify\(\{ programSlug, missionId, email/);
 });
 
 test("authorized public program puts tasks first and collapses secondary details", async () => {
@@ -117,11 +117,12 @@ test("authorized public program puts tasks first and collapses secondary details
   assert.ok(missionSection > 0);
   assert.ok(detailsSection > missionSection);
   assert.match(publicPage, /<details>/);
-  assert.match(publicPage, /Выберите задание и передайте результат/);
+  assert.match(publicPage, /Выберите способ заработать/);
+  assert.match(publicPage, /Регистрация понадобится только при отправке первой заявки/);
   assert.doesNotMatch(publicPage, /partner-program-hero/);
 });
 
-test("user-facing application uses the Rela assistant name", async () => {
+test("user-facing application uses the Yaler assistant name", async () => {
   const files = [
     "../app/dashboard/programs/new/new-program-form.tsx",
     "../app/dashboard/programs/page.tsx",
@@ -129,6 +130,6 @@ test("user-facing application uses the Rela assistant name", async () => {
     "../app/dashboard/settings/plan-settings.tsx",
   ];
   const source = (await Promise.all(files.map((file) => readFile(new URL(file, import.meta.url), "utf8")))).join("\n");
-  assert.match(source, /Rela/);
+  assert.match(source, /Yaler/);
   assert.doesNotMatch(source, /Gemini/i);
 });

@@ -13,5 +13,5 @@ export default async function NewProgramPage() {
   const company = await getCompanyForUser(user.userId);
   if (!company) redirect("/onboarding");
   const profile = await getConfirmedCompanyProfile(company.id) ?? await getLatestCompanyProfile(company.id);
-  return <NewProgramForm companyName={company.name} tokenBalance={company.aiTokenBalance} profileVersion={profile?.versionNumber ?? null} profileStatus={profile?.status ?? "MISSING"} />;
+  return <NewProgramForm profileVersion={profile?.versionNumber ?? null} profileStatus={profile?.status ?? "MISSING"} />;
 }

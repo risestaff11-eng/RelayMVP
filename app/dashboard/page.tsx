@@ -22,27 +22,27 @@ export default async function DashboardPage() {
   const showFirstRun = !hasPublished || stats.partners === 0 || stats.submissions === 0 || stats.awaitingReview > 0;
   const progress = hasPublished ? 100 : hasProgram ? 75 : profile ? 50 : 25;
   const nextHref = stats.awaitingReview > 0 ? "/dashboard/submissions" : !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
-  const nextLabel = stats.awaitingReview > 0 ? `Проверить результаты · ${stats.awaitingReview}` : !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
+  const nextLabel = stats.awaitingReview > 0 ? `${stats.awaitingReview} новые заявки — посмотреть` : !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
   const latestProgram = programs[0];
   const latestResult = submissions[0];
   const activities = latestResult ? [
-    { mark: "↗", title: "Получен новый результат", text: `${latestResult.contactName} · ${latestResult.programName}`, date: latestResult.createdAt, href: "/dashboard/submissions", action: "Проверить результат" },
+    { mark: "↗", title: "Получена новая заявка", text: `${latestResult.contactName} · ${latestResult.programName}`, date: latestResult.createdAt, href: "/dashboard/submissions", action: "Посмотреть заявку" },
     { mark: "◇", title: latestProgram?.status === "ACTIVE" ? "Программа опубликована" : "Программа обновлена", text: latestProgram?.name ?? company.name, date: latestProgram?.updatedAt ?? company.createdAt, href: latestProgram ? `/dashboard/programs/${latestProgram.id}` : "/dashboard/programs", action: "Открыть программу" },
     { mark: "○", title: "Агенты подключаются по ссылке", text: `${stats.partners} зарегистрировано`, date: latestResult.createdAt, href: "/dashboard/partners", action: "Посмотреть агентов" },
   ] : latestProgram ? [
     { mark: "◇", title: latestProgram.status === "ACTIVE" ? "Программа опубликована" : "Черновик программы сохранён", text: latestProgram.name, date: latestProgram.updatedAt, href: `/dashboard/programs/${latestProgram.id}`, action: latestProgram.status === "ACTIVE" ? "Скопировать ссылку" : "Продолжить настройку" },
-    { mark: profile ? "✓" : "◎", title: profile ? "AI-профиль подтверждён" : "AI-профиль ждёт подтверждения", text: profile ? "Данные готовы для генерации заданий" : "Проверьте данные компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
+    { mark: profile ? "✓" : "◎", title: profile ? "Профиль компании подтверждён" : "Профиль компании ждёт подтверждения", text: profile ? "Данные готовы для генерации заданий" : "Проверьте данные компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
     { mark: "○", title: "Следующий шаг", text: latestProgram.status === "ACTIVE" ? "Пригласите первых агентов" : "Опубликуйте внешнюю ссылку", date: latestProgram.updatedAt, href: latestProgram.status === "ACTIVE" ? "/dashboard/partners" : `/dashboard/programs/${latestProgram.id}`, action: latestProgram.status === "ACTIVE" ? "Перейти к агентам" : "Опубликовать" },
   ] : [
     { mark: "✓", title: "Компания создана", text: `${company.name} добавлена в Relay`, date: company.createdAt, href: "/dashboard/settings", action: "Проверить данные" },
-    { mark: profile ? "✓" : "◎", title: profile ? "AI-профиль подтверждён" : "Следующий шаг — AI-профиль", text: profile ? "Основа для заданий готова" : "Relay изучит сайт компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
+    { mark: profile ? "✓" : "◎", title: profile ? "Профиль компании подтверждён" : "Следующий шаг — профиль компании", text: profile ? "Основа для заданий готова" : "Yaler изучит сайт компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
     { mark: "＋", title: "Создайте первую программу", text: "Соберите задания и условия выплат", date: company.createdAt, href: "/dashboard/programs/new", action: "Создать программу" },
   ];
 
   return (
     <div className="dashboard-content">
       <div className="dashboard-heading">
-        <div><h1>Добро пожаловать, {user.fullName?.split(" ")[0] ?? "в Relay"}</h1><p>Здесь видно, как развивается агентский канал {company.name}.</p></div>
+        <div><h1>{stats.awaitingReview > 0 ? `${stats.awaitingReview} ${stats.awaitingReview === 1 ? "заявка ждёт" : "заявки ждут"} вашего решения` : `Рабочий стол ${company.name}`}</h1><p>{stats.awaitingReview > 0 ? "Откройте заявку и решите: взять клиента в работу или объяснить отказ." : "Здесь видны заявки, агенты, выплаты и следующий полезный шаг."}</p></div>
         <Link className="button button-primary" href={nextHref}>{nextLabel} <span>→</span></Link>
       </div>
 
@@ -50,20 +50,20 @@ export default async function DashboardPage() {
 
       <section className="metrics" aria-label="Основные показатели">
         <Link className="metric metric-link" href="/dashboard/programs"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>Из {stats.programs} созданных · открыть →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/partners"><div className="metric-top"><span>АГЕНТЫ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{stats.activePartners} активных · открыть список →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/submissions"><div className="metric-top"><span>ПОЛУЧЕНО РЕЗУЛЬТАТОВ</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{stats.awaitingReview} ждут проверки · перейти →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/partners"><div className="metric-top"><span>КТО ВАС РЕКОМЕНДУЕТ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{stats.contributedPartners} уже привели заявку · открыть →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/submissions"><div className="metric-top"><span>ПОЛУЧЕНО ЗАЯВОК</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{stats.awaitingReview} ждут решения · перейти →</small></Link>
         <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">₸</span></div><strong>{formatInteger(stats.approvedRewards)} ₸</strong><small>Подтверждённые вознаграждения · открыть →</small></Link>
-        <Link className={`metric metric-link ai-balance-metric ${company.aiTokenBalance < 1000 ? "low" : ""}`} href="/dashboard/settings"><div className="metric-top"><span>AI-КРЕДИТЫ</span><span className="metric-icon">✦</span></div><strong>{formatInteger(company.aiTokenBalance)}</strong><small>{company.aiTokenBalance < 1000 ? "Требуется пополнение · открыть →" : "Анализ, генерация и чат · подробнее →"}</small></Link>
+        <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>ВЫПЛАЧЕНО</span><span className="metric-icon">✓</span></div><strong>{formatInteger(stats.paidRewards)} ₸</strong><small>Подтверждено агентами · открыть →</small></Link>
       </section>
 
       <section className="dashboard-grid">
         <div>
           {!showFirstRun && <article className="setup-card">
-            <div className="setup-card-top"><div><h3>Запуск программы</h3><p>{hasPublished ? "Программа опубликована. Следующий цикл — привлечение агентов, проверка результатов и прозрачные выплаты." : "Relay ведёт от профиля компании до внешней ссылки с понятными заданиями и наградами."}</p></div><span className="progress-badge">{progress}%</span></div>
+            <div className="setup-card-top"><div><h3>Запуск программы</h3><p>{hasPublished ? "Программа опубликована. Теперь приглашайте агентов, проверяйте заявки и отмечайте выплаты." : "Relay ведёт от профиля компании до внешней ссылки с понятными заданиями и наградами."}</p></div><span className="progress-badge">{progress}%</span></div>
             <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
             <div className="setup-steps">
               <Link className="setup-step done" href="/dashboard/settings"><strong>✓ Компания →</strong>Основные данные сохранены</Link>
-              <Link className={`setup-step ${!profile ? "next" : "done"}`} href="/dashboard/company-profile"><strong>{profile ? "✓" : "02"} AI-профиль {!profile && "→"}</strong>Продукты, ЦА и УТП</Link>
+              <Link className={`setup-step ${!profile ? "next" : "done"}`} href="/dashboard/company-profile"><strong>{profile ? "✓" : "02"} Профиль компании {!profile && "→"}</strong>Продукты, клиенты и преимущества</Link>
               <Link className={`setup-step ${profile && !hasProgram ? "next" : hasProgram ? "done" : ""}`} href={hasProgram ? `/dashboard/programs/${programs[0].id}` : "/dashboard/programs/new"}><strong>{hasProgram ? "✓" : "03"} Задания</strong>Лиды, сделки, имидж</Link>
               <Link className={`setup-step ${hasProgram && !hasPublished ? "next" : hasPublished ? "done" : ""}`} href={hasProgram ? `/dashboard/programs/${programs[0].id}` : "/dashboard/programs"}><strong>{hasPublished ? "✓" : "04"} Публикация</strong>Внешняя ссылка</Link>
             </div>
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
 
           <article className="panel" style={{ marginTop: showFirstRun ? 0 : 14 }}>
             <div className="panel-header"><div><h2>Агентские программы</h2><p>Запускайте, приостанавливайте и архивируйте программы прямо здесь.</p></div><Link href="/dashboard/programs/new">＋ Новая программа</Link></div>
-            {programs.length ? <div className="dashboard-campaign-mini-grid">{programs.slice(0, 3).map((program) => <article className={`dashboard-program-mini status-card-${program.status.toLowerCase()}`} key={program.id}><div><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : program.status === "PAUSED" ? "На паузе" : program.status === "ARCHIVED" ? "В архиве" : "Черновик"}</span><Link href={`/dashboard/programs/${program.id}`} aria-label={`Открыть ${program.name}`}>↗</Link></div><Link className="dashboard-program-mini-main" href={`/dashboard/programs/${program.id}`}><h3>{program.name}</h3><p>{program.missions.length} заданий · {program.agentCount} агентов · {program.resultCount} результатов</p></Link><ProgramQuickActions id={program.id} initialStatus={program.status} /></article>)}</div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Создайте её сразу — AI-профиль можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать программу</Link></div></div>}
+            {programs.length ? <div className="dashboard-campaign-mini-grid">{programs.slice(0, 3).map((program) => <article className={`dashboard-program-mini status-card-${program.status.toLowerCase()}`} key={program.id}><div><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : program.status === "PAUSED" ? "На паузе" : program.status === "ARCHIVED" ? "В архиве" : "Черновик"}</span><Link href={`/dashboard/programs/${program.id}`} aria-label={`Открыть ${program.name}`}>↗</Link></div><Link className="dashboard-program-mini-main" href={`/dashboard/programs/${program.id}`}><h3>{program.name}</h3><p>{program.missions.length} заданий · {program.agentCount} агентов · {program.resultCount} заявок</p></Link><ProgramQuickActions id={program.id} initialStatus={program.status} /></article>)}</div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Создайте её сразу — профиль компании можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать программу</Link></div></div>}
           </article>
         </div>
 

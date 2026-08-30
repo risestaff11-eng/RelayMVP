@@ -6,6 +6,15 @@ import { visibleSubmissionFormFields, type SubmissionFormField } from "../../../
 type FieldValue = string | boolean;
 type VoiceAnswer = { fieldId: string; value: string; confidence: number };
 
+function formatPhoneInput(value: string) {
+  let digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.startsWith("8")) digits = `7${digits.slice(1)}`;
+  if (!digits.startsWith("7") && digits.length) digits = `7${digits}`.slice(0, 11);
+  if (!digits) return "";
+  const local = digits.slice(1);
+  return `+7${local.length ? ` (${local.slice(0, 3)}` : ""}${local.length >= 3 ? ")" : ""}${local.length > 3 ? ` ${local.slice(3, 6)}` : ""}${local.length > 6 ? `-${local.slice(6, 8)}` : ""}${local.length > 8 ? `-${local.slice(8, 10)}` : ""}`;
+}
+
 export function LeadSubmissionForm({ programSlug, missionId, missionType, token, formFields }: { programSlug: string; missionId: string; missionType: string; token: string; formFields: SubmissionFormField[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -64,6 +73,14 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
         return false;
       }
       const textValue = String(value ?? "").trim();
+      if (textValue && field.semantic === "CONTACT_NAME" && textValue.length < 2) {
+        setError(`Укажите полное имя в поле «${field.label}»`);
+        return false;
+      }
+      if (textValue && field.semantic === "COMMENT" && textValue.length < 5) {
+        setError(`Добавьте короткое пояснение в поле «${field.label}»`);
+        return false;
+      }
       if (textValue && field.type === "PHONE" && textValue.replace(/\D/g, "").length < 7) {
         setError(`Укажите корректный телефон в поле «${field.label}»`);
         return false;
@@ -152,7 +169,7 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
   }
 
   async function analyzeVoice(file: File, durationSeconds: number) {
-    setVoicePending(true); setVoiceNotice("Rela расшифровывает запись и заполняет ответы…"); setError("");
+    setVoicePending(true); setVoiceNotice("Yaler расшифровывает запись и заполняет ответы…"); setError("");
     const form = new FormData(); form.set("token", token); form.set("missionId", missionId); form.set("audio", file); form.set("durationSeconds", String(durationSeconds));
     try {
       const response = await fetch("/api/partner/audio/transcribe", { method: "POST", body: form });
@@ -241,7 +258,7 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
     let control: React.ReactNode;
     if (field.type === "TEXTAREA") control = <textarea {...common} rows={4} value={String(values[field.id] ?? "")} onChange={(event) => setFieldValue(field.id, event.target.value)} />;
     else if (field.type === "SELECT") control = <select {...common} value={String(values[field.id] ?? "")} onChange={(event) => setFieldValue(field.id, event.target.value)}><option value="" disabled>Выберите вариант</option>{field.options.map((option) => <option key={option}>{option}</option>)}</select>;
-    else control = <input {...common} type={field.type === "PHONE" ? "tel" : field.type === "EMAIL" ? "email" : field.type === "URL" ? "url" : "text"} inputMode={field.type === "PHONE" ? "tel" : undefined} pattern={field.type === "PHONE" ? "[+0-9() \\-]{7,40}" : undefined} value={String(values[field.id] ?? "")} onChange={(event) => setFieldValue(field.id, event.target.value)} />;
+    else control = <input {...common} type={field.type === "PHONE" ? "tel" : field.type === "EMAIL" ? "email" : field.type === "URL" ? "url" : "text"} inputMode={field.type === "PHONE" ? "tel" : undefined} pattern={field.type === "PHONE" ? "[+0-9() \\-]{7,40}" : undefined} value={String(values[field.id] ?? "")} onChange={(event) => setFieldValue(field.id, field.type === "PHONE" ? formatPhoneInput(event.target.value) : event.target.value)} />;
     return <label key={field.id} className="dialog-field"><span>{field.label}{field.required ? " *" : ""}</span>{control}{field.description && <small id={`${field.id}-help`}>{field.description}</small>}</label>;
   }
 
@@ -249,7 +266,7 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
   return <form ref={formRef} className="lead-submission-form agent-dialog-form" onSubmit={submit}>
     <div className="lead-form-stepper"><span className={step === 1 ? "active" : "done"}><b>{step > 1 ? "✓" : "1"}</b> Контакт</span><i /><span className={step === 2 ? "active" : step > 2 ? "done" : ""}><b>{step > 2 ? "✓" : "2"}</b> Контекст</span><i /><span className={step === 3 ? "active" : ""}><b>3</b> Проверка</span></div>
 
-    {step < 3 && <section className="voice-answer-card"><div className="dialog-system-message"><span>R</span><div><strong>Можно рассказать всё голосом</strong><p>Запишите сообщение до 60 секунд. Rela расшифрует его, разложит данные по полям и попросит вас всё проверить.</p></div></div><div className="voice-controls">{recording ? <button className="voice-record-button recording" type="button" onClick={stopRecording}><i>■</i><span>Остановить · 0:{String(recordingSeconds).padStart(2, "0")}</span></button> : <button className="voice-record-button" type="button" disabled={voicePending} onClick={() => void startRecording()}><i>●</i><span>{voiceFile ? "Записать заново" : "Записать ответ"}</span></button>}<button type="button" className="voice-upload-button" disabled={recording || voicePending} onClick={() => voiceInput.current?.click()}>Загрузить аудио</button><input ref={voiceInput} type="file" accept="audio/*" capture hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void acceptVoiceFile(file); }} /></div>{voicePending && <div className="voice-processing"><i /><span>Расшифровываем и готовим черновик ответов…</span></div>}{voiceFile && !voicePending && <div className="voice-result"><audio controls src={voiceUrl}><track kind="captions" srcLang="ru" label="Расшифровка" src={`data:text/vtt;charset=utf-8,${encodeURIComponent(`WEBVTT\\n\\n00:00.000 --> 00:59.999\\n${voiceTranscript || "Голосовой ответ агента"}`)}`} /></audio><small>{voiceDurationSeconds ? `${voiceDurationSeconds} сек.` : "до 60 сек."}</small><button type="button" onClick={clearVoice}>Удалить запись</button><label><input type="checkbox" checked={includeVoice} onChange={(event) => setIncludeVoice(event.target.checked)} /><span>Передать оригинал записи компании</span></label></div>}{voiceTranscript && <details className="voice-transcript"><summary>Расшифровка записи</summary><textarea value={voiceTranscript} onChange={(event) => setVoiceTranscript(event.target.value)} rows={5} /></details>}{voiceNotice && <p className="voice-notice">✓ {voiceNotice}</p>}</section>}
+    {step < 3 && <section className="voice-answer-card"><div className="dialog-system-message"><span>R</span><div><strong>Можно рассказать всё голосом</strong><p>Запишите сообщение до 60 секунд. Yaler расшифрует его, разложит данные по полям и попросит вас всё проверить.</p></div></div><div className="voice-controls">{recording ? <button className="voice-record-button recording" type="button" onClick={stopRecording}><i>■</i><span>Остановить · 0:{String(recordingSeconds).padStart(2, "0")}</span></button> : <button className="voice-record-button" type="button" disabled={voicePending} onClick={() => void startRecording()}><i>●</i><span>{voiceFile ? "Записать заново" : "Записать ответ"}</span></button>}<button type="button" className="voice-upload-button" disabled={recording || voicePending} onClick={() => voiceInput.current?.click()}>Загрузить аудио</button><input ref={voiceInput} type="file" accept="audio/*" capture hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void acceptVoiceFile(file); }} /></div>{voicePending && <div className="voice-processing"><i /><span>Расшифровываем и готовим черновик ответов…</span></div>}{voiceFile && !voicePending && <div className="voice-result"><audio controls src={voiceUrl}><track kind="captions" srcLang="ru" label="Расшифровка" src={`data:text/vtt;charset=utf-8,${encodeURIComponent(`WEBVTT\\n\\n00:00.000 --> 00:59.999\\n${voiceTranscript || "Голосовой ответ агента"}`)}`} /></audio><small>{voiceDurationSeconds ? `${voiceDurationSeconds} сек.` : "до 60 сек."}</small><button type="button" onClick={clearVoice}>Удалить запись</button><label><input type="checkbox" checked={includeVoice} onChange={(event) => setIncludeVoice(event.target.checked)} /><span>Передать оригинал записи компании</span></label></div>}{voiceTranscript && <details className="voice-transcript"><summary>Расшифровка записи</summary><textarea value={voiceTranscript} onChange={(event) => setVoiceTranscript(event.target.value)} rows={5} /></details>}{voiceNotice && <p className="voice-notice">✓ {voiceNotice}</p>}</section>}
 
     {step === 1 && <div className="lead-step-panel active"><div className="dialog-system-message"><span>R</span><div><strong>{commercial ? "Кого вы рекомендуете?" : "Какой результат вы получили?"}</strong><p>{commercial ? "Укажите контакт. Система проверит дубликат до передачи данных компании." : "Заполните основные данные результата. Можно использовать готовую расшифровку выше."}</p></div></div><section className="dialog-answer-card"><div className="partner-form-grid dynamic-result-fields">{contactFields.map(renderField)}</div></section>{duplicate && <div className="duplicate-warning"><strong>Контакт уже зарегистрирован</strong><p>Выберите другого потенциального клиента.</p></div>}{error && <div className="inline-notice error" role="alert">{error}</div>}<button className="button button-primary partner-submit-button" type="button" onClick={() => void nextFromContact()} disabled={pending}>{pending ? "Проверяем контакт…" : "Продолжить"}<span>→</span></button></div>}
 

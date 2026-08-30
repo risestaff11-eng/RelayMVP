@@ -53,9 +53,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 .relay-language-switcher button.active { color: var(--ink); background: var(--lime); }
 .relay-language-switcher button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+body:has(.dashboard-shell) > .relay-language-switcher { top: 17px; right: 116px; bottom: auto; box-shadow: none; }
 
 @media (max-width: 760px) {
   .relay-language-switcher { right: 12px; bottom: 82px; }
+  body:has(.dashboard-shell) > .relay-language-switcher { top: 14px; right: 64px; bottom: auto; transform: scale(.9); transform-origin: top right; }
   .lp-shell .relay-language-switcher { bottom: 76px; }
 }
 
@@ -1496,6 +1498,24 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 @media (max-width: 900px) {
   .knowledge-drafts { grid-template-columns: 1fr; }
   .methodologist-generation-grid { grid-template-columns: 1fr; }
+}
+
+/* Public program: registration appears only after a mission was chosen. */
+.partner-entry-overlay { position: fixed; z-index: 1200; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(17,18,15,.7); backdrop-filter: blur(8px); }
+.partner-entry-dismiss { position: absolute; inset: 0; }
+.partner-entry-overlay .partner-entry-card { position: relative; z-index: 1; max-height: calc(100dvh - 32px); overflow: auto; }
+.partner-entry-close { position: absolute; z-index: 2; top: 14px; right: 14px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: rgba(255,255,255,.12); font-size: 24px; text-decoration: none; }
+.partner-legal-note { color: #71766b; font-size: 11px; line-height: 1.45; text-align: center; }
+.partner-legal-note a { color: inherit; text-decoration: underline; }
+.result-client-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+.result-client-actions a { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border: 1px solid rgba(255,255,255,.25); border-radius: 10px; color: inherit; text-decoration: none; }
+.result-primary-decisions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.result-primary-decisions .reject { color: #9a241d; border: 1px solid #e8b1ac; background: #fff4f2; }
+.result-decision-form label > small { color: #62665d; font-size: 11px; line-height: 1.4; }
+@media (max-width: 640px) {
+  .partner-entry-overlay { align-items: end; padding: 0; }
+  .partner-entry-overlay .partner-entry-card { width: 100%; max-height: 94dvh; border-radius: 22px 22px 0 0; }
+  .result-primary-decisions { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
   .methodologist-heading { align-items: start; }

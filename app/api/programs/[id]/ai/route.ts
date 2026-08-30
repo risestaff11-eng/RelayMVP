@@ -118,12 +118,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       result = ai;
       const field = normalizeSubmissionFormFields([{ ...ai.data, id: `custom-${crypto.randomUUID()}`, semantic: "CUSTOM", stage: payload.stage, type: requestedType, scope: payload.scope, sortOrder: 99 }]).find((item) => item.semantic === "CUSTOM");
       responseData = { field };
-    } else throw new Error("Неизвестное действие Rela");
+    } else throw new Error("Неизвестное действие Yaler");
 
     const spent = Math.min(company.aiTokenBalance, calculateAiCredits("PROGRAM_GENERATION", result, 1));
     await getDb().update(companies).set({ aiTokenBalance: sql`max(${companies.aiTokenBalance} - ${spent}, 0)`, aiTokensUsed: sql`${companies.aiTokensUsed} + ${spent}`, updatedAt: new Date().toISOString() }).where(eq(companies.id, company.id));
     return Response.json({ ...responseData, creditsSpent: spent, tokenBalance: Math.max(0, company.aiTokenBalance - spent), creditLimit: aiCreditLimit("PROGRAM_GENERATION", 1) });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : "Rela не смогла подготовить вариант" }, { status: 400 });
+    return Response.json({ error: error instanceof Error ? error.message : "Yaler не смог подготовить вариант" }, { status: 400 });
   }
 }

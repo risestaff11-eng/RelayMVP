@@ -38,6 +38,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const missionPayloads = Array.isArray(payload.missions) ? payload.missions as Array<Record<string, unknown>> : [];
     const formFields = normalizeSubmissionFormFields(payload.formFields);
     if (name.length < 3 || !description) throw new Error("Заполните название и описание программы");
+    const duplicate = await getDb().select({ id: programs.id }).from(programs).where(and(eq(programs.companyId, company.id), eq(programs.name, name))).limit(2);
+    if (duplicate.some((program) => program.id !== id)) throw new Error("Программа с таким названием уже существует. Добавьте назначение или аудиторию в название.");
     if (!GOALS.has(goal) || !CURRENCIES.has(currency)) throw new Error("Проверьте цель и валюту программы");
     if (missionPayloads.length < current.missions.length || missionPayloads.length === 0 || missionPayloads.length > 12) throw new Error("В программе должно быть от 1 до 12 заданий");
 

@@ -7,14 +7,14 @@ import { DashboardIcon } from "./dashboard-icon";
 
 const items = [
   { href: "/dashboard", label: "Рабочий стол", hint: "Сводка и следующие действия", icon: "home", exact: true },
-  { href: "/dashboard/programs", label: "Программы", hint: "Задания, награды и ссылки", icon: "programs" },
-  { href: "/dashboard/submissions", label: "Результаты", hint: "Проверка работы агентов", icon: "results" },
-  { href: "/dashboard/partners", label: "Агенты", hint: "Участники и управление доступом", icon: "agents" },
+  { href: "/dashboard/programs", label: "Программы", hint: "Задания, вознаграждения и ссылки", icon: "programs" },
+  { href: "/dashboard/submissions", label: "Заявки", hint: "Решения по заявкам", icon: "results" },
+  { href: "/dashboard/partners", label: "Кто вас рекомендует", hint: "Люди, ссылки и вклад", icon: "agents" },
   { href: "/dashboard/rewards", label: "Выплаты", hint: "Начисления и реестр", icon: "rewards" },
   { href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "analytics" },
-  { href: "/dashboard/assistant", label: "AI-агент", hint: "Советы и изменения в сервисе", icon: "assistant" },
-  { href: "/dashboard/methodologist", label: "AI-Методолог", hint: "Скрипты и материалы для агентов", icon: "methodologist" },
-  { href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для AI и заданий", icon: "company" },
+  { href: "/dashboard/assistant", label: "Yaler · программы", hint: "Помощник по запуску и улучшениям", icon: "assistant" },
+  { href: "/dashboard/methodologist", label: "Материалы для агентов", hint: "Скрипты, ответы и обучение", icon: "methodologist" },
+  { href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для Yaler и заданий", icon: "company" },
   { href: "/dashboard/settings", label: "Настройки", hint: "Контакты, тариф и AI-кредиты", icon: "settings" },
 ] as const;
 

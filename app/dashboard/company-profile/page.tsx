@@ -5,7 +5,7 @@ import { getCompanyForUser } from "../../../db/company";
 import { getLatestCompanyProfile } from "../../../db/profile";
 import { CompanyProfileEditor } from "./profile-editor";
 
-export const metadata: Metadata = { title: "AI-профиль компании" };
+export const metadata: Metadata = { title: "Профиль компании" };
 export const dynamic = "force-dynamic";
 
 export default async function CompanyProfilePage() {

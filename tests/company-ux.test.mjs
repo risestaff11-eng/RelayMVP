@@ -6,7 +6,7 @@ test("company cabinet uses a consistent navigation icon system and contextual to
   const navigation = await readFile(new URL("../app/dashboard/_components/dashboard-nav.tsx", import.meta.url), "utf8");
   const layout = await readFile(new URL("../app/dashboard/layout.tsx", import.meta.url), "utf8");
   assert.match(navigation, /DashboardIcon name=\{item\.icon\}/);
-  assert.ok(navigation.indexOf('label: "AI-Методолог"') < navigation.indexOf('label: "Данные компании"'));
+  assert.ok(navigation.indexOf('label: "Материалы для агентов"') < navigation.indexOf('label: "Данные компании"'));
   assert.match(layout, /<DashboardContext nextStep=/);
 });
 
@@ -15,11 +15,11 @@ test("company dashboard prioritizes results that require review", async () => {
   const startGuide = await readFile(new URL("../app/dashboard/_components/first-run-guide.tsx", import.meta.url), "utf8");
   const tour = await readFile(new URL("../app/dashboard/_components/dashboard-tour.tsx", import.meta.url), "utf8");
   assert.match(dashboard, /stats\.awaitingReview > 0 \? "\/dashboard\/submissions"/);
-  assert.match(dashboard, /Проверить результаты · \$\{stats\.awaitingReview\}/);
+  assert.match(dashboard, /новые заявки — посмотреть/);
   assert.match(dashboard, /href="\/dashboard\/rewards"/);
   assert.match(dashboard, /<FirstRunGuide/);
-  assert.match(startGuide, /Relay ведёт вас по одному шагу/);
-  assert.match(startGuide, /Выполните действие ниже — следующий шаг появится автоматически/);
+  assert.match(startGuide, /Сделайте один полезный шаг/);
+  assert.match(startGuide, /приблизит программу к первым продажам/);
   assert.doesNotMatch(tour, /setTimeout\(\(\) => setStep\(0\)/);
 });
 

@@ -6,7 +6,7 @@ import { getCompanyKnowledge, getCompanyMethodologyBrief } from "../../../db/kno
 import { getConfirmedCompanyProfile, getLatestCompanyProfile } from "../../../db/profile";
 import { MethodologistEditor } from "./methodologist-editor";
 
-export const metadata: Metadata = { title: "AI-Методолог" };
+export const metadata: Metadata = { title: "Материалы для агентов" };
 export const dynamic = "force-dynamic";
 
 export default async function MethodologistPage() {

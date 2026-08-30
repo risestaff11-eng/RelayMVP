@@ -31,8 +31,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const rankedAgents = analytics.byAgent.slice(0, 5);
   const maxScore = Math.max(1, ...rankedAgents.map((agent) => agent.score));
   const periodLabel = period === "all" ? "за всё время" : `за ${period} дней`;
-  const submittedToAccepted = analytics.results.length ? Math.round(analytics.results.filter((result) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(result.status)).length / analytics.results.length * 100) : 0;
-  const submittedToDeal = analytics.results.length ? Math.round(analytics.results.filter((result) => result.status === "DEAL").length / analytics.results.length * 100) : 0;
+  const reviewedResults = analytics.results.filter((result) => !["SUBMITTED", "REVIEWING"].includes(result.status));
+  const submittedToAccepted = reviewedResults.length ? Math.round(reviewedResults.filter((result) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(result.status)).length / reviewedResults.length * 100) : null;
+  const submittedToDeal = reviewedResults.length ? Math.round(reviewedResults.filter((result) => ["DEAL", "REWARDED"].includes(result.status)).length / reviewedResults.length * 100) : null;
   const inactiveAgents = analytics.byAgent.filter((agent) => agent.results === 0).slice(0, 5);
   const exportRows = analytics.byAgent.map((agent) => [agent.name, agent.email, agent.phone, agent.programName, agent.results, agent.accepted, agent.deals, agent.acceptanceRate, agent.dealRate, agent.due, agent.paid, agent.lastActivity]);
 
@@ -42,26 +43,26 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <div>
           <span className="module-kicker">АНАЛИТИКА АГЕНТСКОГО КАНАЛА</span>
           <h1>Сравнение агентов</h1>
-          <p>Смотрите, кто приводит результаты, конвертирует их в сделки и сколько заработал за выбранный период.</p>
+          <p>Смотрите, кто приводит заявки, доводит клиентов до сделки и сколько заработал за выбранный период.</p>
         </div>
         <AnalyticsFilters programs={programs.map(({ id, name }) => ({ id, name }))} period={period} programId={validCampaign} />
       </div>
 
       <section className="operations-metrics brand-metrics">
         <article><small>ВСЕГО АГЕНТОВ</small><div className="analytics-metric-value"><strong>{analytics.agents.length}</strong><em>всего</em></div><span>В выбранных программах</span></article>
-        <article><small>АКТИВНЫЕ АГЕНТЫ</small><div className="analytics-metric-value"><strong>{activeAgentIds.size}</strong><em>с результатом</em></div><span>Передали результат {periodLabel}</span></article>
-        <article><small>РЕЗУЛЬТАТОВ НА АГЕНТА</small><div className="analytics-metric-value"><strong>{averageResults}</strong><em>в среднем</em></div><span>Только среди активных агентов</span></article>
+        <article><small>ПРИВЕЛИ ЗАЯВКУ</small><div className="analytics-metric-value"><strong>{activeAgentIds.size}</strong><em>агентов</em></div><span>Есть заявка {periodLabel}</span></article>
+        <article><small>ЗАЯВОК НА АГЕНТА</small><div className="analytics-metric-value"><strong>{averageResults}</strong><em>в среднем</em></div><span>Среди тех, кто уже привёл клиента</span></article>
         <article><small>ВЫПЛАЧЕНО АГЕНТАМ</small><div className="analytics-metric-value"><strong>{formatInteger(paid)}</strong><em>₸ за период</em></div><span>Фактически отмечено выплаченным</span></article>
       </section>
 
-      <section className="analytics-decision-strip"><article><small>РЕЗУЛЬТАТ → ПРИНЯТО</small><strong>{submittedToAccepted}%</strong><span>Качество входящего потока</span></article><article><small>РЕЗУЛЬТАТ → СДЕЛКА</small><strong>{submittedToDeal}%</strong><span>Итоговая конверсия</span></article><article><small>ТРЕБУЮТ ВНИМАНИЯ</small><strong>{inactiveAgents.length}</strong><span>Без результата за период</span></article></section>
+      <section className="analytics-decision-strip"><article><small>ЗАЯВКА → В РАБОТЕ</small><strong>{submittedToAccepted === null ? "—" : `${submittedToAccepted}%`}</strong><span>{submittedToAccepted === null ? `Проверьте ${analytics.results.length} заявок` : `По ${reviewedResults.length} решениям`}</span></article><article><small>ЗАЯВКА → СДЕЛКА</small><strong>{submittedToDeal === null ? "—" : `${submittedToDeal}%`}</strong><span>{submittedToDeal === null ? `Проверьте ${analytics.results.length} заявок` : "Итоговая конверсия"}</span></article><article><small>ТРЕБУЮТ ВНИМАНИЯ</small><strong>{inactiveAgents.length}</strong><span>Не привели заявку за период</span></article></section>
 
-      <section className="analytics-visual-summary"><article style={{ "--value": `${submittedToAccepted * 3.6}deg` } as CSSProperties}><div><strong>{submittedToAccepted}%</strong><small>принято</small></div><span>Качество результатов</span></article><article style={{ "--value": `${submittedToDeal * 3.6}deg` } as CSSProperties}><div><strong>{submittedToDeal}%</strong><small>в сделку</small></div><span>Конверсия результата</span></article><article style={{ "--value": `${analytics.agents.length ? activeAgentIds.size / analytics.agents.length * 360 : 0}deg` } as CSSProperties}><div><strong>{activeAgentIds.size}</strong><small>из {analytics.agents.length}</small></div><span>Активные агенты</span></article></section>
+      <section className="analytics-visual-summary"><article style={{ "--value": `${(submittedToAccepted ?? 0) * 3.6}deg` } as CSSProperties}><div><strong>{submittedToAccepted === null ? "—" : `${submittedToAccepted}%`}</strong><small>в работе</small></div><span>Принятые заявки</span></article><article style={{ "--value": `${(submittedToDeal ?? 0) * 3.6}deg` } as CSSProperties}><div><strong>{submittedToDeal === null ? "—" : `${submittedToDeal}%`}</strong><small>в сделку</small></div><span>Конверсия заявок</span></article><article style={{ "--value": `${analytics.agents.length ? activeAgentIds.size / analytics.agents.length * 360 : 0}deg` } as CSSProperties}><div><strong>{activeAgentIds.size}</strong><small>из {analytics.agents.length}</small></div><span>Привели заявку</span></article></section>
 
       <div className="analytics-grid agent-comparison-grid">
         <section className="panel agent-ranking-card">
           <div className="panel-header">
-            <div><h2>Лидеры по результату</h2><p>Рейтинг учитывает отправки, принятые лиды и сделки.</p></div>
+            <div><h2>Лидеры по вкладу</h2><p>Рейтинг учитывает заявки, принятых клиентов и сделки.</p></div>
             <span>{periodLabel}</span>
           </div>
           <div className="agent-ranking">
@@ -81,7 +82,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <div className="panel-header"><div><h2>Воронка агентов</h2><p>Количество людей на каждом этапе.</p></div></div>
           <div className="funnel-list">
             <div><span>Зарегистрировались</span><b>{analytics.agents.length}<em>всего</em></b><i style={{ width: analytics.agents.length ? "100%" : "0%" }} /></div>
-            <div><span>Передали результат</span><b>{activeAgentIds.size}<em>из {analytics.agents.length}</em></b><i style={{ width: `${analytics.agents.length ? Math.max(4, activeAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
+            <div><span>Привели заявку</span><b>{activeAgentIds.size}<em>из {analytics.agents.length}</em></b><i style={{ width: `${analytics.agents.length ? Math.max(4, activeAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
             <div><span>Получили принятие</span><b>{acceptedAgentIds.size}<em>из {analytics.agents.length}</em></b><i style={{ width: `${analytics.agents.length ? Math.max(4, acceptedAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
             <div><span>Довели до сделки</span><b>{dealAgentIds.size}<em>из {analytics.agents.length}</em></b><i style={{ width: `${analytics.agents.length ? Math.max(4, dealAgentIds.size / analytics.agents.length * 100) : 0}%` }} /></div>
           </div>
@@ -93,12 +94,12 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         </section>
       </div>
 
-      <section className="panel program-comparison-panel"><div className="panel-header"><div><h2>Эффективность программ</h2><p>Сравнение помогает понять, куда приглашать новых агентов и какие условия нужно пересмотреть.</p></div></div><div className="program-comparison-list">{analytics.byProgram.map((program) => { const conversion = program.results ? Math.round(program.deals / program.results * 100) : 0; return <article key={program.id}><div><strong>{program.name}</strong><small>{program.agents} агентов · {program.results} результатов</small></div><span><b>{program.accepted}</b> принято</span><span><b>{program.deals}</b> сделок</span><span><b>{conversion}%</b> конверсия</span><span><b>{formatInteger(program.paid)} ₸</b> выплачено</span></article>; })}{!analytics.byProgram.length && <div className="table-empty">Нет программ для сравнения.</div>}</div></section>
+      <section className="panel program-comparison-panel"><div className="panel-header"><div><h2>Эффективность программ</h2><p>Сравнение помогает понять, куда приглашать новых агентов и какие условия нужно пересмотреть.</p></div></div><div className="program-comparison-list">{analytics.byProgram.map((program) => { const conversion = program.results ? Math.round(program.deals / program.results * 100) : 0; return <article key={program.id}><div><strong>{program.name}</strong><small>{program.agents} агентов · {program.results} заявок</small></div><span><b>{program.accepted}</b> принято</span><span><b>{program.deals}</b> сделок</span><span><b>{conversion}%</b> конверсия</span><span><b>{formatInteger(program.paid)} ₸</b> выплачено</span></article>; })}{!analytics.byProgram.length && <div className="table-empty">Нет программ для сравнения.</div>}</div></section>
 
-      <div className="analytics-export-row"><CsvExportButton filename="relay-agent-analytics.csv" label="Скачать данные CSV" headers={["Агент", "Email", "Телефон", "Программа", "Результаты", "Принято", "Сделки", "Принятие %", "Сделки %", "К выплате", "Выплачено", "Последняя активность"]} rows={exportRows} /></div>
+      <div className="analytics-export-row"><CsvExportButton filename="relay-agent-analytics.csv" label="Скачать данные CSV" headers={["Агент", "Email", "Телефон", "Программа", "Заявки", "Принято", "Сделки", "Принятие %", "Сделки %", "К выплате", "Выплачено", "Последняя активность"]} rows={exportRows} /></div>
       <AnalyticsReport agents={analytics.byAgent} periodLabel={periodLabel} totals={{ agents: analytics.agents.length, active: activeAgentIds.size, results: analytics.results.length, deals: analytics.results.filter((result) => result.status === "DEAL").length, paid }} />
 
-      {inactiveAgents.length > 0 && <section className="panel attention-agents-panel"><div className="panel-header"><div><h2>Кого стоит активировать</h2><p>Агенты без результатов в выбранном периоде. Свяжитесь с ними или предложите более подходящее задание.</p></div></div><div>{inactiveAgents.map((agent) => { const digits = agent.phone.replace(/\D/g, ""); const message = encodeURIComponent(`Здравствуйте, ${agent.name || "коллега"}! В программе «${agent.programName}» появились актуальные задания. Подскажите, нужна ли помощь с первым результатом?`); return <article key={agent.id}><span><strong>{agent.name || agent.email}</strong><small>{agent.programName} · активность {formatDate(agent.lastActivity)}</small></span>{digits ? <a href={`https://wa.me/${digits}?text=${message}`} target="_blank" rel="noreferrer">Написать в WhatsApp ↗</a> : <a href={`mailto:${agent.email}`}>Написать на email ↗</a>}</article>; })}</div></section>}
+      {inactiveAgents.length > 0 && <section className="panel attention-agents-panel"><div className="panel-header"><div><h2>Кого стоит активировать</h2><p>Агенты без заявок в выбранном периоде. Свяжитесь с ними или предложите более подходящее задание.</p></div></div><div>{inactiveAgents.map((agent) => { const digits = agent.phone.replace(/\D/g, ""); const message = encodeURIComponent(`Здравствуйте, ${agent.name || "коллега"}! В программе «${agent.programName}» появились актуальные задания. Подскажите, нужна ли помощь с первой заявкой?`); return <article key={agent.id}><span><strong>{agent.name || agent.email}</strong><small>{agent.programName} · активность {formatDate(agent.lastActivity)}</small></span>{digits ? <a href={`https://wa.me/${digits}?text=${message}`} target="_blank" rel="noreferrer">Написать в WhatsApp ↗</a> : <a href={`mailto:${agent.email}`}>Написать на email ↗</a>}</article>; })}</div></section>}
     </div>
   );
 }

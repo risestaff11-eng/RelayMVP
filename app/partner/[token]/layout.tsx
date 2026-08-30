@@ -25,7 +25,7 @@ export default async function PartnerLayout({ children, params }: { children: Re
         <Link className="brand partner-brand" href={`/partner/${token}`}><MarketingLogo /><span>Relay</span></Link>
         <div className="partner-company-chip"><CompanyLogo company={portal.company} /><small>КОМПАНИЯ</small><strong>{portal.company.name}</strong><span>● {portal.programs.length} программ · задания доступны</span></div>
         <PartnerNav token={token} />
-        <div className="partner-trust-note"><i>✓</i><div><strong>Результаты зафиксированы</strong><p>Дата, автор и история статусов сохраняются.</p></div></div>
+        <div className="partner-trust-note"><i>✓</i><div><strong>Заявки зафиксированы</strong><p>Дата, автор и история статусов сохраняются.</p></div></div>
       </aside>
       <section className="partner-portal-main">
         <header className="partner-portal-topbar">

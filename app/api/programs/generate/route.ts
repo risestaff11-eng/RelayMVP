@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
@@ -59,6 +59,8 @@ export async function POST(request: Request) {
     if (mode === "ai" && company.aiTokenBalance < minimumAiCredits("PROGRAM_GENERATION")) throw new Error("Недостаточно AI-кредитов для генерации программы");
 
     const db = getDb();
+    const duplicate = await db.select({ id: programs.id }).from(programs).where(and(eq(programs.companyId, company.id), eq(programs.name, name))).limit(1);
+    if (duplicate[0]) throw new Error("Программа с таким названием уже существует. Уточните назначение, например «Лиды на ипотеку» или «Закрытые сделки».");
     if (mode === "manual") {
       const programId = crypto.randomUUID();
       const slug = `${slugPart(name)}-${crypto.randomUUID().slice(0, 7)}`;
@@ -133,7 +135,7 @@ export async function POST(request: Request) {
     });
 
     const byType = new Map(ai.data.missions.map((mission) => [mission.type, mission]));
-    if (selectedTypes.some((type) => !byType.has(type)) || byType.size !== selectedTypes.length) throw new Error("Rela подготовила неполный набор заданий. Повторите генерацию.");
+    if (selectedTypes.some((type) => !byType.has(type)) || byType.size !== selectedTypes.length) throw new Error("Yaler подготовил неполный набор заданий. Повторите генерацию.");
 
     const programId = crypto.randomUUID();
     const slug = `${slugPart(name)}-${crypto.randomUUID().slice(0, 7)}`;

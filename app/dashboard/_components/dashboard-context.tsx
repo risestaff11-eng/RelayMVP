@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 const sections = [
   ["/dashboard/programs", "Программы и задания"],
   ["/dashboard/submissions", "Проверка результатов"],
-  ["/dashboard/partners", "Агентская сеть"],
+  ["/dashboard/partners", "Кто вас рекомендует"],
   ["/dashboard/rewards", "Выплаты агентам"],
   ["/dashboard/analytics", "Аналитика"],
-  ["/dashboard/assistant", "AI-агент"],
-  ["/dashboard/methodologist", "AI-Методолог"],
+  ["/dashboard/assistant", "Yaler · программы"],
+  ["/dashboard/methodologist", "Материалы для агентов"],
   ["/dashboard/company-profile", "Данные компании"],
   ["/dashboard/settings", "Настройки"],
 ] as const;

@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { SafeLink as Link } from "@/app/safe-link";
 import type { CompanyProfile } from "../../../db/profile";
-import { formatInteger } from "@/lib/format-display";
 
 type FormState = {
   businessDescription: string;
@@ -53,7 +52,7 @@ export function CompanyProfileEditor({
   const [savedWebsite, setSavedWebsite] = useState(company.website);
   const [profile, setProfile] = useState(initialProfile);
   const [form, setForm] = useState(() => formFromProfile(initialProfile));
-  const [tokenBalance, setTokenBalance] = useState(company.aiTokenBalance);
+  const [, setTokenBalance] = useState(company.aiTokenBalance);
   const [pending, setPending] = useState<"website" | "analysis" | "save" | "confirm" | null>(null);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -164,8 +163,8 @@ export function CompanyProfileEditor({
   return (
     <div className="dashboard-content module-content profile-editor-page">
       <div className="module-heading profile-page-heading">
-        <div><span className="module-kicker">ШАГ 2 ИЗ 4 · AI-ПРОФИЛЬ</span><h1>Профиль компании</h1><p>AI собирает факты с сайта, но решение всегда остаётся за вами: исправьте пробелы и подтвердите каждую новую версию.</p></div>
-        <div className="heading-actions"><span className="token-pill">AI · {formatInteger(tokenBalance)} кредитов</span><Link className="button button-ghost compact-button" href="/dashboard/settings">Настройки профиля →</Link></div>
+        <div><span className="module-kicker">ПРОФИЛЬ КОМПАНИИ</span><h1>Проверьте, что Yaler понял ваш бизнес</h1><p>Yaler собирает факты с сайта, а вы исправляете неточности и подтверждаете готовую версию.</p></div>
+        <div className="heading-actions"><Link className="button button-ghost compact-button" href="/dashboard/settings">Настройки профиля →</Link></div>
       </div>
 
       {notice && <div className={`inline-notice ${notice.type}`} role="status">{notice.text}</div>}
@@ -176,17 +175,16 @@ export function CompanyProfileEditor({
           <label htmlFor="company-website">Сайт компании</label>
           <div><input id="company-website" type="url" value={website} onChange={(event) => setWebsite(event.target.value)} required /><button type="submit" disabled={pending !== null}>{pending === "website" ? "Сохраняем…" : "Сохранить сайт"}</button></div>
         </form>
-        <div className="website-actions-row"><a href={savedWebsite} target="_blank" rel="noreferrer">Открыть сайт ↗</a><span>Списание по факту · максимум 600 AI-кредитов</span><button className="button button-primary" type="button" onClick={analyze} disabled={pending !== null}>{pending === "analysis" ? "AI анализирует сайт…" : profile ? "Запустить новый AI-анализ" : "Запустить AI-анализ"}<span>✦</span></button></div>
+        <div className="website-actions-row"><a href={savedWebsite} target="_blank" rel="noreferrer">Открыть сайт ↗</a><span>Расход будет показан после анализа</span><button className="button button-primary" type="button" onClick={analyze} disabled={pending !== null}>{pending === "analysis" ? "Yaler анализирует сайт…" : profile ? "Обновить данные с Yaler" : "Собрать данные с Yaler"}<span>✦</span></button></div>
       </section>
 
       <div className="profile-status-row">
         <div><small>ТЕКУЩАЯ ВЕРСИЯ</small><strong>{statusLabel}</strong></div>
         {profile && <div><small>ИСТОЧНИК</small><strong>{profile.sourceWebsite}</strong></div>}
-        {profile && <div><small>ТЕХНИЧЕСКИЙ ОБЪЁМ</small><strong>{formatInteger(profile.inputTokens + profile.outputTokens)} токенов Rela</strong></div>}
       </div>
 
       {!profile ? (
-        <section className="panel profile-empty-state"><div className="profile-empty-icon">✦</div><h2>AI-профиля пока нет</h2><p>Запустите анализ. Relay прочитает открытые страницы сайта и создаст редактируемый черновик, а не готовую истину.</p></section>
+        <section className="panel profile-empty-state"><div className="profile-empty-icon">✦</div><h2>Профиль компании пока не собран</h2><p>Yaler прочитает открытые страницы сайта и создаст редактируемый черновик.</p></section>
       ) : !profileMatchesWebsite ? (
         <section className="panel profile-empty-state warning-state"><div className="profile-empty-icon">↻</div><h2>Сайт изменился</h2><p>Версия {profile.versionNumber} была создана для другого адреса. Запустите новый анализ; до подтверждения прежний профиль остаётся историей.</p></section>
       ) : (
@@ -197,7 +195,7 @@ export function CompanyProfileEditor({
 
           <div className="profile-fields-grid">
             <label className="profile-field full"><span>Описание бизнеса <i>обязательно</i></span><textarea rows={4} value={form.businessDescription} onChange={(event) => updateField("businessDescription", event.target.value)} readOnly={!editable} /></label>
-            <label className="profile-field"><span>Продукты и услуги <i>по одному в строке</i></span><textarea rows={6} value={form.products} onChange={(event) => updateField("products", event.target.value)} readOnly={!editable} /></label>
+            <label className="profile-field"><span>Продукты и услуги <i>каждый с новой строки</i></span><textarea rows={6} value={form.products} onChange={(event) => updateField("products", event.target.value)} readOnly={!editable} /></label>
             <label className="profile-field"><span>Целевая аудитория <i>обязательно</i></span><textarea rows={6} value={form.targetAudience} onChange={(event) => updateField("targetAudience", event.target.value)} readOnly={!editable} /></label>
             <label className="profile-field"><span>Ключевые преимущества</span><textarea rows={6} value={form.advantages} onChange={(event) => updateField("advantages", event.target.value)} readOnly={!editable} /></label>
             <label className="profile-field"><span>Триггеры покупки</span><textarea rows={6} value={form.buyingTriggers} onChange={(event) => updateField("buyingTriggers", event.target.value)} readOnly={!editable} /></label>

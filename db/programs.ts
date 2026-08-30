@@ -133,11 +133,13 @@ export async function getPublicProgramBySlug(slug: string) {
 
 export async function getCompanyOperations(companyId: string) {
   const db = getDb();
-  const [programCount, activeProgramCount, partnerCount, activePartnerCount, submissionCount, reviewCount, approvedRewards, paidRewards] = await Promise.all([
+  const [programCount, activeProgramCount, partnerCount, activePartnerCount, contributedPartnerCount, convertedPartnerCount, submissionCount, reviewCount, approvedRewards, paidRewards] = await Promise.all([
     db.select({ value: count() }).from(programs).where(eq(programs.companyId, companyId)),
     db.select({ value: count() }).from(programs).where(and(eq(programs.companyId, companyId), eq(programs.status, "ACTIVE"))),
     db.select({ value: countDistinct(partners.email) }).from(partners).where(eq(partners.companyId, companyId)),
     db.select({ value: countDistinct(partners.email) }).from(partners).where(and(eq(partners.companyId, companyId), eq(partners.status, "ACTIVE"))),
+    db.select({ value: countDistinct(submissions.partnerId) }).from(submissions).where(eq(submissions.companyId, companyId)),
+    db.select({ value: countDistinct(submissions.partnerId) }).from(submissions).where(and(eq(submissions.companyId, companyId), inArray(submissions.status, ["DEAL", "REWARDED"]))),
     db.select({ value: count() }).from(submissions).where(eq(submissions.companyId, companyId)),
     db.select({ value: count() }).from(submissions).where(and(eq(submissions.companyId, companyId), eq(submissions.status, "SUBMITTED"))),
     db.select({ value: sum(rewards.amount) }).from(rewards).where(and(eq(rewards.companyId, companyId), eq(rewards.status, "APPROVED"))),
@@ -148,6 +150,8 @@ export async function getCompanyOperations(companyId: string) {
     activePrograms: activeProgramCount[0]?.value ?? 0,
     partners: partnerCount[0]?.value ?? 0,
     activePartners: activePartnerCount[0]?.value ?? 0,
+    contributedPartners: contributedPartnerCount[0]?.value ?? 0,
+    convertedPartners: convertedPartnerCount[0]?.value ?? 0,
     submissions: submissionCount[0]?.value ?? 0,
     awaitingReview: reviewCount[0]?.value ?? 0,
     approvedRewards: Number(approvedRewards[0]?.value ?? 0),
@@ -172,6 +176,7 @@ export async function getSubmissionsForCompany(companyId: string) {
     partnerEmail: row.partner.email,
     partnerPhone: row.partner.phone,
     missionTitle: row.mission.title,
+    rewardMode: row.mission.rewardMode,
     rewardValue: row.mission.rewardValue,
     rewardLabel: row.mission.rewardLabel,
     currency: row.program.currency,

@@ -10,7 +10,7 @@ import { PartnerEntry } from "./partner-entry";
 import { PublicMissionAction } from "./public-mission-action";
 
 export const dynamic = "force-dynamic";
-const typeNames: Record<string, string> = { LEAD: "Люди", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
+const typeNames: Record<string, string> = { LEAD: "Лиды", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -18,9 +18,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: program?.name ?? "Агентская программа", description: program?.description ?? "Агентская программа в Relay", referrer: "no-referrer" };
 }
 
-export default async function PublicProgramPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ access?: string }> }) {
+export default async function PublicProgramPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ access?: string; join?: string }> }) {
   const { slug } = await params;
-  const { access = "" } = await searchParams;
+  const { access = "", join = "" } = await searchParams;
   const program = await getPublicProgramBySlug(slug);
   if (!program) notFound();
   const rows = await getDb().select({ id: companies.id, name: companies.name, website: companies.website, logoObjectKey: companies.logoObjectKey }).from(companies).where(eq(companies.id, program.companyId)).limit(1);
@@ -28,7 +28,7 @@ export default async function PublicProgramPage({ params, searchParams }: { para
   if (!company) notFound();
   const portal = access ? await getPartnerPortal(access) : null;
   const authorized = portal?.programs.some((item) => item.id === program.id) ? portal : null;
-  if (!authorized) return <PartnerEntry programSlug={slug} companyId={company.id} companyName={company.name} logoObjectKey={company.logoObjectKey} programName={program.name} reward={program.missions[0]?.rewardLabel || "По условиям задания"} />;
+  const joinMission = !authorized ? program.missions.find((mission) => mission.id === join) : null;
 
   return (
     <main className="partner-program-page">
@@ -39,15 +39,15 @@ export default async function PublicProgramPage({ params, searchParams }: { para
         </Link>
         <div className="partner-program-nav-actions">
           <span>{company.name}</span>
-          <Link href={`/partner/${access}`}>Кабинет агента →</Link>
+          {authorized ? <Link href={`/partner/${access}`}>Кабинет агента →</Link> : <span>Выберите задание ниже</span>}
         </div>
       </header>
 
       <section className="partner-missions-section" id="missions">
         <div className="partner-section-heading">
           <span className="module-kicker">{company.name} · ДОСТУПНЫЕ ЗАДАНИЯ</span>
-          <h1>Выберите задание и передайте результат</h1>
-          <p>Сразу видны действия, подтверждение и вознаграждение. Остальная информация о программе находится ниже.</p>
+          <h1>Выберите способ заработать</h1>
+          <p>Сразу видны действия, подтверждение и вознаграждение. Регистрация понадобится только при отправке первой заявки.</p>
         </div>
         <div className="partner-mission-grid">
           {program.missions.map((mission, index) => (
@@ -69,11 +69,11 @@ export default async function PublicProgramPage({ params, searchParams }: { para
                 {mission.resources.length > 0 && (
                   <div className="mission-agent-files">
                     <strong>Файлы компании</strong>
-                    {mission.resources.map((resource) => (
+                    {mission.resources.map((resource) => authorized ? (
                       <a href={`/api/partner/mission-files/${resource.id}?token=${access}`} key={resource.id}>
                         ↓ {resource.fileName}<small>{Math.max(1, Math.round(resource.size / 1024))} КБ</small>
                       </a>
-                    ))}
+                    ) : <span key={resource.id}>{resource.fileName}<small>Доступен после выбора задания</small></span>)}
                   </div>
                 )}
               </div>
@@ -84,7 +84,8 @@ export default async function PublicProgramPage({ params, searchParams }: { para
               <PublicMissionAction
                 token={access}
                 missionId={mission.id}
-                accepted={authorized.acceptances.some((item) => item.missionId === mission.id && item.status === "ACTIVE")}
+                programSlug={slug}
+                accepted={Boolean(authorized?.acceptances.some((item) => item.missionId === mission.id && item.status === "ACTIVE"))}
               />
             </article>
           ))}
@@ -102,7 +103,8 @@ export default async function PublicProgramPage({ params, searchParams }: { para
             <div className="partner-program-facts">
               <div><small>КОМПАНИЯ</small><strong>{company.name}</strong></div>
               <div><small>ЗАДАНИЙ</small><strong>{program.missions.length}</strong></div>
-              <div><small>ВАЛЮТА</small><strong>{program.currency}</strong></div>
+              <div><small>УЧАСТВУЮТ</small><strong>{program.agentCount} агентов</strong></div>
+              <div><small>ВАЛЮТА</small><strong>{program.currency === "KZT" ? "₸" : program.currency}</strong></div>
               <div><small>СРОК</small><strong>{program.expiresAt ? new Date(program.expiresAt).toLocaleDateString("ru-RU") : "Без ограничения"}</strong></div>
             </div>
           </div>
@@ -124,6 +126,7 @@ export default async function PublicProgramPage({ params, searchParams }: { para
         <span>Работает на Relay</span>
         <a href={company.website} target="_blank" rel="noreferrer" referrerPolicy="no-referrer">Сайт компании ↗</a>
       </footer>
+      {joinMission && <PartnerEntry programSlug={slug} missionId={joinMission.id} companyId={company.id} companyName={company.name} logoObjectKey={company.logoObjectKey} programName={joinMission.title} reward={joinMission.rewardLabel || "По условиям задания"} />}
     </main>
   );
 }
