@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { authSessions, userRoles, users } from "../db/schema";
 
 const SESSION_COOKIE = "relay_session";
@@ -62,8 +62,13 @@ export async function createAuthSession(userId: string) {
   const rawToken = bytesToBase64Url(crypto.getRandomValues(new Uint8Array(32)));
   const id = await sha256(rawToken);
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  const now = new Date().toISOString();
   const { getDb } = await import("../db");
-  await getDb().insert(authSessions).values({ id, userId, expiresAt: expiresAt.toISOString() });
+  const db = getDb();
+  await db.batch([
+    db.insert(authSessions).values({ id, userId, expiresAt: expiresAt.toISOString(), createdAt: now }),
+    db.update(users).set({ lastLoginAt: now, loginCount: sql`${users.loginCount} + 1`, updatedAt: now }).where(eq(users.id, userId)),
+  ]);
   const jar = await cookies();
   jar.set(SESSION_COOKIE, rawToken, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", expires: expiresAt });
 }

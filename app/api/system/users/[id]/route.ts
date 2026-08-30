@@ -30,6 +30,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(request) || !(await hasAdminSession())) return Response.json({ error: "Доступ запрещён" }, { status: 403 });
   const { id } = await params;
-  await deleteCompanyUser(id);
-  return Response.json({ ok: true });
+  const payload = await request.json().catch(() => ({})) as { confirmation?: string };
+  if (payload.confirmation !== "DELETE_COMPANY") return Response.json({ error: "Подтвердите безвозвратное удаление" }, { status: 400 });
+  const deletedAccount = await deleteCompanyUser(id);
+  if (!deletedAccount) return Response.json({ error: "Аккаунт уже удалён или не найден" }, { status: 404 });
+  return Response.json({ ok: true, deletedAccount });
 }

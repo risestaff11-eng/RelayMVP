@@ -18,6 +18,8 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash"),
   status: text("status").notNull().default("pending"),
   emailVerifiedAt: text("email_verified_at"),
+  lastLoginAt: text("last_login_at"),
+  loginCount: integer("login_count").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("idx_users_email").on(table.email)]);
@@ -130,6 +132,29 @@ export const companyMethodologyBriefs = sqliteTable("company_methodology_briefs"
   language: text("language").notNull().default("Русский"),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const companyAccountDeletionLogs = sqliteTable(
+  "company_account_deletion_logs",
+  {
+    id: text("id").primaryKey(),
+    originalUserId: text("original_user_id").notNull(),
+    originalCompanyId: text("original_company_id"),
+    companyName: text("company_name").notNull().default(""),
+    emailMasked: text("email_masked").notNull().default(""),
+    emailDomain: text("email_domain").notNull().default(""),
+    programsCount: integer("programs_count").notNull().default(0),
+    agentsCount: integer("agents_count").notNull().default(0),
+    submissionsCount: integer("submissions_count").notNull().default(0),
+    paidRewardsCount: integer("paid_rewards_count").notNull().default(0),
+    paidRewardsAmount: integer("paid_rewards_amount").notNull().default(0),
+    storageCleanupStatus: text("storage_cleanup_status").notNull().default("PENDING"),
+    deletedAt: text("deleted_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_company_deletion_logs_deleted_at").on(table.deletedAt),
+    index("idx_company_deletion_logs_email_domain").on(table.emailDomain),
+  ],
+);
 
 export const companyMembers = sqliteTable(
   "company_members",

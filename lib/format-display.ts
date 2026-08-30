@@ -2,7 +2,10 @@ const MONTHS_SHORT = ["янв.", "февр.", "мар.", "апр.", "мая", "�
 const QYZYLORDA_OFFSET_MS = 5 * 60 * 60 * 1000;
 
 function parts(value: string | Date) {
-  const date = value instanceof Date ? value : new Date(value);
+  const normalized = typeof value === "string" && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)
+    ? `${value.replace(" ", "T")}Z`
+    : value;
+  const date = normalized instanceof Date ? normalized : new Date(normalized);
   const local = new Date(date.getTime() + QYZYLORDA_OFFSET_MS);
   return {
     day: String(local.getUTCDate()).padStart(2, "0"),
@@ -10,6 +13,7 @@ function parts(value: string | Date) {
     year: local.getUTCFullYear(),
     hour: String(local.getUTCHours()).padStart(2, "0"),
     minute: String(local.getUTCMinutes()).padStart(2, "0"),
+    second: String(local.getUTCSeconds()).padStart(2, "0"),
   };
 }
 
@@ -26,6 +30,11 @@ export function formatDate(value: string | Date) {
 export function formatDateTime(value: string | Date) {
   const date = parts(value);
   return `${date.day}.${String(date.month + 1).padStart(2, "0")}.${date.year}, ${date.hour}:${date.minute}`;
+}
+
+export function formatDateTimeSeconds(value: string | Date) {
+  const date = parts(value);
+  return `${date.day}.${String(date.month + 1).padStart(2, "0")}.${date.year}, ${date.hour}:${date.minute}:${date.second}`;
 }
 
 export function formatActivityDate(value: string | Date) {
