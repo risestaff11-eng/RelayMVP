@@ -93,7 +93,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const angleList = angles[missionType];
       const angle = angleList[Math.abs(Date.now() + existing.length) % angleList.length];
       const ai = await generateStructuredJson<GeneratedMission>({
-        systemInstruction: `${typeRoles[missionType]} Ты проектируешь задания для агентской сети Relay. Пиши по-русски, конкретно и без выдуманных фактов. Все поля должны быть полностью заполнены и оставаться удобными для ручного редактирования.`,
+        systemInstruction: `${typeRoles[missionType]} Ты проектируешь задания для агентской сети Yaler. Пиши по-русски, конкретно и без выдуманных фактов. Все поля должны быть полностью заполнены и оставаться удобными для ручного редактирования.`,
         prompt: JSON.stringify({ task: "Создай один новый вариант задания. Он должен заметно отличаться от списка existing: другая цель действия, формулировки, последовательность шагов и способ подтверждения. Не копируй названия и предложения. Вознаграждение должно соответствовать типу задания и валюте программы.", variationSeed, creativeAngle: angle, ...context, missionType, existing }),
         schema: missionSchema, maxOutputTokens: 1000, thinkingLevel: "low", temperature: 0.85,
       });
@@ -101,7 +101,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     } else if (action === "FORM") {
       const schema = { type: "object", additionalProperties: false, properties: { fields: { type: "array", minItems: 7, maxItems: 14, items: fieldSchema } }, required: ["fields"] };
       const ai = await generateStructuredJson<{ fields: Array<Record<string, unknown>> }>({
-        systemInstruction: "Ты UX-методолог Relay. Собери короткую форму передачи результата: только данные, которые реально нужны компании для проверки. Сохрани системные semantic-поля CONTACT_NAME, CONTACT_COMPANY, CONTACT_EMAIL, CONTACT_PHONE, COMMENT, LINKS, FILES ровно по одному. Добавь не более 4 CUSTOM-полей. Для лидов и сделок используй scope COMMERCIAL, для имиджа и вовлечения NON_COMMERCIAL, для общих подтверждений ALL. Пиши понятные русские названия, подсказки и примеры.",
+        systemInstruction: "Ты UX-методолог Yaler. Собери короткую форму передачи результата: только данные, которые реально нужны компании для проверки. Сохрани системные semantic-поля CONTACT_NAME, CONTACT_COMPANY, CONTACT_EMAIL, CONTACT_PHONE, COMMENT, LINKS, FILES ровно по одному. Добавь не более 4 CUSTOM-полей. Для лидов и сделок используй scope COMMERCIAL, для имиджа и вовлечения NON_COMMERCIAL, для общих подтверждений ALL. Пиши понятные русские названия, подсказки и примеры.",
         prompt: JSON.stringify({ task: "Предложи полную форму результата для этой программы с учётом всех заданий. Не спрашивай данные, которые не используются при проверке.", variationSeed, ...context, missions: program.missions }),
         schema, maxOutputTokens: 1500, thinkingLevel: "low", temperature: 0.7,
       });
@@ -111,7 +111,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     } else if (action === "FIELD") {
       const requestedType = SUBMISSION_FIELD_TYPES.includes(payload.type as never) ? payload.type : "TEXT";
       const ai = await generateStructuredJson<Record<string, unknown>>({
-        systemInstruction: "Ты UX-методолог Relay. Придумай одно полезное поле формы проверки результата. Оно должно собирать только информацию, которая помогает компании принять или отклонить результат. semantic всегда CUSTOM. Пиши коротко и по-русски.",
+        systemInstruction: "Ты UX-методолог Yaler. Придумай одно полезное поле формы проверки результата. Оно должно собирать только информацию, которая помогает компании принять или отклонить результат. semantic всегда CUSTOM. Пиши коротко и по-русски.",
         prompt: JSON.stringify({ task: "Заполни название, описание, пример и обязательность нового поля. Сохрани выбранные stage, type и scope.", variationSeed, ...context, requested: { stage: payload.stage, type: requestedType, scope: payload.scope }, existingFields: program.formFields }),
         schema: fieldSchema, maxOutputTokens: 500, thinkingLevel: "minimal", temperature: 0.75,
       });

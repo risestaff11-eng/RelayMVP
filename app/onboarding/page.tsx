@@ -17,11 +17,11 @@ export default async function OnboardingPage() {
   return (
     <main className="auth-page">
       <aside className="auth-aside">
-        <Link className="brand" href={marketingUrl()}><span className="brand-mark">R</span><span>Relay</span></Link>
+        <Link className="brand" href={marketingUrl()}><span className="brand-mark">R</span><span>Yaler</span></Link>
         <div className="auth-message">
           <span className="auth-kicker">ШАГ 1 ИЗ 4</span>
           <h1>Начнём с вашей компании.</h1>
-          <p>Дальше Relay изучит сайт, подготовит профиль бизнеса и предложит четыре агентские задания.</p>
+          <p>Дальше Yaler изучит сайт, подготовит профиль бизнеса и предложит четыре агентские задания.</p>
         </div>
         <div className="auth-steps" aria-label="Прогресс настройки"><span /><span /><span /><span /></div>
       </aside>

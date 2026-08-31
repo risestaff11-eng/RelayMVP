@@ -10,6 +10,7 @@ const items = [
   ["/opportunities", "Возможности", "Доступные задания", "✦"],
   ["/missions", "Мои задания", "Что взято в работу", "◎"],
   ["/submissions", "Мои заявки", "Решения компании и статусы", "↗"],
+  ["/reports", "Отчёты", "Сдать отчёт и посмотреть историю", "▥"],
   ["/payouts", "Выплаты", "Начисления и даты выплат", "₸"],
   ["/materials", "База знаний", "Компания, сообщения и материалы", "▤"],
   ["/referral", "Реферальная ссылка", "Клиент сам передаст контакт", "↗"],
@@ -47,11 +48,11 @@ export function PartnerNav({ token }: { token: string }) {
     <button ref={triggerRef} className="mobile-menu-trigger agent-menu-trigger" type="button" aria-label="Открыть меню" aria-expanded={open} aria-controls="agent-mobile-drawer" onClick={() => setOpen(true)}><i /><i /><i /></button>
     {open && <button className="mobile-drawer-scrim" type="button" aria-label="Закрыть меню" onClick={closeMenu} />}
     <aside className={`mobile-side-drawer agent-side-drawer ${open ? "open" : ""}`} id="agent-mobile-drawer" aria-hidden={!open} inert={!open} role="dialog" aria-modal="true" aria-label="Меню кабинета агента">
-      <header><div className="mobile-drawer-brand"><div className="mobile-drawer-logo"><MarketingLogo /></div><div><small>RELAY</small><strong>КАБИНЕТ АГЕНТА</strong></div></div><button ref={closeRef} type="button" aria-label="Закрыть меню" onClick={closeMenu}>×</button></header>
+      <header><div className="mobile-drawer-brand"><div className="mobile-drawer-logo"><MarketingLogo /></div><div><small>YALER</small><strong>КАБИНЕТ АГЕНТА</strong></div></div><button ref={closeRef} type="button" aria-label="Закрыть меню" onClick={closeMenu}>×</button></header>
       <nav aria-label="Мобильная навигация агента">
         {items.map(([suffix, label, hint, icon]) => <Link key={suffix} className={isActive(suffix) ? "active" : undefined} href={hrefFor(suffix)} aria-current={isActive(suffix) ? "page" : undefined} onClick={() => setOpen(false)}><i aria-hidden="true">{icon}</i><span><strong>{label}</strong><small>{hint}</small></span><b aria-hidden="true">→</b></Link>)}
       </nav>
-      <footer className="mobile-telegram-footer"><a href="https://t.me/relayagents" target="_blank" rel="noreferrer"><i>↗</i><span><strong>Relay Agents</strong><small>Telegram-канал для всех агентов</small></span><b>Открыть</b></a></footer>
+      <footer className="mobile-telegram-footer"><a href="https://t.me/relayagents" target="_blank" rel="noreferrer"><i>↗</i><span><strong>Yaler Agents</strong><small>Telegram-канал для всех агентов</small></span><b>Открыть</b></a></footer>
     </aside>
   </>;
 }

@@ -210,12 +210,12 @@ export function SystemUsers({
     URL.revokeObjectURL(url);
   }
 
-  if (!ready) return <main className="system-gate"><form onSubmit={login}><h1>Relay · управление</h1><label>Секретный пароль<input name="password" type="password" autoComplete="current-password" required /></label>{error && <p>{error}</p>}<button type="submit">Открыть админку</button></form></main>;
+  if (!ready) return <main className="system-gate"><form onSubmit={login}><h1>Yaler · управление</h1><label>Секретный пароль<input name="password" type="password" autoComplete="current-password" required /></label>{error && <p>{error}</p>}<button type="submit">Открыть админку</button></form></main>;
 
   return (
     <main className="system-users system-admin-v2">
       <header className="system-admin-header">
-        <div><span>RELAY · SYSTEM</span><h1>Состояние проекта</h1><p>Компании, активность и деньги. Дата и время указаны по Астане.</p></div>
+        <div><span>YALER · SYSTEM</span><h1>Состояние проекта</h1><p>Компании, активность и деньги. Дата и время указаны по Астане.</p></div>
         <button type="button" onClick={downloadCsv}>↓ Скачать сводку CSV</button>
       </header>
 

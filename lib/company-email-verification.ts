@@ -34,8 +34,8 @@ export async function sendCompanyEmailCode(destination: string, code: string) {
     body: JSON.stringify({
       from: runtime.MAGIC_FROM_EMAIL,
       to: [destination],
-      subject: "Код активации кабинета Relay",
-      html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:28px;color:#11120f"><div style="font-size:18px;font-weight:800">Relay</div><h1 style="font-size:24px;margin:28px 0 10px">Подтвердите почту</h1><p style="font-size:15px;line-height:1.55">Введите этот код на странице регистрации:</p><div style="margin:22px 0;padding:18px;border-radius:14px;background:#c1ff36;font-size:32px;font-weight:900;letter-spacing:8px;text-align:center">${code}</div><p style="font-size:13px;line-height:1.55;color:#5f6359">Код действует 10 минут. Если вы не регистрировались в Relay, просто проигнорируйте письмо.</p></div>`,
+      subject: "Код активации кабинета Yaler",
+      html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:28px;color:#11120f"><div style="font-size:18px;font-weight:800">Yaler</div><h1 style="font-size:24px;margin:28px 0 10px">Подтвердите почту</h1><p style="font-size:15px;line-height:1.55">Введите этот код на странице регистрации:</p><div style="margin:22px 0;padding:18px;border-radius:14px;background:#c1ff36;font-size:32px;font-weight:900;letter-spacing:8px;text-align:center">${code}</div><p style="font-size:13px;line-height:1.55;color:#5f6359">Код действует 10 минут. Если вы не регистрировались в Yaler, просто проигнорируйте письмо.</p></div>`,
     }),
   });
   if (!response.ok) throw new Error("Не удалось отправить код на email");

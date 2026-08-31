@@ -26,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <aside className="sidebar">
         <CompanyBrand company={{ id: company.id, name: company.name, logoObjectKey: company.logoObjectKey }} />
         <DashboardNav />
-        <div className="sidebar-footer"><Link className="sidebar-ai-agent" href="/dashboard/assistant"><span>✦</span><div><strong>Yaler</strong><small>Помощник по программам</small></div><b>→</b></Link><p className="powered-by-relay">Powered by Relay</p></div>
+        <div className="sidebar-footer"><Link className="sidebar-ai-agent" href="/dashboard/assistant"><span>✦</span><div><strong>Yaler</strong><small>Помощник по программам</small></div><b>→</b></Link><p className="powered-by-relay">Powered by Yaler</p></div>
       </aside>
 
       <section className="dashboard-main">

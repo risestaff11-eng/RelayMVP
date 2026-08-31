@@ -59,7 +59,7 @@ export function MarketingSpecialOffer() {
     <section className="lp-special-offer" role="dialog" aria-modal="true" aria-labelledby="special-offer-title" aria-describedby="special-offer-copy">
       <button ref={closeButtonRef} className="lp-special-offer-close" type="button" onClick={() => setOpen(false)} aria-label="Закрыть">×</button>
       <span>ТОЛЬКО 20 КОМПАНИЙ НА БЛИЖАЙШИЙ ПЕРСОНАЛЬНЫЙ ЗАПУСК</span>
-      <h2 id="special-offer-title">Соберём первую программу Relay вместе с вами.</h2>
+      <h2 id="special-offer-title">Соберём первую программу Yaler вместе с вами.</h2>
       <p id="special-offer-copy">За одну рабочую встречу разберём продукт и подготовим основу программы к публикации.</p>
       <ul className="lp-special-offer-kit">
         <li><b>01</b><span><strong>4 готовых задания</strong>По одному для каждого типа</span></li>
@@ -68,7 +68,7 @@ export function MarketingSpecialOffer() {
       </ul>
       <div className="lp-special-offer-limit"><b>20</b><span><strong>Только 20 компаний</strong>Набор закроется после заполнения двадцати мест</span></div>
       <a href={whatsappHref} target="_blank" rel="noreferrer" data-track="special_offer_whatsapp">Оставить заявку <span aria-hidden="true">↗</span></a>
-      <button className="lp-special-offer-later" type="button" onClick={() => setOpen(false)}>Продолжить знакомство с Relay</button>
+      <button className="lp-special-offer-later" type="button" onClick={() => setOpen(false)}>Продолжить знакомство с Yaler</button>
     </section>
   </div>;
 }

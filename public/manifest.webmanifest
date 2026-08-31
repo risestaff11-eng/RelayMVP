@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Relay — агентские продажи",
-  "short_name": "Relay",
+  "name": "Yaler — агентские продажи",
+  "short_name": "Yaler",
   "description": "Программы, задания, результаты и выплаты в одном кабинете.",
   "start_url": "/?source=pwa",
   "scope": "/",

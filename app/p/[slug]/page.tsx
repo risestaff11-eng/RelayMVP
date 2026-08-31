@@ -15,7 +15,7 @@ const typeNames: Record<string, string> = { LEAD: "Лиды", DEAL: "Сделк�
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const program = await getPublicProgramBySlug(slug);
-  return { title: program?.name ?? "Агентская программа", description: program?.description ?? "Агентская программа в Relay", referrer: "no-referrer" };
+  return { title: program?.name ?? "Агентская программа", description: program?.description ?? "Агентская программа в Yaler", referrer: "no-referrer" };
 }
 
 export default async function PublicProgramPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ access?: string; join?: string }> }) {
@@ -35,7 +35,7 @@ export default async function PublicProgramPage({ params, searchParams }: { para
       <header className="partner-program-nav">
         <Link className="brand" href={`/p/${slug}?access=${access}`}>
           <span className="brand-mark">R</span>
-          <span>Relay</span>
+          <span>Yaler</span>
         </Link>
         <div className="partner-program-nav-actions">
           <span>{company.name}</span>
@@ -117,13 +117,13 @@ export default async function PublicProgramPage({ params, searchParams }: { para
           <div className="partner-program-details-body partner-terms-grid">
             <article><strong>Сроки выплаты</strong><p>{program.payoutTerms}</p></article>
             <article><strong>Ограничения</strong><p>{program.legalTerms}</p></article>
-            <p className="partner-beta-note">Relay фиксирует владельца рекомендации, дату отправки и всю историю статусов.</p>
+            <p className="partner-beta-note">Yaler фиксирует владельца рекомендации, дату отправки и всю историю статусов.</p>
           </div>
         </details>
       </section>
 
       <footer className="partner-program-footer">
-        <span>Работает на Relay</span>
+        <span>Работает на Yaler</span>
         <a href={company.website} target="_blank" rel="noreferrer" referrerPolicy="no-referrer">Сайт компании ↗</a>
       </footer>
       {joinMission && <PartnerEntry programSlug={slug} missionId={joinMission.id} companyId={company.id} companyName={company.name} logoObjectKey={company.logoObjectKey} programName={joinMission.title} reward={joinMission.rewardLabel || "По условиям задания"} />}

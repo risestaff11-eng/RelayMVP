@@ -49,26 +49,26 @@ test("keeps Russian as default and restores the shared Kazakh preference", async
   assert.match(html, /class="active" aria-pressed="true">ҚАЗ/);
 });
 
-test("renders the Relay landing page", async () => {
+test("renders the Yaler landing page", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Relay/);
+  assert.match(html, /Yaler/);
   assert.match(html, /<html lang="ru"/);
   assert.match(html, /relay-language-switcher/);
   assert.match(html, />ҚАЗ</);
-  assert.match(html, /Relay — продажи через агентов и амбассадоров/);
+  assert.match(html, /Yaler — продажи через агентов и амбассадоров/);
   assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz"/);
   assert.match(html, /rel="icon" href="\/icon-192\.png"/);
   assert.match(html, /"@type":"WebSite"/);
-  assert.match(html, /"alternateName":\["RiseStaff","Relay by RiseStaff"\]/);
+  assert.match(html, /"alternateName":\["RiseStaff","Yaler by RiseStaff"\]/);
   assert.match(html, /lp-color-word/);
   assert.match(html, /рекомендации/);
   assert.match(html, /4 ЗАДАНИЯ/);
   assert.doesNotMatch(html, /Northstar CRM/);
   assert.match(html, /Агент сразу видит, кого искать и сколько заработает/);
-  assert.match(html, /ТЕКУЩИЙ ПИЛОТ RELAY/);
-  assert.match(html, /Relay не является биржей амбассадоров/);
+  assert.match(html, /ТЕКУЩИЙ ПИЛОТ YALER/);
+  assert.match(html, /Yaler не является биржей амбассадоров/);
   assert.match(html, /ДЛЯ КОМПАНИЙ, КОТОРЫМ НУЖНЫ КЛИЕНТЫ ПО РЕКОМЕНДАЦИИ/);
   assert.doesNotMatch(html, /B2B-клиент|B2B-лид|B2B-продаж/i);
   assert.match(html, /50 000 AI-кредитов/);
@@ -95,7 +95,7 @@ test("renders the integrator one-screen offer", async () => {
   const response = await render("/integrators");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Запускайте Relay клиентам и зарабатывайте на настройке/);
+  assert.match(html, /Запускайте Yaler клиентам и зарабатывайте на настройке/);
   assert.match(html, /Настройте первую программу/);
   assert.match(html, /Обновляйте программы клиента/);
 });

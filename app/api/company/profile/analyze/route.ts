@@ -83,7 +83,7 @@ async function fetchHtml(input: URL) {
     const response = await fetch(current, {
       redirect: "manual",
       signal: AbortSignal.timeout(25000),
-      headers: { "user-agent": "RelayProfileBot/1.1 (+https://relay-agent-sales-rustam.frosty-whale-0805.chatgpt.site)" },
+      headers: { "user-agent": "YalerProfileBot/1.1 (+https://relay-agent-sales-rustam.frosty-whale-0805.chatgpt.site)" },
     });
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const location = response.headers.get("location");
@@ -131,7 +131,7 @@ async function collectWebsiteText(website: string) {
   } catch {
     return {
       text: "Содержимое сайта временно недоступно. Используй только проверенные факты из анкеты компании.",
-      warning: "Сайт не успел ответить. Relay создал базовый черновик по данным анкеты — заполните недостающие поля вручную.",
+      warning: "Сайт не успел ответить. Yaler создал базовый черновик по данным анкеты — заполните недостающие поля вручную.",
     };
   }
 }

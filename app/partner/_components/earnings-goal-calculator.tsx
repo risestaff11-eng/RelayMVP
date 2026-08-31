@@ -38,7 +38,7 @@ export function EarningsGoalCalculator() {
 
   return (
     <section className="earnings-goal-card">
-      <div className="earnings-goal-copy"><small>ЦЕЛЬ ЗАРАБОТКА</small><h2>Сколько рекомендаций нужно?</h2><p>Введите цель — Relay рассчитает темп.</p></div>
+      <div className="earnings-goal-copy"><small>ЦЕЛЬ ЗАРАБОТКА</small><h2>Сколько рекомендаций нужно?</h2><p>Введите цель — Yaler рассчитает темп.</p></div>
       <div className="earnings-goal-fields">
         <label><span>Хочу в месяц</span><div><input type="number" min="0" inputMode="numeric" value={goal.target || ""} placeholder="500 000" onChange={(event) => update({ ...goal, target: Number(event.target.value) })} /><b>₸</b></div></label>
         <label><span>Средняя комиссия</span><div><input type="number" min="0" inputMode="numeric" value={goal.commission || ""} placeholder="50 000" onChange={(event) => update({ ...goal, commission: Number(event.target.value) })} /><b>₸</b></div></label>

@@ -13,7 +13,7 @@ export default async function PartnerPayoutsPage({ params }: { params: Promise<{
   const received = portal.rewards.filter((item) => item.status === "PAID" && item.partnerConfirmedAt).reduce((sum, item) => sum + item.amount, 0);
   const markedByCompany = portal.rewards.filter((item) => item.status === "PAID" && !item.partnerConfirmedAt).reduce((sum, item) => sum + item.amount, 0);
   const agentName = [portal.profile.firstName, portal.profile.lastName].filter(Boolean).join(" ") || portal.partner.name || portal.partner.email;
-  const supportText = `Здравствуйте! Помогите получить вознаграждение от компании «${portal.company.name}». Компания отметила выплату в Relay, но деньги пока не получены. Агент: ${agentName}.`;
+  const supportText = `Здравствуйте! Помогите получить вознаграждение от компании «${portal.company.name}». Компания отметила выплату в Yaler, но деньги пока не получены. Агент: ${agentName}.`;
   const supportHref = `https://wa.me/77765086000?text=${encodeURIComponent(supportText)}`;
 
   return (

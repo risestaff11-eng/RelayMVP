@@ -176,6 +176,13 @@
       "when": 1788057266239,
       "tag": "0024_tough_prima",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1788138473498,
+      "tag": "0025_bored_charles_xavier",
+      "breakpoints": true
     }
   ]
 }

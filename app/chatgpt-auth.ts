@@ -14,14 +14,14 @@ export async function requireChatGPTUser(returnTo: string): Promise<ChatGPTUser>
 }
 
 export function chatGPTSignInPath(returnTo: string): string {
-  return `/auth?returnTo=${encodeURIComponent(safeYalertiveReturnPath(returnTo))}`;
+  return `/auth?returnTo=${encodeURIComponent(safeRelativeReturnPath(returnTo))}`;
 }
 
 export function chatGPTSignOutPath(returnTo = "/"): string {
-  return `/api/auth/logout?returnTo=${encodeURIComponent(safeYalertiveReturnPath(returnTo))}`;
+  return `/api/auth/logout?returnTo=${encodeURIComponent(safeRelativeReturnPath(returnTo))}`;
 }
 
-function safeYalertiveReturnPath(value: string) {
+function safeRelativeReturnPath(value: string) {
   if (!value.startsWith("/") || value.startsWith("//")) return "/";
   try {
     const url = new URL(value, "https://relay.local");

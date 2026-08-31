@@ -11,7 +11,7 @@ const starterPrompts = ["Проверь, что мешает запустить 
 
 export function AiAssistantChat({ companyName, initialTokenBalance }: { companyName: string; initialTokenBalance: number }) {
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([{ role: "assistant", content: `Я Yaler, помощник ${companyName} в Relay. Помогу собрать программу, улучшить задания, активировать агентов и разобраться в заявках. Изменения внесу только после вашего подтверждения.`, suggestions: starterPrompts }]);
+  const [messages, setMessages] = useState<Message[]>([{ role: "assistant", content: `Я Yaler, помощник ${companyName} в Yaler. Помогу собрать программу, улучшить задания, активировать агентов и разобраться в заявках. Изменения внесу только после вашего подтверждения.`, suggestions: starterPrompts }]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [applying, setApplying] = useState(false);

@@ -23,7 +23,7 @@ export function FirstRunGuide(props: GuideProps) {
     : !props.hasProgram
       ? { number: "02", title: "Создайте первую программу", text: "Опишите цель, выберите задания и назначьте понятное вознаграждение для агента.", href: "/dashboard/programs/new", action: "Создать программу" }
       : !props.hasPublished
-        ? { number: "03", title: "Опубликуйте программу", text: "Проверьте задания и условия. После публикации Relay создаст ссылку для приглашения агентов.", href: `/dashboard/programs/${props.programId}`, action: "Продолжить настройку" }
+        ? { number: "03", title: "Опубликуйте программу", text: "Проверьте задания и условия. После публикации Yaler создаст ссылку для приглашения агентов.", href: `/dashboard/programs/${props.programId}`, action: "Продолжить настройку" }
         : props.partnerCount === 0
           ? { number: "04", title: "Пригласите первого агента", text: "Откройте опубликованную программу, скопируйте ссылку и отправьте её человеку, который может рекомендовать клиентов.", href: `/dashboard/programs/${props.programId}`, action: "Получить ссылку" }
           : props.submissionCount === 0

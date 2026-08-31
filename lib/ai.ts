@@ -66,7 +66,7 @@ export async function generateStructuredJsonFromAudio<T>({
     }),
   });
   const result = (await response.json()) as AiProviderResponse;
-  if (!response.ok) throw new Error(result.error?.message || `Yaler временно недоступна (HTTP ${response.status})`);
+  if (!response.ok) throw new Error(result.error?.message || `Yaler временно недоступен (HTTP ${response.status})`);
   const candidate = result.candidates?.[0];
   const text = candidate?.content?.parts?.filter((part) => !part.thought && typeof part.text === "string").map((part) => part.text).join("").trim();
   if (!text) throw new Error(candidate?.finishMessage || "Yaler не смог расшифровать запись");
@@ -116,7 +116,7 @@ export async function generateStructuredJson<T>({
     }),
   });
   const result = (await response.json()) as AiProviderResponse;
-  if (!response.ok) throw new Error(result.error?.message || `Yaler временно недоступна (HTTP ${response.status})`);
+  if (!response.ok) throw new Error(result.error?.message || `Yaler временно недоступен (HTTP ${response.status})`);
   if (result.promptFeedback?.blockReason) throw new Error(`Yaler не может обработать запрос: ${result.promptFeedback.blockReason}`);
 
   const candidate = result.candidates?.[0];

@@ -469,3 +469,85 @@ export const rewards = sqliteTable(
     index("idx_rewards_partner_status").on(table.partnerId, table.status),
   ],
 );
+
+export const reportTemplates = sqliteTable(
+  "report_templates",
+  {
+    id: text("id").primaryKey(),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    programId: text("program_id").references(() => programs.id),
+    name: text("name").notNull().default("Регулярный отчёт"),
+    fieldsJson: text("fields_json").notNull().default("[]"),
+    metricsJson: text("metrics_json").notNull().default("[]"),
+    status: text("status").notNull().default("ACTIVE"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_report_templates_company_status").on(table.companyId, table.status),
+    index("idx_report_templates_program").on(table.programId),
+  ],
+);
+
+export const agentReports = sqliteTable(
+  "agent_reports",
+  {
+    id: text("id").primaryKey(),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    partnerId: text("partner_id").notNull().references(() => partners.id),
+    programId: text("program_id").references(() => programs.id),
+    templateId: text("template_id").references(() => reportTemplates.id),
+    periodStart: text("period_start").notNull(),
+    periodEnd: text("period_end").notNull(),
+    templateSnapshotJson: text("template_snapshot_json").notNull().default("[]"),
+    answersJson: text("answers_json").notNull().default("{}"),
+    metricsJson: text("metrics_json").notNull().default("{}"),
+    transcript: text("transcript").notNull().default(""),
+    audioDurationSeconds: integer("audio_duration_seconds").notNull().default(0),
+    aiSummaryJson: text("ai_summary_json").notNull().default("{}"),
+    status: text("status").notNull().default("DRAFT"),
+    companyComment: text("company_comment").notNull().default(""),
+    submittedAt: text("submitted_at"),
+    viewedAt: text("viewed_at"),
+    acceptedAt: text("accepted_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_agent_reports_company_status_period").on(table.companyId, table.status, table.periodEnd),
+    index("idx_agent_reports_partner_period").on(table.partnerId, table.periodEnd),
+    index("idx_agent_reports_program_period").on(table.programId, table.periodEnd),
+  ],
+);
+
+export const reportFiles = sqliteTable(
+  "report_files",
+  {
+    id: text("id").primaryKey(),
+    reportId: text("report_id").notNull().references(() => agentReports.id),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    partnerId: text("partner_id").notNull().references(() => partners.id),
+    objectKey: text("object_key").notNull(),
+    fileName: text("file_name").notNull(),
+    mimeType: text("mime_type").notNull().default("application/octet-stream"),
+    size: integer("size").notNull().default(0),
+    kind: text("kind").notNull().default("ATTACHMENT"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_report_files_report").on(table.reportId, table.createdAt)],
+);
+
+export const reportRevisions = sqliteTable(
+  "report_revisions",
+  {
+    id: text("id").primaryKey(),
+    reportId: text("report_id").notNull().references(() => agentReports.id),
+    actorType: text("actor_type").notNull(),
+    fromStatus: text("from_status"),
+    toStatus: text("to_status").notNull(),
+    snapshotJson: text("snapshot_json").notNull().default("{}"),
+    comment: text("comment").notNull().default(""),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_report_revisions_report_created").on(table.reportId, table.createdAt)],
+);

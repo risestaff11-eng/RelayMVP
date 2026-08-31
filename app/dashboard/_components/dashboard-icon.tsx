@@ -1,9 +1,10 @@
-type IconName = "home" | "programs" | "results" | "agents" | "rewards" | "analytics" | "assistant" | "methodologist" | "company" | "settings";
+type IconName = "home" | "programs" | "results" | "reports" | "agents" | "rewards" | "analytics" | "assistant" | "methodologist" | "company" | "settings";
 
 const paths: Record<IconName, React.ReactNode> = {
   home: <><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9.5V21h13V9.5" /><path d="M9.5 21v-6h5v6" /></>,
   programs: <><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" /></>,
   results: <><path d="M5 3h11l3 3v15H5z" /><path d="M16 3v4h4" /><path d="m8 14 2.5 2.5L16 11" /></>,
+  reports: <><path d="M5 3h14v18H5z" /><path d="M8 7h8M8 11h8M8 15h5" /><path d="m15 17 1.5 1.5L20 15" /></>,
   agents: <><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3.5 20c.4-4 2.3-6 5.5-6s5.1 2 5.5 6" /><path d="M14 15c3.8-.7 6 1 6.5 4.5" /></>,
   rewards: <><rect x="3" y="6" width="18" height="14" rx="3" /><path d="M3 10h18" /><path d="M16 15h2" /><path d="M7 3v6M17 3v6" /></>,
   analytics: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /><path d="m4 8 6-5 6 7 5-5" /></>,
