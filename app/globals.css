@@ -444,6 +444,10 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .mission-select i { font-size: 20px; font-style: normal; }
 .mission-select strong { margin-top: auto; font-size: 16px; }
 .mission-select small { margin-top: 5px; max-width: 280px; font-size: 9px; line-height: 1.45; }
+.mission-select.type-deal { color: #fff; background: #1b1c18; }
+.mission-select.type-deal strong,.mission-select.type-deal small,.mission-select.type-deal i { color: #fff; }
+.mission-select.type-deal .mission-select-check { color: #171914; background: #c9ff47; }
+.mission-select.type-deal.selected { border-color: #c9ff47; box-shadow: inset 0 0 0 1px #c9ff47; }
 .builder-error { margin: 0; }
 .builder-submit-bar, .program-publish-bar { padding: 21px 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-radius: 16px; color: white; background: var(--ink); }
 .builder-submit-bar strong, .program-publish-bar strong { font-size: 12px; }

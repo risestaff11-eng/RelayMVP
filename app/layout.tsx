@@ -25,17 +25,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const description = "Создавайте задания для внешних агентов, получайте новых клиентов по одной ссылке и отслеживайте каждый результат до выплаты.";
+const description = "Назначьте вознаграждение за приведённого клиента. Yaler покажет, кто кого привёл, что стало с заявкой и сколько нужно выплатить.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://risestaff.kz"),
   applicationName: "Yaler",
   title: {
-    default: "Yaler — продажи через агентов и амбассадоров",
+    default: "Yaler — сервис для программы «приведи клиента»",
     template: "%s · Yaler",
   },
   description,
-  keywords: ["канал амбассадоров", "программа для амбассадоров", "управление рекомендациями", "партнёрские продажи", "внешние продажи", "Yaler", "RiseStaff"],
+  keywords: ["приведи клиента", "вознаграждение за клиента", "программа рекомендаций", "партнёрские продажи", "учёт выплат", "Yaler", "RiseStaff"],
   creator: "Yaler",
   publisher: "Yaler",
   category: "business",
@@ -57,15 +57,15 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: "Yaler",
     locale: "ru_KZ",
-    title: "Yaler — продажи через агентов и амбассадоров",
+    title: "Yaler — сервис для программы «приведи клиента»",
     description,
     type: "website",
     url: "https://risestaff.kz/",
-    images: [{ url: "https://risestaff.kz/og.png", width: 1731, height: 909, alt: "Yaler — продажи через агентов и амбассадоров" }],
+    images: [{ url: "https://risestaff.kz/og.png", width: 1731, height: 909, alt: "Yaler — сервис для программы «приведи клиента»" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Yaler — продажи через агентов и амбассадоров",
+    title: "Yaler — сервис для программы «приведи клиента»",
     description,
     images: ["https://risestaff.kz/og.png"],
   },

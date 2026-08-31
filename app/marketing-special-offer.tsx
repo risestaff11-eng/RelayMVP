@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 
 const sessionKey = "relay_special_offer_seen";
-const whatsappHref = "https://wa.me/77765086000?text=%D0%A5%D0%BE%D1%87%D1%83%20%D1%81%D0%BF%D0%B5%D1%86%D0%BF%D1%80%D0%B5%D0%B4%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5";
 
 export function MarketingSpecialOffer() {
   const [open, setOpen] = useState(false);
@@ -21,6 +20,10 @@ export function MarketingSpecialOffer() {
 
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry?.isIntersecting) return;
+      if (window.location.hash === "#company-application") {
+        observer.disconnect();
+        return;
+      }
       try {
         window.sessionStorage.setItem(sessionKey, "shown");
       } catch {
@@ -67,7 +70,7 @@ export function MarketingSpecialOffer() {
         <li><b>03</b><span><strong>Правила проверки</strong>Статусы, награды и причины отказа</span></li>
       </ul>
       <div className="lp-special-offer-limit"><b>20</b><span><strong>Только 20 компаний</strong>Набор закроется после заполнения двадцати мест</span></div>
-      <a href={whatsappHref} target="_blank" rel="noreferrer" data-track="special_offer_whatsapp">Оставить заявку <span aria-hidden="true">↗</span></a>
+      <a href="#company-application" onClick={() => setOpen(false)} data-track="special_offer_application">Оставить заявку <span aria-hidden="true">↗</span></a>
       <button className="lp-special-offer-later" type="button" onClick={() => setOpen(false)}>Продолжить знакомство с Yaler</button>
     </section>
   </div>;

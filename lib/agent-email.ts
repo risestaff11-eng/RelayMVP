@@ -36,6 +36,23 @@ export async function sendAgentApplicationNotification(application: { name: stri
   await sendEmail({ to: destination, subject: "Новый агент", html: `<div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;padding:28px;color:#11120f"><b style="font-size:18px">Yaler</b><h1>Новая заявка агента</h1><table style="width:100%;border-collapse:collapse">${rows}</table><p style="margin-top:24px"><a href="https://company.risestaff.kz/system/users" style="display:inline-block;background:#11120f;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none">Открыть админку</a></p></div>` });
 }
 
+export async function sendCompanyApplicationNotification(application: { name: string; company: string; email: string; phone: string; comment: string }) {
+  const destination = "rtarzhakayev@gmail.com";
+  const rows = [
+    ["Имя", application.name],
+    ["Компания", application.company],
+    ["Email", application.email],
+    ["Телефон", application.phone],
+    ["Кого хотят привлекать", application.comment],
+  ].map(([label, value]) => `<tr><td style="padding:9px 12px;color:#666;vertical-align:top">${escapeHtml(label)}</td><td style="padding:9px 12px;font-weight:600">${escapeHtml(value || "—")}</td></tr>`).join("");
+
+  await sendEmail({
+    to: destination,
+    subject: "Новая компания",
+    html: `<div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;padding:28px;color:#11120f"><b style="font-size:18px">Yaler</b><h1 style="font-size:25px;margin:26px 0 12px">Новая заявка компании</h1><table style="width:100%;border-collapse:collapse">${rows}</table><p style="margin-top:24px"><a href="https://company.risestaff.kz/system/users" style="display:inline-block;background:#11120f;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none">Открыть админку</a></p></div>`,
+  });
+}
+
 export async function sendCompanyNewSubmissionNotification(input: { destination: string; companyName: string; agentName: string; missionTitle: string; programName: string; contactName: string; contactCompany: string; submissionId: string }) {
   const reviewUrl = `https://company.risestaff.kz/auth?returnTo=${encodeURIComponent(`/dashboard/submissions?submission=${input.submissionId}`)}`;
   const contact = input.contactCompany ? `${input.contactName || "Новый контакт"} · ${input.contactCompany}` : input.contactName || "Новый результат";

@@ -46,6 +46,20 @@ test("new agent applications are persisted, emailed and manageable by admin", as
   assert.match(admin, /Заявки на участие/);
 });
 
+test("landing company applications are validated and emailed to the owner", async () => {
+  const [route, email, form] = await Promise.all([
+    read("app/api/marketing/company-application/route.ts"),
+    read("lib/agent-email.ts"),
+    read("app/company-application-form.tsx"),
+  ]);
+  assert.match(route, /sameOrigin/);
+  assert.match(route, /website/);
+  assert.match(route, /sendCompanyApplicationNotification/);
+  assert.match(email, /subject: "Новая компания"/);
+  assert.match(email, /rtarzhakayev@gmail\.com/);
+  assert.match(form, /\/api\/marketing\/company-application/);
+});
+
 test("support entry is temporary, server-authorized and visibly disclosed", async () => {
   const [auth, route, layout] = await Promise.all([
     read("lib/account-auth.ts"),
