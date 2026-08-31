@@ -72,15 +72,19 @@ export async function getPartnerPortal(token: string) {
     db.select().from(companyKnowledgeItems).where(and(eq(companyKnowledgeItems.companyId, partner.companyId), eq(companyKnowledgeItems.status, "PUBLISHED"))).orderBy(asc(companyKnowledgeItems.sortOrder), desc(companyKnowledgeItems.updatedAt)),
   ]);
   const company = companyRows[0];
-  const currentProgram = programRows.find((item) => item.id === partner.programId);
-  if (!currentProgram || !company) return null;
+  const now = Date.now();
+  const availableProgramRows = programRows.filter((item) => item.status === "ACTIVE" && (!item.expiresAt || new Date(item.expiresAt).getTime() > now));
+  const availableProgramIds = new Set(availableProgramRows.map((item) => item.id));
+  const activePartner = identityRows.find((item) => item.id === partner.id && availableProgramIds.has(item.programId)) ?? identityRows.find((item) => availableProgramIds.has(item.programId));
+  const currentProgram = availableProgramRows.find((item) => item.id === activePartner?.programId) ?? availableProgramRows[0];
+  if (!currentProgram || !activePartner || !company) return null;
   const submissionIds = submissionRows.map((item) => item.id);
   const [eventRows, attachmentRows] = submissionIds.length ? await Promise.all([
     db.select().from(submissionStatusEvents).where(inArray(submissionStatusEvents.submissionId, submissionIds)).orderBy(desc(submissionStatusEvents.createdAt)),
     db.select().from(submissionAttachments).where(inArray(submissionAttachments.submissionId, submissionIds)).orderBy(asc(submissionAttachments.createdAt)),
   ]) : [[], []];
 
-  const serializedMissions = missionRows.map((mission) => {
+  const serializedAllMissions = missionRows.map((mission) => {
     const missionProgram = programRows.find((item) => item.id === mission.programId)!;
     return {
       ...mission,
@@ -93,10 +97,11 @@ export async function getPartnerPortal(token: string) {
       resources: resourceRows.filter((resource) => resource.missionId === mission.id).map(({ id, fileName, mimeType, size }) => ({ id, fileName, mimeType, size })),
     };
   });
+  const serializedMissions = serializedAllMissions.filter((mission) => mission.status === "ACTIVE" && availableProgramIds.has(mission.programId));
   const serializedSubmissions = submissionRows.map((submission) => ({
     ...submission,
     ...parsePayload(submission.payloadJson),
-    mission: serializedMissions.find((mission) => mission.id === submission.missionId) ?? null,
+    mission: serializedAllMissions.find((mission) => mission.id === submission.missionId) ?? null,
     events: eventRows.filter((event) => event.submissionId === submission.id),
     attachments: attachmentRows.filter((attachment) => attachment.submissionId === submission.id),
     reward: rewardRows.find((reward) => reward.submissionId === submission.id) ?? null,
@@ -106,11 +111,11 @@ export async function getPartnerPortal(token: string) {
 
   return {
     token,
-    partner,
+    partner: activePartner,
     partners: identityRows,
     company,
     program: currentProgram,
-    programs: programRows,
+    programs: availableProgramRows,
     missions: serializedMissions,
     submissions: serializedSubmissions,
     rewards: rewardRows,

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, or, isNull, gt, sql } from "drizzle-orm";
 import { getDb } from ".";
 import { companies, partnerAccessLinks, partners, programs } from "./schema";
 import { normalizeAgentEmail, normalizeAgentPhone } from "../lib/agent-auth";
@@ -25,13 +25,13 @@ export async function getAgentWorkspace(email: string, phone: string) {
     programId: programs.id,
     programName: programs.name,
     programStatus: programs.status,
-    missionCount: sql<number>`coalesce((select count(*) from missions m where m.program_id = ${programs.id}), 0)`,
+    missionCount: sql<number>`coalesce((select count(*) from missions m where m.program_id = ${programs.id} and m.status = 'ACTIVE'), 0)`,
     submissionCount: sql<number>`coalesce((select count(*) from submissions s where s.partner_id = ${partners.id}), 0)`,
     pendingRewards: sql<number>`coalesce((select sum(r.amount) from rewards r where r.partner_id = ${partners.id} and r.status in ('PENDING', 'APPROVED')), 0)`,
   }).from(partners)
     .innerJoin(companies, eq(partners.companyId, companies.id))
     .innerJoin(programs, eq(partners.programId, programs.id))
-    .where(inArray(partners.id, ids))
+    .where(and(inArray(partners.id, ids), eq(programs.status, "ACTIVE"), or(isNull(programs.expiresAt), gt(programs.expiresAt, new Date().toISOString()))))
     .orderBy(asc(companies.name), asc(programs.name));
   const companiesMap = new Map<string, { id: string; name: string; agentName: string; programs: Array<{ id: string; name: string; status: string; missionCount: number; submissionCount: number; pendingRewards: number }> }>();
   for (const row of rows) {
@@ -44,7 +44,10 @@ export async function getAgentWorkspace(email: string, phone: string) {
 
 export async function createCompanyAccessForAgent(email: string, phone: string, companyId: string) {
   const matched = await findAgentPartners(email, phone);
-  const partner = matched.find((row) => row.companyId === companyId);
+  const availablePrograms = await getDb().select({ id: programs.id }).from(programs)
+    .where(and(eq(programs.companyId, companyId), eq(programs.status, "ACTIVE"), or(isNull(programs.expiresAt), gt(programs.expiresAt, new Date().toISOString()))));
+  const availableProgramIds = new Set(availablePrograms.map((item) => item.id));
+  const partner = matched.find((row) => row.companyId === companyId && availableProgramIds.has(row.programId));
   if (!partner) return null;
   const rawToken = createPartnerToken();
   const now = new Date().toISOString();

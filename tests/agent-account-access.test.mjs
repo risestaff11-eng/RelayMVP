@@ -20,13 +20,17 @@ test("agent login requires email, normalized phone and a one-time email code", a
 });
 
 test("one agent can open programs from several companies without merging tenant data", async () => {
-  const [source, workspace, layout] = await Promise.all([read("db/agent-access.ts"), read("app/agent/page.tsx"), read("app/partner/[token]/layout.tsx")]);
+  const [source, portal, workspace, layout] = await Promise.all([read("db/agent-access.ts"), read("db/partner.ts"), read("app/agent/page.tsx"), read("app/partner/[token]/layout.tsx")]);
   assert.match(source, /companiesMap/);
   assert.match(source, /row\.companyId === companyId/);
   assert.match(source, /partnerAccessLinks/);
   assert.match(source, /30 \* 24 \* 60 \* 60 \* 1000/);
   assert.match(workspace, /Данные компаний не смешиваются/);
   assert.match(layout, /Сменить компанию/);
+  assert.match(source, /eq\(programs\.status, "ACTIVE"\)/);
+  assert.match(source, /gt\(programs\.expiresAt/);
+  assert.match(portal, /availableProgramRows/);
+  assert.match(portal, /mission\.status === "ACTIVE"/);
 });
 
 test("new agent applications are persisted, emailed and manageable by admin", async () => {
