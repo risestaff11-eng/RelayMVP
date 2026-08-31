@@ -22,6 +22,9 @@ export async function PATCH(request: Request) {
     if (action === "STATUS") {
       const reportId = cleanString(payload.reportId, 80); const next = cleanString(payload.status, 30); if (!new Set(["VIEWED", "NEEDS_CLARIFICATION", "ACCEPTED"]).has(next)) throw new Error("Недопустимый статус");
       const report = (await getDb().select().from(agentReports).where(and(eq(agentReports.id, reportId), eq(agentReports.companyId, ctx.company.id))).limit(1))[0]; if (!report) return Response.json({ error: "Отчёт не найден" }, { status: 404 });
+      if (report.status === next) return Response.json({ ok: true, status: next });
+      const allowedTransitions: Record<string, string[]> = { SUBMITTED: ["VIEWED", "NEEDS_CLARIFICATION", "ACCEPTED"], VIEWED: ["NEEDS_CLARIFICATION", "ACCEPTED"], NEEDS_CLARIFICATION: ["ACCEPTED"] };
+      if (!(allowedTransitions[report.status] || []).includes(next)) throw new Error("Статус отчёта уже изменился. Обновите страницу и повторите действие.");
       const comment = cleanString(payload.comment, 1200); if (next === "NEEDS_CLARIFICATION" && !comment) throw new Error("Укажите, что нужно уточнить");
       await getDb().update(agentReports).set({ status: next, companyComment: comment, viewedAt: report.viewedAt || now, acceptedAt: next === "ACCEPTED" ? now : report.acceptedAt, updatedAt: now }).where(eq(agentReports.id, report.id));
       await getDb().insert(reportRevisions).values({ id: crypto.randomUUID(), reportId: report.id, actorType: "COMPANY", fromStatus: report.status, toStatus: next, snapshotJson: report.answersJson, comment, createdAt: now }); return Response.json({ ok: true, status: next });

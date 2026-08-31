@@ -16,7 +16,9 @@ export async function ensureReportTemplate(companyId: string) {
 
 export async function calculatePartnerReportMetrics(partnerIds: string[], periodStart: string, periodEnd: string) {
   if (!partnerIds.length) return {};
-  const db = getDb(); const end = `${periodEnd}T23:59:59.999Z`; const start = `${periodStart}T00:00:00.000Z`;
+  const db = getDb();
+  const start = new Date(`${periodStart}T00:00:00.000+05:00`).toISOString();
+  const end = new Date(`${periodEnd}T23:59:59.999+05:00`).toISOString();
   const resultRows = await db.select().from(submissions).where(and(inArray(submissions.partnerId, partnerIds), gte(submissions.createdAt, start), lte(submissions.createdAt, end)));
   const rewardRows = await db.select().from(rewards).where(and(inArray(rewards.partnerId, partnerIds), gte(rewards.createdAt, start), lte(rewards.createdAt, end)));
   const completedRows = await db.select().from(partnerMissionAcceptances).where(and(inArray(partnerMissionAcceptances.partnerId, partnerIds), gte(partnerMissionAcceptances.completedAt, start), lte(partnerMissionAcceptances.completedAt, end)));
@@ -28,7 +30,11 @@ export async function calculatePartnerReportMetrics(partnerIds: string[], period
     rejected: resultRows.filter((item) => item.status === "REJECTED").length,
     leads: resultRows.filter((item) => item.type === "LEAD").length,
     deals: resultRows.filter((item) => ["DEAL", "REWARDED"].includes(item.status)).length,
-    accrued: sum(["APPROVED", "PAID"]), paid: sum(["PAID"]), pending: sum(["PENDING", "APPROVED"]),
+    accrued: sum(["APPROVED", "PAID"]),
+    paid: sum(["PAID"]),
+    pending: sum(["PENDING", "APPROVED"]),
+    paidRewardsCount: rewardRows.filter((item) => item.status === "PAID").length,
+    pendingRewardsCount: rewardRows.filter((item) => ["PENDING", "APPROVED"].includes(item.status)).length,
   };
 }
 
@@ -41,10 +47,18 @@ export async function getPartnerReports(partnerIds: string[]) {
 
 export async function getCompanyReports(companyId: string) {
   const db = getDb();
-  const rows = await db.select({ report: agentReports, partnerName: partners.name, partnerEmail: partners.email, partnerPhone: partners.phone, programName: programs.name }).from(agentReports)
+  const rows = await db.select({ report: agentReports, partnerName: partners.name, partnerEmail: partners.email, partnerPhone: partners.phone, partnerUserId: partners.userId, programName: programs.name }).from(agentReports)
     .innerJoin(partners, eq(agentReports.partnerId, partners.id)).leftJoin(programs, eq(agentReports.programId, programs.id)).where(eq(agentReports.companyId, companyId)).orderBy(desc(agentReports.periodEnd), desc(agentReports.updatedAt));
   const ids = rows.map(({ report }) => report.id); const files = ids.length ? await db.select().from(reportFiles).where(inArray(reportFiles.reportId, ids)).orderBy(asc(reportFiles.createdAt)) : [];
-  return rows.map(({ report, ...identity }) => ({ ...report, ...identity, templateSnapshot: parseReportFields(report.templateSnapshotJson), answers: json<Record<string, unknown>>(report.answersJson, {}), metrics: json<Record<string, number>>(report.metricsJson, {}), aiSummary: json<Record<string, unknown>>(report.aiSummaryJson, {}), files: files.filter((file) => file.reportId === report.id) }));
+  const companyPartners = await db.select({ id: partners.id, userId: partners.userId, email: partners.email, programId: partners.programId }).from(partners).where(eq(partners.companyId, companyId));
+  return Promise.all(rows.map(async ({ report, partnerUserId, ...identity }) => {
+    const scopedPartnerIds = companyPartners.filter((candidate) => {
+      const sameIdentity = partnerUserId && candidate.userId ? candidate.userId === partnerUserId : candidate.email.toLowerCase() === identity.partnerEmail.toLowerCase();
+      return sameIdentity && (!report.programId || candidate.programId === report.programId);
+    }).map((candidate) => candidate.id);
+    const currentMetrics = await calculatePartnerReportMetrics(scopedPartnerIds.length ? scopedPartnerIds : [report.partnerId], report.periodStart, report.periodEnd);
+    return { ...report, ...identity, templateSnapshot: parseReportFields(report.templateSnapshotJson), answers: json<Record<string, unknown>>(report.answersJson, {}), metrics: { ...json<Record<string, number>>(report.metricsJson, {}), ...currentMetrics }, aiSummary: json<Record<string, unknown>>(report.aiSummaryJson, {}), files: files.filter((file) => file.reportId === report.id) };
+  }));
 }
 
 export async function getCompanyReportOverview(companyId: string) {

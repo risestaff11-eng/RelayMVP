@@ -15,7 +15,7 @@ const defaults: Array<Omit<ReportField, "sortOrder">> = [
 ];
 
 export const defaultReportFields = (): ReportField[] => defaults.map((field, sortOrder) => ({ ...field, sortOrder }));
-export const DEFAULT_REPORT_METRICS = ["completedTasks", "submissions", "accepted", "rejected", "leads", "deals", "accrued", "paid", "pending"];
+export const DEFAULT_REPORT_METRICS = ["completedTasks", "submissions", "accepted", "rejected", "leads", "deals", "accrued", "paid", "pending", "paidRewardsCount", "pendingRewardsCount"];
 
 export function parseReportFields(value: string | null | undefined): ReportField[] {
   try {

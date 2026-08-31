@@ -1,8 +1,9 @@
 import { and, eq, or } from "drizzle-orm";
 import { getDb } from "../../../../../db";
 import { getPublicReferral } from "../../../../../db/referrals";
-import { submissionStatusEvents, submissions } from "../../../../../db/schema";
+import { submissionStatusEvents, submissions, users } from "../../../../../db/schema";
 import { cleanString, sameOrigin } from "../../../company/_utils";
+import { sendCompanyNewSubmissionNotification } from "../../../../../lib/agent-email";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -30,6 +31,10 @@ export async function POST(request: Request) {
       getDb().insert(submissions).values({ id, companyId: referral.company.id, programId: referral.program.id, missionId: referral.mission.id, partnerId: referral.partner.id, type: referral.mission.type, contactName: name, contactCompany: "", contactEmail, contactPhone, payloadJson: JSON.stringify({ partnerComment: comment, externalLinks: [], customAnswers: [], submittedByClient: true, referralSource: "CLIENT_SELF_SERVICE", clientConsentAcceptedAt: now }), status: "SUBMITTED", createdAt: now, updatedAt: now }),
       getDb().insert(submissionStatusEvents).values({ id: crypto.randomUUID(), submissionId: id, fromStatus: null, toStatus: "SUBMITTED", actorType: "CLIENT", comment: "Клиент самостоятельно заполнил реферальную форму агента", createdAt: now }),
     ]);
+    const owner = (await getDb().select({ email: users.email }).from(users).where(eq(users.id, referral.company.ownerUserId)).limit(1))[0];
+    if (owner?.email) {
+      await sendCompanyNewSubmissionNotification({ destination: owner.email, companyName: referral.company.name, agentName: referral.partner.name, missionTitle: referral.mission.title, programName: referral.program.name, contactName: name, contactCompany: "", submissionId: id }).catch((error) => console.error("referral notification email failed", error));
+    }
     return Response.json({ ok: true }, { status: 201 });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось передать контакт" }, { status: 400 });

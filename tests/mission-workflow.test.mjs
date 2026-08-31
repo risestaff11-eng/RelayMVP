@@ -59,6 +59,20 @@ test("public submission saves dynamic answers and files", async () => {
   assert.match(form, /reportValidity/);
 });
 
+test("a new result notifies the company and opens the exact review card", async () => {
+  const [route, referralRoute, email, page] = await Promise.all([
+    readFile(new URL("../app/api/public/submissions/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/public/referrals/submit/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/agent-email.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/submissions/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(route, /sendCompanyNewSubmissionNotification/);
+  assert.match(referralRoute, /sendCompanyNewSubmissionNotification/);
+  assert.match(email, /dashboard\/submissions\?submission=/);
+  assert.match(email, /Для доступа введите почту и пароль компании/);
+  assert.match(page, /initialSelectedId/);
+});
+
 test("agent result flow supports confirmed voice drafts and removable multi-file evidence", async () => {
   const form = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/lead-submission-form.tsx", import.meta.url), "utf8");
   const transcriptionRoute = await readFile(new URL("../app/api/partner/audio/transcribe/route.ts", import.meta.url), "utf8");

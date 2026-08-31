@@ -7,6 +7,7 @@ type Report = {
   partnerId: string;
   partnerName: string;
   partnerEmail: string;
+  partnerPhone: string;
   programId: string | null;
   programName: string | null;
   periodStart: string;
@@ -44,6 +45,8 @@ const metricNames: Record<string, string> = {
   accrued: "Начислено",
   paid: "Выплачено",
   pending: "К выплате",
+  paidRewardsCount: "Выплат проведено",
+  pendingRewardsCount: "Выплат ожидается",
 };
 const types: Record<string, string> = {
   TEXT: "Короткий текст",
@@ -57,11 +60,13 @@ const types: Record<string, string> = {
   BOOLEAN: "Да / нет",
 };
 export function ReportsWorkspace({
+  companyName,
   template,
   initialReports,
   overview,
   programs,
 }: {
+  companyName: string;
   template: { id: string; fields: ReportField[]; metrics: string[] };
   initialReports: Report[];
   overview: {
@@ -90,6 +95,8 @@ export function ReportsWorkspace({
     null,
   );
   const [pending, setPending] = useState(false);
+  const [statusPending, setStatusPending] = useState("");
+  const [acceptedReport, setAcceptedReport] = useState<Report | null>(null);
   const visible = useMemo(
     () =>
       reports.filter(
@@ -136,24 +143,25 @@ export function ReportsWorkspace({
     setSettings(false);
   }
   async function status(report: Report, next: string, comment = "") {
-    const response = await fetch("/api/company/reports", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        action: "STATUS",
-        reportId: report.id,
-        status: next,
-        comment,
-      }),
-    });
-    const data = (await response.json()) as { error?: string };
-    if (!response.ok) {
-      setNotice(data.error || "Ошибка");
-      return;
+    setStatusPending(report.id);
+    setNotice("");
+    try {
+      const response = await fetch("/api/company/reports", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "STATUS", reportId: report.id, status: next, comment }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Не удалось обновить отчёт");
+      const updated = { ...report, status: next, companyComment: comment };
+      setReports((current) => current.map((item) => (item.id === report.id ? updated : item)));
+      setSelected(updated);
+      if (next === "ACCEPTED") setAcceptedReport(updated);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Не удалось обновить отчёт");
+    } finally {
+      setStatusPending("");
     }
-    const updated = { ...report, status: next, companyComment: comment };
-    setReports(reports.map((item) => (item.id === report.id ? updated : item)));
-    setSelected(updated);
   }
   async function analyze() {
     setPending(true);
@@ -320,11 +328,7 @@ export function ReportsWorkspace({
           .map((report) => (
             <article
               key={report.id}
-              onClick={() => {
-                setSelected(report);
-                if (report.status === "SUBMITTED")
-                  void status(report, "VIEWED");
-              }}
+              onClick={() => setSelected(report)}
             >
               <header>
                 <span>{statusNames[report.status]}</span>
@@ -368,16 +372,15 @@ export function ReportsWorkspace({
               </div>
               <button onClick={() => setSelected(null)}>×</button>
             </header>
-            <div className="report-detail-metrics">
-              {Object.entries(selected.metrics)
-                .filter(([, value]) => value)
-                .map(([key, value]) => (
-                  <span key={key}>
-                    <small>{metricNames[key] || key}</small>
-                    <strong>{value}</strong>
-                  </span>
-                ))}
-            </div>
+            <section className="report-period-summary">
+              <div><small>АВТОМАТИЧЕСКАЯ СВОДКА</small><h3>Показатели кабинета за период отчёта</h3><p>{selected.periodStart} — {selected.periodEnd}. Данные рассчитаны системой, агент их не вводил.</p></div>
+              <div className="report-detail-metrics">
+                <span><small>РЕЗУЛЬТАТОВ</small><strong>{selected.metrics.submissions || 0}</strong></span>
+                <span><small>ВЫПЛАТ ПРОВЕДЕНО</small><strong>{selected.metrics.paidRewardsCount || 0}</strong></span>
+                <span><small>ОЖИДАЕТ ОПЛАТЫ</small><strong>{(selected.metrics.pending || 0).toLocaleString("ru-RU")} ₸</strong></span>
+                <span><small>ВЫПЛАЧЕНО</small><strong>{(selected.metrics.paid || 0).toLocaleString("ru-RU")} ₸</strong></span>
+              </div>
+            </section>
             <div className="report-detail-answers">
               {selected.templateSnapshot
                 .filter(
@@ -426,6 +429,7 @@ export function ReportsWorkspace({
             </div>
             <footer>
               <button
+                type="button"
                 onClick={() => {
                   const comment = prompt("Что агенту нужно уточнить?") || "";
                   if (comment)
@@ -435,12 +439,22 @@ export function ReportsWorkspace({
                 Запросить уточнение
               </button>
               <button
+                type="button"
                 className="button button-primary"
+                disabled={statusPending === selected.id || selected.status === "ACCEPTED"}
                 onClick={() => void status(selected, "ACCEPTED")}
               >
-                Принять отчёт
+                {statusPending === selected.id ? "Принимаем…" : selected.status === "ACCEPTED" ? "Отчёт принят" : "Принять отчёт"}
               </button>
             </footer>
+          </section>
+        </div>
+      )}
+      {acceptedReport && (
+        <div className="report-accepted-backdrop" role="presentation">
+          <section className="report-accepted-dialog" role="dialog" aria-modal="true" aria-labelledby="report-accepted-title">
+            <i>✓</i><small>ГОТОВО</small><h2 id="report-accepted-title">Отчёт принят</h2><p>{acceptedReport.partnerName} увидит новый статус в кабинете. Можно сразу подтвердить это в WhatsApp.</p>
+            <div>{acceptedReport.partnerPhone ? <a href={`https://wa.me/${acceptedReport.partnerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(`Здравствуйте, ${acceptedReport.partnerName}! Это команда ${companyName}. Ваш отчёт за ${acceptedReport.periodStart} — ${acceptedReport.periodEnd} принят. Спасибо, данные и показатели сохранены в Yaler.`)}`} target="_blank" rel="noreferrer">Написать агенту в WhatsApp ↗</a> : <span>Телефон агента не указан</span>}<button type="button" onClick={() => setAcceptedReport(null)}>Закрыть</button></div>
           </section>
         </div>
       )}

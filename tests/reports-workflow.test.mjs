@@ -45,9 +45,14 @@ test("reporting is available to both company and agent with evidence-based analy
 });
 
 test("automatic report metrics include tasks, results and rewards", async () => {
-  const source = await read("db/reports.ts");
+  const [source, workspace] = await Promise.all([read("db/reports.ts"), read("app/dashboard/reports/reports-workspace.tsx")]);
   assert.match(source, /partnerMissionAcceptances/);
   assert.match(source, /submissions/);
   assert.match(source, /rewards/);
   assert.match(source, /completedTasks/);
+  assert.match(source, /paidRewardsCount/);
+  assert.match(source, /T00:00:00\.000\+05:00/);
+  assert.match(workspace, /Показатели кабинета за период отчёта/);
+  assert.match(workspace, /Отчёт принят/);
+  assert.match(workspace, /Написать агенту в WhatsApp/);
 });

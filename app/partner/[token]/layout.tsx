@@ -23,7 +23,7 @@ export default async function PartnerLayout({ children, params }: { children: Re
     <main className="partner-portal-shell">
       <aside className="partner-portal-sidebar">
         <Link className="brand partner-brand" href={`/partner/${token}`}><MarketingLogo /><span>Yaler</span></Link>
-        <div className="partner-company-chip"><CompanyLogo company={portal.company} /><small>КОМПАНИЯ</small><strong>{portal.company.name}</strong><span>● {portal.programs.length} программ · задания доступны</span></div>
+        <div className="partner-company-chip"><CompanyLogo company={portal.company} /><small>КОМПАНИЯ</small><strong>{portal.company.name}</strong><span>● {portal.programs.length} программ · задания доступны</span><a href="/agent">Сменить компанию ↗</a></div>
         <PartnerNav token={token} />
         <div className="partner-trust-note"><i>✓</i><div><strong>Заявки зафиксированы</strong><p>Дата, автор и история статусов сохраняются.</p></div></div>
       </aside>
@@ -33,6 +33,7 @@ export default async function PartnerLayout({ children, params }: { children: Re
             <div className="partner-mini-avatar">{portal.profile.avatarObjectKey ? <img src={`/api/partner/avatar?token=${token}`} alt="Аватар агента" /> : <span>{initials}</span>}</div>
             <div className="partner-top-copy"><small>АГЕНТ</small><strong>{portal.profile.firstName || portal.partner.email}</strong><PartnerEarningStrip token={token} activeCount={activeMissions.length} bestReward={bestReward?.rewardLabel} /></div>
           </div>
+          <a className="partner-company-switch-mobile" href="/agent">{portal.company.name} · сменить</a>
           <QuickResultLauncher token={token} missions={portal.missions} acceptedMissionIds={portal.acceptances.filter((item) => item.status === "ACTIVE").map((item) => item.missionId)} />
         </header>
         {children}

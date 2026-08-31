@@ -7,8 +7,8 @@ export const metadata: Metadata = { title: "Вход в Yaler", robots: { index:
 export const dynamic = "force-dynamic";
 
 export default async function AuthPage({ searchParams }: { searchParams: Promise<{ returnTo?: string }> }) {
-  if (await getAccountUser()) redirect("/dashboard");
   const { returnTo = "/dashboard" } = await searchParams;
   const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/dashboard";
+  if (await getAccountUser()) redirect(safeReturnTo);
   return <AuthFlow returnTo={safeReturnTo} />;
 }

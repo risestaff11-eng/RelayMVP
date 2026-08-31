@@ -32,7 +32,8 @@ export async function POST(request: Request) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(periodStart) || !/^\d{4}-\d{2}-\d{2}$/.test(periodEnd) || periodStart > periodEnd) throw new Error("Проверьте период отчёта");
     const answers = parseAnswers(form.get("answers")); const submit = form.get("submit") === "yes"; const fields = existing ? JSON.parse(existing.templateSnapshotJson) : template.fields;
     if (submit) for (const field of fields) if (field.enabled !== false && field.required && field.type !== "FILE" && !String(answers[field.id] ?? "").trim()) throw new Error(`Заполните обязательное поле «${field.label}»`);
-    const metrics = await calculatePartnerReportMetrics(portal.partners.map((item) => item.id), periodStart, periodEnd);
+    const metricPartnerIds = programId ? portal.partners.filter((item) => item.programId === programId).map((item) => item.id) : portal.partners.map((item) => item.id);
+    const metrics = await calculatePartnerReportMetrics(metricPartnerIds, periodStart, periodEnd);
     const transcript = cleanString(form.get("transcript"), 12000); const audioDurationSeconds = Math.min(180, Math.max(0, Number(form.get("audioDurationSeconds")) || 0));
     const files = form.getAll("files").filter((item): item is File => item instanceof File && item.size > 0); const audio = form.get("audio"); const audioFile = audio instanceof File && audio.size > 0 ? audio : null;
     const currentFiles = existing ? await getDb().select().from(reportFiles).where(eq(reportFiles.reportId, reportId)) : [];
