@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/media-has-caption */
 import { useMemo, useRef, useState } from "react";
 import type { ReportField } from "../../../../lib/reporting";
+import { countRu } from "@/lib/format-display";
 type FileRow = {
   id: string;
   fileName: string;
@@ -341,7 +342,7 @@ export function ReportCenter({
               ).slice(0, 180)}
             </p>
             <footer>
-              <span>{report.files.length} файлов</span>
+              <span>{countRu(report.files.length, "файл", "файла", "файлов")}</span>
               <span>
                 {Object.values(report.metrics).filter(Boolean).length}{" "}
                 показателей

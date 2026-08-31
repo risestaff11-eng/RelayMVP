@@ -25,6 +25,7 @@ export async function getAgentWorkspace(email: string, phone: string) {
     programId: programs.id,
     programName: programs.name,
     programStatus: programs.status,
+    currency: programs.currency,
     missionCount: sql<number>`coalesce((select count(*) from missions m where m.program_id = ${programs.id} and m.status = 'ACTIVE'), 0)`,
     submissionCount: sql<number>`coalesce((select count(*) from submissions s where s.partner_id = ${partners.id}), 0)`,
     pendingRewards: sql<number>`coalesce((select sum(r.amount) from rewards r where r.partner_id = ${partners.id} and r.status in ('PENDING', 'APPROVED')), 0)`,
@@ -33,10 +34,10 @@ export async function getAgentWorkspace(email: string, phone: string) {
     .innerJoin(programs, eq(partners.programId, programs.id))
     .where(and(inArray(partners.id, ids), eq(programs.status, "ACTIVE"), or(isNull(programs.expiresAt), gt(programs.expiresAt, new Date().toISOString()))))
     .orderBy(asc(companies.name), asc(programs.name));
-  const companiesMap = new Map<string, { id: string; name: string; agentName: string; programs: Array<{ id: string; name: string; status: string; missionCount: number; submissionCount: number; pendingRewards: number }> }>();
+  const companiesMap = new Map<string, { id: string; name: string; agentName: string; programs: Array<{ id: string; name: string; status: string; currency: string; missionCount: number; submissionCount: number; pendingRewards: number }> }>();
   for (const row of rows) {
     const company = companiesMap.get(row.companyId) ?? { id: row.companyId, name: row.companyName, agentName: row.partnerName, programs: [] };
-    company.programs.push({ id: row.programId, name: row.programName, status: row.programStatus, missionCount: Number(row.missionCount), submissionCount: Number(row.submissionCount), pendingRewards: Number(row.pendingRewards) });
+    company.programs.push({ id: row.programId, name: row.programName, status: row.programStatus, currency: row.currency, missionCount: Number(row.missionCount), submissionCount: Number(row.submissionCount), pendingRewards: Number(row.pendingRewards) });
     companiesMap.set(row.companyId, company);
   }
   return { email: normalizeAgentEmail(email), phone: normalizeAgentPhone(phone), name: matched[0].name, companies: [...companiesMap.values()] };

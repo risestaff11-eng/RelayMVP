@@ -2,16 +2,21 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("company users can reset a forgotten password with registration phone", async () => {
+test("company users can reset a forgotten password with a one-time email code", async () => {
   const route = await readFile(new URL("../app/api/auth/reset-password/route.ts", import.meta.url), "utf8");
   const flow = await readFile(new URL("../app/auth/auth-flow.tsx", import.meta.url), "utf8");
-  assert.match(route, /normalizePhone/);
+  const schema = await readFile(new URL("../db/schema.ts", import.meta.url), "utf8");
+  assert.match(route, /sendPasswordResetCode/);
+  assert.match(route, /hashVerificationCode/);
+  assert.match(route, /expiresAt/);
+  assert.match(route, /attempts >= 5/);
   assert.match(route, /hashPassword\(password\)/);
   assert.match(route, /delete\(authSessions\)/);
-  assert.match(route, /recent\.length >= 5/);
+  assert.match(schema, /password_reset_codes/);
   assert.match(flow, /Забыли пароль\?/);
   assert.match(flow, /\/api\/auth\/reset-password/);
-  assert.match(flow, /Не помню телефон — написать в WhatsApp/);
+  assert.match(flow, /Код из письма/);
+  assert.match(flow, /Придумайте новый пароль/);
 });
 
 test("registration offers email-code activation with a manual admin fallback", async () => {

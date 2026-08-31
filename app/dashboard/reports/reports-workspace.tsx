@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/media-has-caption */
 import { useMemo, useState } from "react";
 import type { ReportField } from "../../../lib/reporting";
+import { countRu } from "@/lib/format-display";
 type Report = {
   id: string;
   partnerId: string;
@@ -347,7 +348,7 @@ export function ReportsWorkspace({
                 ).slice(0, 180)}
               </p>
               <footer>
-                <b>{report.files.length} файлов</b>
+                <b>{countRu(report.files.length, "файл", "файла", "файлов")}</b>
                 <b>
                   {Object.values(report.metrics).filter(Boolean).length}{" "}
                   показателей

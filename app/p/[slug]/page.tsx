@@ -8,6 +8,7 @@ import { getPublicProgramBySlug } from "../../../db/programs";
 import { companies } from "../../../db/schema";
 import { PartnerEntry } from "./partner-entry";
 import { PublicMissionAction } from "./public-mission-action";
+import { countRu } from "@/lib/format-display";
 
 export const dynamic = "force-dynamic";
 const typeNames: Record<string, string> = { LEAD: "Лиды", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
@@ -103,7 +104,7 @@ export default async function PublicProgramPage({ params, searchParams }: { para
             <div className="partner-program-facts">
               <div><small>КОМПАНИЯ</small><strong>{company.name}</strong></div>
               <div><small>ЗАДАНИЙ</small><strong>{program.missions.length}</strong></div>
-              <div><small>УЧАСТВУЮТ</small><strong>{program.agentCount} агентов</strong></div>
+              <div><small>УЧАСТВУЮТ</small><strong>{countRu(program.agentCount, "агент", "агента", "агентов")}</strong></div>
               <div><small>ВАЛЮТА</small><strong>{program.currency === "KZT" ? "₸" : program.currency}</strong></div>
               <div><small>СРОК</small><strong>{program.expiresAt ? new Date(program.expiresAt).toLocaleDateString("ru-RU") : "Без ограничения"}</strong></div>
             </div>

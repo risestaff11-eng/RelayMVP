@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPartnerPortal } from "../../../db/partner";
 import { SafeLink as Link } from "@/app/safe-link";
 import { money, shortDate, statusNames, typeNames } from "../_lib";
+import { countRu } from "@/lib/format-display";
 
 export const metadata: Metadata = { title: "Кабинет агента" };
 
@@ -37,6 +38,7 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
     { title: "Передайте результат", text: acceptedMission ? acceptedMission.title : "Добавьте контакт и контекст, чтобы компания могла быстро всё проверить.", href: acceptedMission ? `/partner/${token}/submit/${acceptedMission.id}` : `/partner/${token}/missions`, action: "Передать результат" },
     { title: "Следите за статусом", text: "Решение компании, комментарии и начисление сохраняются в одной истории.", href: `/partner/${token}/submissions`, action: "Открыть результаты" },
   ];
+  const onboardingComplete = basicProfileReady && portal.submissions.length > 0;
 
   return (
     <div className="partner-portal-content partner-home-page">
@@ -45,10 +47,10 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
         <Link className="button button-primary" href={`/partner/${token}/opportunities`}>Передать лид или результат <span>↗</span></Link>
       </div>
 
-      <section className="mobile-agent-roadmap" aria-label="Путь к первой выплате">
+      {onboardingComplete ? <section className="mobile-agent-progress-compact" aria-label="Онбординг завершён"><span>✓</span><div><small>БАЗОВАЯ НАСТРОЙКА ГОТОВА</small><strong>Передавайте новые результаты и следите за выплатами</strong></div><Link href={`/partner/${token}/submissions`}>Мои заявки →</Link></section> : <section className="mobile-agent-roadmap" aria-label="Путь к первой выплате">
         <header><small>ВАШ МАРШРУТ</small><h2>Четыре шага к первой выплате</h2><p>Все шаги доступны сразу. Начните с подсвеченного, либо откройте любой другой.</p></header>
         <div>{journey.map((item, index) => { const step = index + 1; const state = step < guide.step ? "done" : step === guide.step ? "current" : "ahead"; return <article className={state} key={item.title}><div className="mobile-roadmap-top"><span>{step < guide.step ? "✓" : `0${step}`}</span><small>{state === "done" ? "ВЫПОЛНЕНО" : state === "current" ? "СЛЕДУЮЩИЙ ШАГ" : "МОЖНО ОТКРЫТЬ"}</small></div><h3>{item.title}</h3><p>{item.text}</p>{step === 3 && acceptedMission && <strong className="mobile-roadmap-reward">Ваш заработок: {acceptedMission.rewardLabel}</strong>}<Link href={item.href}>{state === "current" ? item.action : state === "done" ? "Посмотреть" : "Перейти к шагу"}<span>→</span></Link></article>; })}</div>
-      </section>
+      </section>}
 
       <section className="mobile-agent-balance">
         <div><small>ДОСТУПНО К ВЫПЛАТЕ</small><strong>{money(available, portal.program.currency)}</strong><span>Ожидается: {money(expected, portal.program.currency)}</span></div>
@@ -59,7 +61,7 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
         <article className="wallet-card available"><small>ДОСТУПНО К ВЫПЛАТЕ</small><strong>{money(available, portal.program.currency)}</strong><span>Подтверждено компанией</span></article>
         <article className="wallet-card"><small>ОЖИДАЕТСЯ</small><strong>{money(expected, portal.program.currency)}</strong><span>Результаты на пути к начислению</span></article>
         <article className="wallet-card"><small>ЗАРАБОТАНО ЗА ВСЁ ВРЕМЯ</small><strong>{money(earned, portal.program.currency)}</strong><span>Отмечено выплаченным</span></article>
-        <article className="wallet-card earning-potential"><small>ЛУЧШАЯ ВОЗМОЖНОСТЬ</small><strong>{bestReward?.rewardLabel || "Новые задания скоро"}</strong><span>{activeMissionCount} доступно сейчас</span></article>
+        <article className="wallet-card earning-potential"><small>ЛУЧШАЯ ВОЗМОЖНОСТЬ</small><strong>{bestReward?.rewardLabel || "Новые задания скоро"}</strong><span>{countRu(activeMissionCount, "задание доступно", "задания доступны", "заданий доступно")} сейчас</span></article>
       </section>
 
       <section className="partner-home-grid">
@@ -76,7 +78,7 @@ export default async function PartnerHome({ params }: { params: Promise<{ token:
           </section>
         </div>
         <aside className="partner-home-side">
-          <section className="earning-opportunity-card"><span>ПОТЕНЦИАЛ ЗАРАБОТКА</span><h2>{bestReward ? `До ${bestReward.rewardLabel} за одно задание` : "Ожидаем новые задания"}</h2><p>{activeMissionCount ? `Сейчас доступно ${activeMissionCount} заданий. В работе у вас: ${activeWorkCount}.` : "Компания пока не опубликовала активные задания."}</p><dl><div><dt>К выплате</dt><dd>{money(available, portal.program.currency)}</dd></div><div><dt>Получено</dt><dd>{money(earned, portal.program.currency)}</dd></div></dl><Link href={`/partner/${token}/opportunities`}>Посмотреть все возможности →</Link></section>
+          <section className="earning-opportunity-card"><span>ПОТЕНЦИАЛ ЗАРАБОТКА</span><h2>{bestReward ? `До ${bestReward.rewardLabel} за одно задание` : "Ожидаем новые задания"}</h2><p>{activeMissionCount ? `Сейчас доступно ${countRu(activeMissionCount, "задание", "задания", "заданий")}. В работе: ${activeWorkCount}.` : "Компания пока не опубликовала активные задания."}</p><dl><div><dt>К выплате</dt><dd>{money(available, portal.program.currency)}</dd></div><div><dt>Получено</dt><dd>{money(earned, portal.program.currency)}</dd></div></dl><Link href={`/partner/${token}/opportunities`}>Открыть доступные задания →</Link></section>
           <section className="next-reward-card"><span>БЛИЖАЙШАЯ НАГРАДА</span>{portal.submissions[0] ? <><strong>{portal.submissions[0].mission?.rewardLabel || "После принятия"}</strong><p>{portal.submissions[0].contactCompany} · {statusNames[portal.submissions[0].status]}</p></> : <><strong>Первая выплата</strong><p>Выберите задание и передайте подходящий контакт.</p></>}<Link href={`/partner/${token}/payouts`}>Открыть выплаты →</Link></section>
           <section className="new-offers-card"><div><span>НОВЫЕ ПРЕДЛОЖЕНИЯ</span><b>{portal.missions.length}</b></div>{portal.missions.slice(0, 3).map((mission) => <Link href={`/p/${mission.programSlug}?access=${token}#missions`} key={mission.id}><i className={`type-dot-${mission.type.toLowerCase()}`} /><span className="offer-title"><strong>{mission.title}</strong><small>{mission.programName} · дедлайн: {mission.programExpiresAt ? new Date(mission.programExpiresAt).toLocaleDateString("ru-RU") : "без ограничения"}</small></span><span>→</span></Link>)}</section>
         </aside>

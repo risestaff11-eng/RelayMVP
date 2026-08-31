@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { countRu } from "@/lib/format-display";
 
 type RewardItem = { amount: number; status: string; partnerConfirmedAt: string | null; createdAt: string; type: string };
 
@@ -15,7 +16,7 @@ export function ProfileEarningsSummary({ rewards, currency, missionCount, bestRe
   const received = filtered.filter((item) => item.status === "PAID" && item.partnerConfirmedAt).reduce((sum, item) => sum + item.amount, 0);
   const due = filtered.filter((item) => item.status === "APPROVED").reduce((sum, item) => sum + item.amount, 0);
   const expected = filtered.filter((item) => item.status === "PENDING").reduce((sum, item) => sum + item.amount, 0);
-  return <section className="profile-earnings-summary"><div><span>СВОДКА ПО ЗАРАБОТКУ</span><h2>Ваши деньги и возможности</h2><p>Фильтры меняют только финансовую историю. Доступные задания показаны отдельно.</p></div><div className="profile-earning-filters"><label><span>Период</span><select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="ALL">За всё время</option><option value="30">Последние 30 дней</option><option value="90">Последние 90 дней</option></select></label><label><span>Тип задания</span><select value={type} onChange={(event) => setType(event.target.value)}><option value="ALL">Все типы</option><option value="LEAD">Лиды</option><option value="DEAL">Сделки</option><option value="IMAGE">Имидж</option><option value="ENGAGEMENT">Вовлечение</option></select></label></div><div className="profile-earning-metrics"><article><small>ПОЛУЧЕНО</small><strong>{format(received)}</strong></article><article><small>К ВЫПЛАТЕ</small><strong>{format(due)}</strong></article><article><small>ОЖИДАЕТСЯ</small><strong>{format(expected)}</strong></article><article className="accent"><small>ДОСТУПНО СЕЙЧАС</small><strong>{missionCount} заданий</strong><span>{bestReward ? `до ${bestReward}` : "новые задания скоро"}</span></article></div></section>;
+  return <section className="profile-earnings-summary"><div><span>СВОДКА ПО ЗАРАБОТКУ</span><h2>Ваши деньги и возможности</h2><p>Фильтры меняют только финансовую историю. Доступные задания показаны отдельно.</p></div><div className="profile-earning-filters"><label><span>Период</span><select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="ALL">За всё время</option><option value="30">Последние 30 дней</option><option value="90">Последние 90 дней</option></select></label><label><span>Тип задания</span><select value={type} onChange={(event) => setType(event.target.value)}><option value="ALL">Все типы</option><option value="LEAD">Лиды</option><option value="DEAL">Сделки</option><option value="IMAGE">Имидж</option><option value="ENGAGEMENT">Вовлечение</option></select></label></div><div className="profile-earning-metrics"><article><small>ПОЛУЧЕНО</small><strong>{format(received)}</strong></article><article><small>К ВЫПЛАТЕ</small><strong>{format(due)}</strong></article><article><small>ОЖИДАЕТСЯ</small><strong>{format(expected)}</strong></article><article className="accent"><small>ДОСТУПНО СЕЙЧАС</small><strong>{countRu(missionCount, "задание", "задания", "заданий")}</strong><span>{bestReward ? `до ${bestReward}` : "новые задания скоро"}</span></article></div></section>;
 }
 
 export function PartnerExitButton() {

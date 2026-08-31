@@ -6,7 +6,7 @@ import { getCompanyForUser } from "../../db/company";
 import { getConfirmedCompanyProfile } from "../../db/profile";
 import { getCompanyOperations, getProgramsForCompany, getSubmissionsForCompany } from "../../db/programs";
 import { ProgramQuickActions } from "./_components/program-quick-actions";
-import { formatActivityDate, formatInteger } from "@/lib/format-display";
+import { countRu, formatActivityDate, formatMoneyGroups } from "@/lib/format-display";
 import { FirstRunGuide } from "./_components/first-run-guide";
 
 export const metadata: Metadata = { title: "Кабинет компании" };
@@ -22,7 +22,7 @@ export default async function DashboardPage() {
   const showFirstRun = !hasPublished || stats.partners === 0 || stats.submissions === 0 || stats.awaitingReview > 0;
   const progress = hasPublished ? 100 : hasProgram ? 75 : profile ? 50 : 25;
   const nextHref = stats.awaitingReview > 0 ? "/dashboard/submissions" : !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
-  const nextLabel = stats.awaitingReview > 0 ? `${stats.awaitingReview} новые заявки — посмотреть` : !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
+  const nextLabel = stats.awaitingReview > 0 ? `${countRu(stats.awaitingReview, "новая заявка", "новые заявки", "новых заявок")} — посмотреть` : !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
   const latestProgram = programs[0];
   const latestResult = submissions[0];
   const activities = latestResult ? [
@@ -42,18 +42,18 @@ export default async function DashboardPage() {
   return (
     <div className="dashboard-content">
       <div className="dashboard-heading">
-        <div><h1>{stats.awaitingReview > 0 ? `${stats.awaitingReview} ${stats.awaitingReview === 1 ? "заявка ждёт" : "заявки ждут"} вашего решения` : `Рабочий стол ${company.name}`}</h1><p>{stats.awaitingReview > 0 ? "Откройте заявку и решите: взять клиента в работу или объяснить отказ." : "Здесь видны заявки, агенты, выплаты и следующий полезный шаг."}</p></div>
+        <div><h1>{stats.awaitingReview > 0 ? `${countRu(stats.awaitingReview, "заявка", "заявки", "заявок")} ${stats.awaitingReview === 1 ? "ждёт" : "ждут"} вашего решения` : `Рабочий стол ${company.name}`}</h1><p>{stats.awaitingReview > 0 ? "Откройте заявку и решите: взять клиента в работу или объяснить отказ." : "Здесь видны заявки, агенты, выплаты и следующий полезный шаг."}</p></div>
         <Link className="button button-primary" href={nextHref}>{nextLabel} <span>→</span></Link>
       </div>
 
       {showFirstRun && <FirstRunGuide hasProfile={Boolean(profile)} hasProgram={hasProgram} hasPublished={hasPublished} partnerCount={stats.partners} submissionCount={stats.submissions} awaitingReview={stats.awaitingReview} programId={programs[0]?.id} />}
 
       <section className="metrics" aria-label="Основные показатели">
-        <Link className="metric metric-link" href="/dashboard/programs"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>Из {stats.programs} созданных · открыть →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/partners"><div className="metric-top"><span>КТО ВАС РЕКОМЕНДУЕТ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{stats.contributedPartners} уже привели заявку · открыть →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/submissions"><div className="metric-top"><span>ПОЛУЧЕНО ЗАЯВОК</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{stats.awaitingReview} ждут решения · перейти →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">₸</span></div><strong>{formatInteger(stats.approvedRewards)} ₸</strong><small>Подтверждённые вознаграждения · открыть →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>ВЫПЛАЧЕНО</span><span className="metric-icon">✓</span></div><strong>{formatInteger(stats.paidRewards)} ₸</strong><small>Подтверждено агентами · открыть →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/programs"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>{countRu(stats.programs, "созданная программа", "созданные программы", "созданных программ")} · открыть →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/partners"><div className="metric-top"><span>КТО ВАС РЕКОМЕНДУЕТ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{countRu(stats.contributedPartners, "уже привёл заявку", "уже привели заявку", "уже привели заявку")} · открыть →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/submissions"><div className="metric-top"><span>ПОЛУЧЕНО ЗАЯВОК</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{countRu(stats.awaitingReview, "ждёт решения", "ждут решения", "ждут решения")} · перейти →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">¤</span></div><strong>{formatMoneyGroups(stats.approvedRewardsByCurrency)}</strong><small>Начислено компанией · открыть →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>АГЕНТЫ ПОДТВЕРДИЛИ</span><span className="metric-icon">✓</span></div><strong>{formatMoneyGroups(stats.paidRewardsByCurrency)}</strong><small>Деньги фактически получены · открыть →</small></Link>
       </section>
 
       <section className="dashboard-grid">
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
 
           <article className="panel" style={{ marginTop: showFirstRun ? 0 : 14 }}>
             <div className="panel-header"><div><h2>Агентские программы</h2><p>Запускайте, приостанавливайте и архивируйте программы прямо здесь.</p></div><Link href="/dashboard/programs/new">＋ Новая программа</Link></div>
-            {programs.length ? <div className="dashboard-campaign-mini-grid">{programs.slice(0, 3).map((program) => <article className={`dashboard-program-mini status-card-${program.status.toLowerCase()}`} key={program.id}><div><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : program.status === "PAUSED" ? "На паузе" : program.status === "ARCHIVED" ? "В архиве" : "Черновик"}</span><Link href={`/dashboard/programs/${program.id}`} aria-label={`Открыть ${program.name}`}>↗</Link></div><Link className="dashboard-program-mini-main" href={`/dashboard/programs/${program.id}`}><h3>{program.name}</h3><p>{program.missions.length} заданий · {program.agentCount} агентов · {program.resultCount} заявок</p></Link><ProgramQuickActions id={program.id} initialStatus={program.status} /></article>)}</div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Создайте её сразу — профиль компании можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать программу</Link></div></div>}
+            {programs.length ? <div className="dashboard-campaign-mini-grid">{programs.slice(0, 3).map((program) => <article className={`dashboard-program-mini status-card-${program.status.toLowerCase()}`} key={program.id}><div><span className={`program-status status-${program.status.toLowerCase()}`}>● {program.status === "ACTIVE" ? "Опубликована" : program.status === "PAUSED" ? "На паузе" : program.status === "ARCHIVED" ? "В архиве" : "Черновик"}</span><Link href={`/dashboard/programs/${program.id}`} aria-label={`Открыть ${program.name}`}>↗</Link></div><Link className="dashboard-program-mini-main" href={`/dashboard/programs/${program.id}`}><h3>{program.name}</h3><p>{countRu(program.missions.length, "задание", "задания", "заданий")} · {countRu(program.agentCount, "агент", "агента", "агентов")} · {countRu(program.resultCount, "заявка", "заявки", "заявок")}</p></Link><ProgramQuickActions id={program.id} initialStatus={program.status} /></article>)}</div> : <div className="empty-program"><div><div className="empty-program-icon">＋</div><h3>Здесь появится первая программа</h3><p>Создайте её сразу — профиль компании можно заполнить или подтвердить позже.</p><Link className="empty-link" href="/dashboard/programs/new">Создать программу</Link></div></div>}
           </article>
         </div>
 

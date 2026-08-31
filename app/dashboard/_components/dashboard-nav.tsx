@@ -6,18 +6,20 @@ import { SafeLink as Link } from "@/app/safe-link";
 import { DashboardIcon } from "./dashboard-icon";
 
 const items = [
-  { href: "/dashboard", label: "Рабочий стол", hint: "Сводка и следующие действия", icon: "home", exact: true },
-  { href: "/dashboard/programs", label: "Программы", hint: "Задания, вознаграждения и ссылки", icon: "programs" },
-  { href: "/dashboard/submissions", label: "Заявки", hint: "Решения по заявкам", icon: "results" },
-  { href: "/dashboard/reports", label: "Отчёты агентов", hint: "История, KPI и сигналы", icon: "reports" },
-  { href: "/dashboard/partners", label: "Кто вас рекомендует", hint: "Люди, ссылки и вклад", icon: "agents" },
-  { href: "/dashboard/rewards", label: "Выплаты", hint: "Начисления и реестр", icon: "rewards" },
-  { href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "analytics" },
-  { href: "/dashboard/assistant", label: "Yaler · программы", hint: "Помощник по запуску и улучшениям", icon: "assistant" },
-  { href: "/dashboard/methodologist", label: "Материалы для агентов", hint: "Скрипты, ответы и обучение", icon: "methodologist" },
-  { href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для Yaler и заданий", icon: "company" },
-  { href: "/dashboard/settings", label: "Настройки", hint: "Контакты, тариф и AI-кредиты", icon: "settings" },
+  { group: "РАБОТА", href: "/dashboard", label: "Рабочий стол", hint: "Сводка и следующие действия", icon: "home", exact: true },
+  { group: "РАБОТА", href: "/dashboard/submissions", label: "Заявки", hint: "Проверка, продажи и SLA", icon: "results" },
+  { group: "РАБОТА", href: "/dashboard/rewards", label: "Выплаты", hint: "Начисления и подтверждения", icon: "rewards" },
+  { group: "РАБОТА", href: "/dashboard/reports", label: "Отчёты агентов", hint: "История, KPI и сигналы", icon: "reports" },
+  { group: "СЕТЬ", href: "/dashboard/programs", label: "Программы", hint: "Задания, условия и ссылки", icon: "programs" },
+  { group: "СЕТЬ", href: "/dashboard/partners", label: "Кто вас рекомендует", hint: "Люди, ссылки и вклад", icon: "agents" },
+  { group: "СЕТЬ", href: "/dashboard/methodologist", label: "Материалы для агентов", hint: "Скрипты, ответы и обучение", icon: "methodologist" },
+  { group: "КОНТРОЛЬ", href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "analytics" },
+  { group: "КОНТРОЛЬ", href: "/dashboard/notifications", label: "Уведомления", hint: "Срочные действия и история", icon: "reports" },
+  { group: "НАСТРОЙКИ", href: "/dashboard/assistant", label: "Yaler AI", hint: "Помощник по программам", icon: "assistant" },
+  { group: "НАСТРОЙКИ", href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для заданий", icon: "company" },
+  { group: "НАСТРОЙКИ", href: "/dashboard/settings", label: "Настройки", hint: "Доступ, тариф и экспорт", icon: "settings" },
 ] as const;
+const groups = ["РАБОТА", "СЕТЬ", "КОНТРОЛЬ", "НАСТРОЙКИ"] as const;
 
 export function DashboardNav() {
   const pathname = usePathname();
@@ -34,10 +36,7 @@ export function DashboardNav() {
 
   return <>
     <nav className="sidebar-nav" aria-label="Навигация кабинета компании">
-      <small className="sidebar-nav-label">УПРАВЛЕНИЕ</small>
-      {items.slice(0, 7).map((item) => <Link key={item.href} data-tour={("exact" in item && item.exact) ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i><DashboardIcon name={item.icon} /></i><span>{item.label}<small>{item.hint}</small></span></Link>)}
-      <small className="sidebar-nav-label">НАСТРОЙКА</small>
-      {items.slice(7).map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i><DashboardIcon name={item.icon} /></i><span>{item.label}<small>{item.hint}</small></span></Link>)}
+      {groups.map((group) => <div className="sidebar-nav-group" key={group}><small className="sidebar-nav-label">{group}</small>{items.filter((item) => item.group === group).map((item) => <Link key={item.href} data-tour={("exact" in item && item.exact) ? "overview" : item.href.split("/").pop()} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined}><i><DashboardIcon name={item.icon} /></i><span>{item.label}<small>{item.hint}</small></span></Link>)}</div>)}
     </nav>
 
     <button className="mobile-menu-trigger company-menu-trigger" type="button" aria-label="Открыть меню" aria-expanded={open} aria-controls="company-mobile-drawer" onClick={() => setOpen(true)}><i /><i /><i /></button>
@@ -45,7 +44,7 @@ export function DashboardNav() {
     <aside className={`mobile-side-drawer company-side-drawer ${open ? "open" : ""}`} id="company-mobile-drawer" aria-hidden={!open} inert={!open} role="dialog" aria-modal="true" aria-label="Меню кабинета компании">
       <header><div className="mobile-drawer-brand"><span>R</span><div><small>YALER</small><strong>КАБИНЕТ КОМПАНИИ</strong></div></div><button type="button" aria-label="Закрыть меню" onClick={() => setOpen(false)}>×</button></header>
       <nav aria-label="Мобильная навигация компании">
-        {items.map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined} onClick={() => setOpen(false)}><i><DashboardIcon name={item.icon} /></i><span><strong>{item.label}</strong><small>{item.hint}</small></span><b aria-hidden="true">→</b></Link>)}
+        {groups.map((group) => <div className="mobile-nav-group" key={group}><small>{group}</small>{items.filter((item) => item.group === group).map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined} onClick={() => setOpen(false)}><i><DashboardIcon name={item.icon} /></i><span><strong>{item.label}</strong><small>{item.hint}</small></span><b aria-hidden="true">→</b></Link>)}</div>)}
       </nav>
       <footer><span>YALER · АГЕНТСКИЕ ПРОДАЖИ</span><p>Все основные разделы доступны из этого меню.</p></footer>
     </aside>

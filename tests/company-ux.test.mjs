@@ -15,7 +15,7 @@ test("company dashboard prioritizes results that require review", async () => {
   const startGuide = await readFile(new URL("../app/dashboard/_components/first-run-guide.tsx", import.meta.url), "utf8");
   const tour = await readFile(new URL("../app/dashboard/_components/dashboard-tour.tsx", import.meta.url), "utf8");
   assert.match(dashboard, /stats\.awaitingReview > 0 \? "\/dashboard\/submissions"/);
-  assert.match(dashboard, /новые заявки — посмотреть/);
+  assert.match(dashboard, /countRu\(stats\.awaitingReview, "новая заявка", "новые заявки", "новых заявок"\)/);
   assert.match(dashboard, /href="\/dashboard\/rewards"/);
   assert.match(dashboard, /<FirstRunGuide/);
   assert.match(startGuide, /Сделайте один полезный шаг/);

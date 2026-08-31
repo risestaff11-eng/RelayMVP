@@ -196,6 +196,7 @@ export default async function Home() {
             ссылку своим людям. Yaler запомнит, кто кого привёл, что стало с заявкой
             и сколько вы должны выплатить.
           </p>
+          <p className="lp-hero-definition"><strong>Амбассадор</strong> — ваш клиент, партнёр или знакомый, который рекомендует вас подходящему покупателю.</p>
           <div
             className="lp-mobile-audience"
             aria-label="Для кого и какую задачу решает Yaler"
@@ -440,7 +441,7 @@ export default async function Home() {
                 <i>А</i>
                 <i>Б</i>
                 <i>К</i>
-                <em>+12 агентов</em>
+                <em>+12 амбассадоров</em>
               </div>
             </div>
             <small>ОДНА ССЫЛКА В WHATSAPP</small>

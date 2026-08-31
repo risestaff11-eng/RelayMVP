@@ -56,7 +56,7 @@ export async function getCompanyReports(companyId: string) {
       const sameIdentity = partnerUserId && candidate.userId ? candidate.userId === partnerUserId : candidate.email.toLowerCase() === identity.partnerEmail.toLowerCase();
       return sameIdentity && (!report.programId || candidate.programId === report.programId);
     }).map((candidate) => candidate.id);
-    const currentMetrics = await calculatePartnerReportMetrics(scopedPartnerIds.length ? scopedPartnerIds : [report.partnerId], report.periodStart, report.periodEnd);
+    const currentMetrics = await calculatePartnerReportMetrics(scopedPartnerIds.length ? scopedPartnerIds : [report.partnerId], report.periodStart, report.periodEnd) as Record<string, number>;
     return { ...report, ...identity, templateSnapshot: parseReportFields(report.templateSnapshotJson), answers: json<Record<string, unknown>>(report.answersJson, {}), metrics: { ...json<Record<string, number>>(report.metricsJson, {}), ...currentMetrics }, aiSummary: json<Record<string, unknown>>(report.aiSummaryJson, {}), files: files.filter((file) => file.reportId === report.id) };
   }));
 }

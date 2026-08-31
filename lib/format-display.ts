@@ -27,6 +27,27 @@ export function formatMoney(value: number, currency = "KZT") {
   return `${formatInteger(value)} ${symbol}`;
 }
 
+export function pluralizeRu(value: number, one: string, few: string, many: string) {
+  const absolute = Math.abs(Math.trunc(value));
+  const mod100 = absolute % 100;
+  const mod10 = absolute % 10;
+  if (mod100 >= 11 && mod100 <= 19) return many;
+  if (mod10 === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4) return few;
+  return many;
+}
+
+export function countRu(value: number, one: string, few: string, many: string) {
+  return `${formatInteger(value)} ${pluralizeRu(value, one, few, many)}`;
+}
+
+export function formatMoneyGroups(items: Array<{ amount: number; currency: string }>) {
+  const totals = new Map<string, number>();
+  for (const item of items) totals.set(item.currency || "KZT", (totals.get(item.currency || "KZT") ?? 0) + item.amount);
+  if (!totals.size) return formatMoney(0, "KZT");
+  return [...totals].map(([currency, amount]) => formatMoney(amount, currency)).join(" · ");
+}
+
 export function formatPhone(value: string) {
   const digits = value.replace(/\D/g, "");
   const normalized = digits.length === 11 && digits.startsWith("8") ? `7${digits.slice(1)}` : digits;

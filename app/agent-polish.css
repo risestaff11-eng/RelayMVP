@@ -541,6 +541,31 @@
 .partner-audio-player { width: 100%; display: grid; gap: 8px; }
 .partner-audio-player audio { width: 100%; }
 
+.agent-submit-compact-bar { position: sticky; z-index: 16; top: 72px; margin: -8px 0 12px; padding: 12px 14px; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 12px; border: 1px solid #d3d5cb; border-radius: 15px; background: rgba(255,255,255,.96); box-shadow: 0 10px 30px rgba(28,30,24,.08); backdrop-filter: blur(14px); }
+.agent-submit-compact-bar > a { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 11px; color: #171914; background: #eff0e9; font-size: 18px; font-weight: 900; text-decoration: none; }
+.agent-submit-compact-bar small,.agent-submit-compact-bar strong,.agent-submit-compact-bar b { display: block; }
+.agent-submit-compact-bar > div { min-width: 0; }
+.agent-submit-compact-bar > div small,.agent-submit-compact-bar > span small { color: #777b70; font-size: 8px; font-weight: 900; letter-spacing: .08em; }
+.agent-submit-compact-bar > div strong { margin-top: 3px; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.agent-submit-compact-bar > span { padding: 8px 11px; border-radius: 10px; background: #e9ffc7; }
+.agent-submit-compact-bar > span b { margin-top: 3px; font-size: 13px; }
+.agent-submit-details { margin: 14px 0 0; border: 1px solid #d5d7cd; border-radius: 15px; background: #fff; }
+.agent-submit-details summary { min-height: 52px; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; font-size: 12px; font-weight: 900; }
+.agent-submit-details summary::-webkit-details-marker { display: none; }
+.agent-submit-details summary b { color: #617b25; font-size: 10px; }
+.agent-submit-details[open] summary b { font-size: 0; }.agent-submit-details[open] summary b::after { content: "Свернуть ↑"; font-size: 10px; }
+.agent-submit-details > div { padding: 0 15px 15px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.agent-submit-details section { padding: 13px; border-radius: 12px; background: #f4f5ef; }
+.agent-submit-details section small { color: #75796e; font-size: 8px; font-weight: 950; }
+.agent-submit-details section p { margin: 6px 0 0; font-size: 12px; line-height: 1.5; white-space: pre-wrap; }
+.mobile-agent-progress-compact { margin: 14px 0; padding: 14px; display: grid; grid-template-columns: 38px minmax(0,1fr) auto; align-items: center; gap: 11px; border: 1px solid #d4d7ca; border-radius: 15px; background: #fff; }
+.mobile-agent-progress-compact > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: #c1ff36; font-weight: 950; }
+.mobile-agent-progress-compact small,.mobile-agent-progress-compact strong { display: block; }.mobile-agent-progress-compact small { color: #6d7167; font-size: 8px; font-weight: 900; }.mobile-agent-progress-compact strong { margin-top: 3px; font-size: 12px; }
+.mobile-agent-progress-compact > a { font-size: 11px; font-weight: 900; }
+.partner-state-cards { margin: 14px 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.partner-state-cards > div { padding: 12px; border: 1px solid #d9dbd1; border-radius: 12px; background: #f8f8f4; }
+.partner-state-cards small,.partner-state-cards strong { display: block; }.partner-state-cards small { color: #74786d; font-size: 8px; font-weight: 950; }.partner-state-cards strong { margin-top: 5px; font-size: 12px; }
+
 @media (max-width:900px) {
   .quick-result-launcher { margin-left: 8px; padding: 0 11px; font-size: 11px; }
   .agent-submit-context { grid-template-columns: 1fr; }
@@ -552,6 +577,15 @@
   .partner-portal-topbar .quick-result-launcher { min-width: 44px; width: 44px; padding: 0; justify-content: center; overflow: hidden; color: transparent; gap: 0; }
   .partner-portal-topbar .quick-result-launcher span { color: #171914; font-size: 22px; }
   .agent-submit-workspace { padding: 22px 14px 34px !important; }
+  .agent-submit-compact-bar { top: 74px; margin: -10px -2px 8px; grid-template-columns: 40px minmax(0,1fr); }
+  .agent-submit-compact-bar > span { grid-column: 2; padding: 0; background: transparent; }
+  .agent-submit-compact-bar > span small { display: none; }
+  .agent-submit-compact-bar > span b { color: #496617; font-size: 12px; }
+  .agent-submit-workspace .agent-dialog-form { margin-top: 8px; }
+  .agent-submit-details > div { grid-template-columns: 1fr; }
+  .partner-state-cards { grid-template-columns: 1fr; }
+  .mobile-agent-progress-compact { grid-template-columns: 38px minmax(0,1fr); }
+  .mobile-agent-progress-compact > a { grid-column: 2; }
   .agent-submit-heading { align-items: flex-start; flex-direction: column; gap: 14px; }
   .agent-submit-heading h1 { font-size: 34px; }
   .agent-submit-heading > a { width: 100%; justify-content: center; }

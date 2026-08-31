@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 
 type GoalData = { target: number; commission: number; resultType: "lead" | "deal" };
-const STORAGE_KEY = "relay-agent-earnings-goal";
+const storageKey = (currency: string) => `yaler-agent-earnings-goal-${currency}`;
 
-function loadGoal(): GoalData {
+function loadGoal(currency: string): GoalData {
   if (typeof window === "undefined") return { target: 0, commission: 0, resultType: "deal" };
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || { target: 0, commission: 0, resultType: "deal" };
+    return JSON.parse(localStorage.getItem(storageKey(currency)) || "null") || { target: 0, commission: 0, resultType: "deal" };
   } catch {
     return { target: 0, commission: 0, resultType: "deal" };
   }
@@ -21,18 +21,20 @@ function resultWord(count: number, type: GoalData["resultType"]) {
   return mod100 >= 11 && mod100 <= 19 ? words[2] : mod10 === 1 ? words[0] : mod10 >= 2 && mod10 <= 4 ? words[1] : words[2];
 }
 
-export function EarningsGoalCalculator() {
+function currencySymbol(currency: string) { return currency === "KZT" ? "₸" : currency === "RUB" ? "₽" : currency === "USD" ? "$" : currency === "EUR" ? "€" : currency; }
+
+export function EarningsGoalCalculator({ currency }: { currency: string }) {
   const [goal, setGoal] = useState<GoalData>({ target: 0, commission: 0, resultType: "deal" });
   useEffect(() => {
-    const timer = window.setTimeout(() => setGoal(loadGoal()), 0);
+    const timer = window.setTimeout(() => setGoal(loadGoal(currency)), 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [currency]);
   const needed = goal.target > 0 && goal.commission > 0 ? Math.ceil(goal.target / goal.commission) : 0;
   const weekly = needed ? Math.max(1, Math.ceil(needed / 4)) : 0;
 
   const update = (next: GoalData) => {
     setGoal(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    localStorage.setItem(storageKey(currency), JSON.stringify(next));
     window.dispatchEvent(new CustomEvent("relayearningsgoal", { detail: next }));
   };
 
@@ -40,8 +42,8 @@ export function EarningsGoalCalculator() {
     <section className="earnings-goal-card">
       <div className="earnings-goal-copy"><small>ЦЕЛЬ ЗАРАБОТКА</small><h2>Сколько рекомендаций нужно?</h2><p>Введите цель — Yaler рассчитает темп.</p></div>
       <div className="earnings-goal-fields">
-        <label><span>Хочу в месяц</span><div><input type="number" min="0" inputMode="numeric" value={goal.target || ""} placeholder="500 000" onChange={(event) => update({ ...goal, target: Number(event.target.value) })} /><b>₸</b></div></label>
-        <label><span>Средняя комиссия</span><div><input type="number" min="0" inputMode="numeric" value={goal.commission || ""} placeholder="50 000" onChange={(event) => update({ ...goal, commission: Number(event.target.value) })} /><b>₸</b></div></label>
+        <label><span>Хочу в месяц</span><div><input type="number" min="0" inputMode="numeric" value={goal.target || ""} placeholder="500 000" onChange={(event) => update({ ...goal, target: Number(event.target.value) })} /><b>{currencySymbol(currency)}</b></div></label>
+        <label><span>Средняя комиссия</span><div><input type="number" min="0" inputMode="numeric" value={goal.commission || ""} placeholder="50 000" onChange={(event) => update({ ...goal, commission: Number(event.target.value) })} /><b>{currencySymbol(currency)}</b></div></label>
         <label><span>Платят за</span><select value={goal.resultType} onChange={(event) => update({ ...goal, resultType: event.target.value as GoalData["resultType"] })}><option value="lead">Лид</option><option value="deal">Сделку</option></select></label>
       </div>
       <div className={`earnings-goal-result ${needed ? "ready" : ""}`}>

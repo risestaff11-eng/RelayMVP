@@ -1,7 +1,8 @@
 import { and, asc, count, countDistinct, desc, eq, inArray, isNotNull, sum } from "drizzle-orm";
 import { getDb } from ".";
-import { missionResources, missions, partners, programs, rewards, submissionAttachments, submissions } from "./schema";
+import { missionResources, missions, partners, programs, rewards, submissionAttachments, submissionStatusEvents, submissions } from "./schema";
 import { parseSubmissionFormFields, type SubmissionFormField } from "../lib/submission-form";
+import { isAnalyticsProgram } from "../lib/workflow";
 
 function parseList(value: string) {
   try {
@@ -133,17 +134,19 @@ export async function getPublicProgramBySlug(slug: string) {
 
 export async function getCompanyOperations(companyId: string) {
   const db = getDb();
-  const [programCount, activeProgramCount, partnerCount, activePartnerCount, contributedPartnerCount, convertedPartnerCount, submissionCount, reviewCount, approvedRewards, paidRewards] = await Promise.all([
+  const [programCount, activeProgramCount, partnerCount, activePartnerCount, contributedPartnerCount, convertedPartnerCount, submissionCount, reviewCount, approvedRewards, paidRewards, approvedByCurrency, paidByCurrency] = await Promise.all([
     db.select({ value: count() }).from(programs).where(eq(programs.companyId, companyId)),
     db.select({ value: count() }).from(programs).where(and(eq(programs.companyId, companyId), eq(programs.status, "ACTIVE"))),
     db.select({ value: countDistinct(partners.email) }).from(partners).where(eq(partners.companyId, companyId)),
     db.select({ value: countDistinct(partners.email) }).from(partners).where(and(eq(partners.companyId, companyId), eq(partners.status, "ACTIVE"))),
     db.select({ value: countDistinct(submissions.partnerId) }).from(submissions).where(eq(submissions.companyId, companyId)),
-    db.select({ value: countDistinct(submissions.partnerId) }).from(submissions).where(and(eq(submissions.companyId, companyId), inArray(submissions.status, ["DEAL", "REWARDED"]))),
+    db.select({ value: countDistinct(submissions.partnerId) }).from(submissions).where(and(eq(submissions.companyId, companyId), eq(submissions.salesStatus, "WON"))),
     db.select({ value: count() }).from(submissions).where(eq(submissions.companyId, companyId)),
-    db.select({ value: count() }).from(submissions).where(and(eq(submissions.companyId, companyId), eq(submissions.status, "SUBMITTED"))),
+    db.select({ value: count() }).from(submissions).where(and(eq(submissions.companyId, companyId), inArray(submissions.reviewStatus, ["PENDING", "REVIEWING"]))),
     db.select({ value: sum(rewards.amount) }).from(rewards).where(and(eq(rewards.companyId, companyId), eq(rewards.status, "APPROVED"))),
     db.select({ value: sum(rewards.amount) }).from(rewards).where(and(eq(rewards.companyId, companyId), eq(rewards.status, "PAID"), isNotNull(rewards.partnerConfirmedAt))),
+    db.select({ currency: rewards.currency, amount: sum(rewards.amount) }).from(rewards).where(and(eq(rewards.companyId, companyId), eq(rewards.status, "APPROVED"))).groupBy(rewards.currency),
+    db.select({ currency: rewards.currency, amount: sum(rewards.amount) }).from(rewards).where(and(eq(rewards.companyId, companyId), eq(rewards.status, "PAID"), isNotNull(rewards.partnerConfirmedAt))).groupBy(rewards.currency),
   ]);
   return {
     programs: programCount[0]?.value ?? 0,
@@ -156,6 +159,8 @@ export async function getCompanyOperations(companyId: string) {
     awaitingReview: reviewCount[0]?.value ?? 0,
     approvedRewards: Number(approvedRewards[0]?.value ?? 0),
     paidRewards: Number(paidRewards[0]?.value ?? 0),
+    approvedRewardsByCurrency: approvedByCurrency.map((item) => ({ amount: Number(item.amount ?? 0), currency: item.currency })),
+    paidRewardsByCurrency: paidByCurrency.map((item) => ({ amount: Number(item.amount ?? 0), currency: item.currency })),
   };
 }
 
@@ -169,7 +174,10 @@ export async function getSubmissionsForCompany(companyId: string) {
     .where(eq(submissions.companyId, companyId))
     .orderBy(desc(submissions.createdAt));
   const ids = rows.map((row) => row.submission.id);
-  const attachmentRows = ids.length ? await db.select().from(submissionAttachments).where(inArray(submissionAttachments.submissionId, ids)).orderBy(asc(submissionAttachments.createdAt)) : [];
+  const [attachmentRows, eventRows] = ids.length ? await Promise.all([
+    db.select().from(submissionAttachments).where(inArray(submissionAttachments.submissionId, ids)).orderBy(asc(submissionAttachments.createdAt)),
+    db.select().from(submissionStatusEvents).where(inArray(submissionStatusEvents.submissionId, ids)).orderBy(desc(submissionStatusEvents.createdAt)),
+  ]) : [[], []];
   return rows.map((row) => ({
     ...row.submission,
     partnerName: row.partner.name,
@@ -183,6 +191,7 @@ export async function getSubmissionsForCompany(companyId: string) {
     programName: row.program.name,
     ...parseSubmissionPayload(row.submission.payloadJson),
     attachments: attachmentRows.filter((attachment) => attachment.submissionId === row.submission.id),
+    events: eventRows.filter((event) => event.submissionId === row.submission.id),
   }));
 }
 
@@ -195,7 +204,7 @@ export async function getAgentsForCompany(companyId: string) {
     .orderBy(desc(partners.joinedAt));
   const ids = rows.map((row) => row.agent.id);
   const [resultRows, rewardRows] = ids.length ? await Promise.all([
-    db.select({ id: submissions.id, partnerId: submissions.partnerId, status: submissions.status }).from(submissions).where(inArray(submissions.partnerId, ids)),
+    db.select({ id: submissions.id, partnerId: submissions.partnerId, status: submissions.status, reviewStatus: submissions.reviewStatus, salesStatus: submissions.salesStatus }).from(submissions).where(inArray(submissions.partnerId, ids)),
     db.select({ partnerId: rewards.partnerId, amount: rewards.amount, status: rewards.status, partnerConfirmedAt: rewards.partnerConfirmedAt }).from(rewards).where(inArray(rewards.partnerId, ids)),
   ]) : [[], []];
   const grouped = new Map<string, typeof rows>();
@@ -217,7 +226,7 @@ export async function getAgentsForCompany(companyId: string) {
       programSlug: group[0].program.slug,
       programCount: group.length,
       resultCount: agentResults.length,
-      dealCount: agentResults.filter((result) => result.status === "DEAL").length,
+      dealCount: agentResults.filter((result) => result.salesStatus === "WON").length,
       dueAmount: agentRewards.filter((reward) => reward.status === "APPROVED").reduce((total, reward) => total + reward.amount, 0),
       paidAmount: agentRewards.filter((reward) => reward.status === "PAID" && reward.partnerConfirmedAt).reduce((total, reward) => total + reward.amount, 0),
     };
@@ -246,7 +255,7 @@ export async function getCompanyAnalytics(companyId: string, days: number | null
   ]);
   const since = days ? calculatedAt - days * 86400000 : 0;
   const within = (date: string | null) => !days || (date ? new Date(date).getTime() >= since : false);
-  const selectedPrograms = programRows.filter((program) => !programId || program.id === programId);
+  const selectedPrograms = programRows.filter((program) => programId ? program.id === programId : isAnalyticsProgram(program));
   const selectedIds = new Set(selectedPrograms.map((program) => program.id));
   const programAgents = agentRows.filter((agent) => selectedIds.has(agent.programId));
   const identityGroups = new Map<string, typeof programAgents>();
@@ -264,10 +273,11 @@ export async function getCompanyAnalytics(companyId: string, days: number | null
     return {
       id: program.id,
       name: program.name,
+      currency: program.currency,
       agents: new Set(programAgents.filter((agent) => agent.programId === program.id).map((agent) => agent.userId || agent.email.toLowerCase())).size,
       results: programResults.length,
-      accepted: programResults.filter((result) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(result.status)).length,
-      deals: programResults.filter((result) => result.status === "DEAL").length,
+      accepted: programResults.filter((result) => result.reviewStatus === "ACCEPTED").length,
+      deals: programResults.filter((result) => result.salesStatus === "WON").length,
       paid: rewardItems.filter((reward) => reward.status === "PAID" && reward.partnerConfirmedAt && programResults.some((result) => result.id === reward.submissionId)).reduce((total, reward) => total + reward.amount, 0),
     };
   });
@@ -278,8 +288,8 @@ export async function getCompanyAnalytics(companyId: string, days: number | null
     const agentResults = results.filter((result) => groupIds.has(result.partnerId));
     const agentResultIds = new Set(agentResults.map((result) => result.id));
     const agentRewards = rewardItems.filter((reward) => agentResultIds.has(reward.submissionId));
-    const accepted = agentResults.filter((result) => ["ACCEPTED", "IN_PROGRESS", "DEAL", "REWARDED"].includes(result.status)).length;
-    const deals = agentResults.filter((result) => result.status === "DEAL").length;
+    const accepted = agentResults.filter((result) => result.reviewStatus === "ACCEPTED").length;
+    const deals = agentResults.filter((result) => result.salesStatus === "WON").length;
     const activityDates = [agent.lastActiveAt, ...agentResults.map((result) => result.updatedAt || result.createdAt)].filter(Boolean).map((date) => new Date(date as string).getTime());
     return {
       id: agent.id,
@@ -297,6 +307,8 @@ export async function getCompanyAnalytics(companyId: string, days: number | null
       dealRate: agentResults.length ? Math.round(deals / agentResults.length * 100) : 0,
       due: agentRewards.filter((reward) => reward.status === "APPROVED").reduce((total, reward) => total + reward.amount, 0),
       paid: agentRewards.filter((reward) => reward.status === "PAID" && reward.partnerConfirmedAt).reduce((total, reward) => total + reward.amount, 0),
+      dueByCurrency: agentRewards.filter((reward) => reward.status === "APPROVED").map((reward) => ({ amount: reward.amount, currency: reward.currency })),
+      paidByCurrency: agentRewards.filter((reward) => reward.status === "PAID" && reward.partnerConfirmedAt).map((reward) => ({ amount: reward.amount, currency: reward.currency })),
       score: deals * 100 + accepted * 20 + agentResults.length * 5,
     };
   }).sort((left, right) => right.score - left.score || new Date(right.lastActivity).getTime() - new Date(left.lastActivity).getTime());

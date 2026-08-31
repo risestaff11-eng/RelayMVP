@@ -1,4 +1,4 @@
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, gte, notInArray, or } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { getMissionForPublicSubmission, getPartnerPortal } from "../../../../db/partner";
 import { submissionAttachments, submissionStatusEvents, submissions, users } from "../../../../db/schema";
@@ -7,6 +7,8 @@ import { visibleSubmissionFormFields, type SubmissionFormField } from "../../../
 import { cleanString, sameOrigin } from "../../company/_utils";
 import { agentUrl } from "../../../../lib/public-origins";
 import { sendCompanyNewSubmissionNotification } from "../../../../lib/agent-email";
+import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone } from "../../../../lib/submission-antifraud";
+import { reviewDueAt } from "../../../../lib/workflow";
 
 const allowedTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
 const allowedAudioTypes = new Set(["audio/webm", "audio/mp4", "audio/mpeg", "audio/mp3", "audio/ogg", "audio/wav", "audio/x-wav", "audio/aac", "audio/x-m4a"]);
@@ -48,8 +50,8 @@ export async function POST(request: Request) {
     };
     const contactName = semanticValue("CONTACT_NAME");
     const contactCompany = semanticValue("CONTACT_COMPANY");
-    const contactEmail = semanticValue("CONTACT_EMAIL").toLowerCase();
-    const contactPhone = semanticValue("CONTACT_PHONE");
+    const contactEmail = normalizeContactEmail(semanticValue("CONTACT_EMAIL"));
+    const contactPhone = normalizeContactPhone(semanticValue("CONTACT_PHONE"));
     const partnerComment = semanticValue("COMMENT");
     const audioTranscript = cleanString(form.get("audioTranscript"), 8000);
     const audioDurationSeconds = Math.max(0, Math.min(60, Number(form.get("audioDurationSeconds")) || 0));
@@ -58,8 +60,8 @@ export async function POST(request: Request) {
 
     const db = getDb();
     const duplicateConditions = [contactEmail ? eq(submissions.contactEmail, contactEmail) : null, contactPhone ? eq(submissions.contactPhone, contactPhone) : null].filter(Boolean);
-    const duplicateRows = duplicateConditions.length ? await db.select({ id: submissions.id }).from(submissions).where(and(eq(submissions.programId, target.program.id), duplicateConditions.length === 2 ? or(duplicateConditions[0]!, duplicateConditions[1]!) : duplicateConditions[0]!)).limit(1) : [];
-    if (duplicateRows.length) return Response.json({ error: "Такой контакт уже закреплён в этой программе. Полные данные существующей рекомендации не раскрываются." }, { status: 409 });
+    const duplicateRows = duplicateConditions.length && ["LEAD", "DEAL"].includes(target.mission.type) ? await db.select({ id: submissions.id }).from(submissions).where(and(eq(submissions.companyId, target.company.id), gte(submissions.createdAt, duplicateCutoff()), notInArray(submissions.reviewStatus, ["REJECTED"]), duplicateConditions.length === 2 ? or(duplicateConditions[0]!, duplicateConditions[1]!) : duplicateConditions[0]!)).limit(1) : [];
+    if (duplicateRows.length) return Response.json({ error: "Этот контакт уже закреплён за другой рекомендацией компании. Yaler сохранил первоначальное авторство; данные другого участника не раскрываются." }, { status: 409 });
 
     const allFiles = fields.flatMap((field) => form.getAll(`file__${field.id}`).filter((item): item is File => item instanceof File && item.size > 0).map((file) => ({ field, file })));
     if (allFiles.length > 5) throw new Error("Можно приложить не более 5 файлов");
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
       attachmentRows.push({ id: crypto.randomUUID(), submissionId, objectKey, fileName: `Голосовой комментарий.${extension}`, mimeType: voiceMime, size: voiceNote.size, createdAt: now });
     }
     const customAnswers = fields.filter((field) => field.semantic === "CUSTOM").map((field) => ({ fieldId: field.id, label: field.label, type: field.type, value: values.get(field.id) || (field.type === "FILE" ? allFiles.filter((item) => item.field.id === field.id).map((item) => item.file.name) : "") }));
-    const submissionStatement = db.insert(submissions).values({ id: submissionId, companyId: target.company.id, programId: target.program.id, missionId, partnerId: missionPartner.id, type: target.mission.type, contactName, contactCompany, contactEmail, contactPhone, payloadJson: JSON.stringify({ partnerComment, externalLinks, customAnswers, audioTranscript, audioDurationSeconds, audioConfirmed: Boolean(audioTranscript) }), status: "SUBMITTED", createdAt: now, updatedAt: now });
+    const submissionStatement = db.insert(submissions).values({ id: submissionId, companyId: target.company.id, programId: target.program.id, missionId, partnerId: missionPartner.id, type: target.mission.type, contactName, contactCompany, contactEmail, contactPhone, payloadJson: JSON.stringify({ partnerComment, externalLinks, customAnswers, audioTranscript, audioDurationSeconds, audioConfirmed: Boolean(audioTranscript) }), status: "SUBMITTED", reviewStatus: "PENDING", salesStatus: "NONE", ownershipStatus: "CLEAR", reviewDueAt: reviewDueAt(now), createdAt: now, updatedAt: now });
     const eventStatement = db.insert(submissionStatusEvents).values({ id: crypto.randomUUID(), submissionId, fromStatus: null, toStatus: "SUBMITTED", actorType: "PARTNER", comment: "Результат отправлен компании", createdAt: now });
     if (attachmentRows.length) await db.batch([submissionStatement, eventStatement, db.insert(submissionAttachments).values(attachmentRows)]);
     else await db.batch([submissionStatement, eventStatement]);

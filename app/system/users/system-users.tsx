@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { formatDateTimeSeconds, formatInteger } from "@/lib/format-display";
+import { countRu, formatDateTimeSeconds, formatInteger } from "@/lib/format-display";
 
 type Row = {
   id: string;
@@ -81,8 +81,8 @@ function activityLabel(value: string | null, now: number) {
   const days = Math.floor((now - timestamp(value)) / 86_400_000);
   if (days <= 0) return "Входил сегодня";
   if (days === 1) return "Входил вчера";
-  if (days < 7) return `Входил ${days} дн. назад`;
-  return `Не входил ${days} дн.`;
+  if (days < 7) return `Входил ${countRu(days, "день", "дня", "дней")} назад`;
+  return `Не входил ${countRu(days, "день", "дня", "дней")}`;
 }
 
 function csvCell(value: unknown) {
@@ -254,7 +254,7 @@ export function SystemUsers({
 
   async function remove(row: Row) {
     const confirmation = window.prompt(
-      `Будут удалены кабинет «${row.company || row.name}», ${row.programCount} программ, ${row.agentCount} агентов и ${row.submissionCount} результатов.\n\nДля подтверждения введите УДАЛИТЬ`,
+      `Будут удалены кабинет «${row.company || row.name}», ${countRu(row.programCount, "программа", "программы", "программ")}, ${countRu(row.agentCount, "агент", "агента", "агентов")} и ${countRu(row.submissionCount, "результат", "результата", "результатов")}.\n\nДля подтверждения введите УДАЛИТЬ`,
     );
     if (confirmation !== "УДАЛИТЬ") return;
     setBusy(row.id);
@@ -658,7 +658,7 @@ export function SystemUsers({
                   <article>
                     <small>ВЫПЛАЧЕНО</small>
                     <strong>{formatInteger(row.paidRewardsAmount)} ₸</strong>
-                    <span>{row.paidRewardsCount} выплат</span>
+                    <span>{countRu(row.paidRewardsCount, "выплата", "выплаты", "выплат")}</span>
                   </article>
                   <article>
                     <small>К ВЫПЛАТЕ</small>
@@ -786,7 +786,7 @@ export function SystemUsers({
                 <span>
                   <small>История до удаления</small>
                   <strong>
-                    {row.programsCount} программ · {row.agentsCount} агентов ·{" "}
+                    {countRu(row.programsCount, "программа", "программы", "программ")} · {countRu(row.agentsCount, "агент", "агента", "агентов")} ·{" "}
                     {row.submissionsCount} результатов
                   </strong>
                 </span>

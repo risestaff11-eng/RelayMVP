@@ -19,11 +19,11 @@ export default async function OnboardingPage() {
       <aside className="auth-aside">
         <Link className="brand" href={marketingUrl()}><span className="brand-mark">R</span><span>Yaler</span></Link>
         <div className="auth-message">
-          <span className="auth-kicker">ШАГ 1 ИЗ 4</span>
+          <span className="auth-kicker">НАЧАЛО НАСТРОЙКИ</span>
           <h1>Начнём с вашей компании.</h1>
-          <p>Дальше Yaler изучит сайт, подготовит профиль бизнеса и предложит четыре агентские задания.</p>
+          <p>После создания пространства откроется чек-лист: профиль, первая программа, задание и публикация ссылки.</p>
         </div>
-        <div className="auth-steps" aria-label="Прогресс настройки"><span /><span /><span /><span /></div>
+        <div className="auth-steps" aria-label="Четыре пункта будущего чек-листа"><span /><span /><span /><span /></div>
       </aside>
 
       <section className="auth-main">

@@ -133,6 +133,7 @@ export async function deleteCompanyUser(userId: string) {
     "DELETE FROM agent_reports WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM report_templates WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM company_email_verification_codes WHERE user_id = ?",
+    "DELETE FROM password_reset_codes WHERE user_id = ?",
     "DELETE FROM contact_verification_codes WHERE partner_id IN (SELECT id FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM partner_referral_links WHERE partner_id IN (SELECT id FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM submission_disputes WHERE submission_id IN (SELECT id FROM submissions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",

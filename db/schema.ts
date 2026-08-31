@@ -115,6 +115,24 @@ export const passwordResetAttempts = sqliteTable("password_reset_attempts", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("idx_password_reset_attempts_key_created").on(table.keyHash, table.createdAt)]);
 
+export const passwordResetCodes = sqliteTable(
+  "password_reset_codes",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    destination: text("destination").notNull(),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    consumedAt: text("consumed_at"),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_password_reset_codes_user_created").on(table.userId, table.createdAt),
+    index("idx_password_reset_codes_destination_created").on(table.destination, table.createdAt),
+  ],
+);
+
 export const userRoles = sqliteTable(
   "user_roles",
   {
@@ -469,12 +487,20 @@ export const submissions = sqliteTable(
     contactPhone: text("contact_phone").notNull().default(""),
     payloadJson: text("payload_json").notNull().default("{}"),
     status: text("status").notNull().default("SUBMITTED"),
+    reviewStatus: text("review_status").notNull().default("PENDING"),
+    salesStatus: text("sales_status").notNull().default("NONE"),
+    ownershipStatus: text("ownership_status").notNull().default("CLEAR"),
+    duplicateOfSubmissionId: text("duplicate_of_submission_id"),
+    reviewDueAt: text("review_due_at"),
     companyComment: text("company_comment").notNull().default(""),
     createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
     updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     index("idx_submissions_company_status").on(table.companyId, table.status),
+    index("idx_submissions_company_review_status").on(table.companyId, table.reviewStatus, table.reviewDueAt),
+    index("idx_submissions_company_sales_status").on(table.companyId, table.salesStatus),
+    index("idx_submissions_duplicate_of").on(table.duplicateOfSubmissionId),
     index("idx_submissions_program_created").on(table.programId, table.createdAt),
   ],
 );
