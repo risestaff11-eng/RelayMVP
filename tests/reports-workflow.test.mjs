@@ -15,9 +15,10 @@ test("reporting schema keeps immutable snapshots, files and revisions", async ()
 });
 
 test("partner report API enforces tenant, file and audio boundaries", async () => {
-  const [route, transcript] = await Promise.all([
+  const [route, transcript, reportCenter] = await Promise.all([
     read("app/api/partner/reports/route.ts"),
     read("app/api/partner/reports/transcribe/route.ts"),
+    read("app/partner/[token]/reports/report-center.tsx"),
   ]);
   assert.match(route, /getPartnerPortal/);
   assert.match(route, /не более 5 файлов/);
@@ -25,6 +26,8 @@ test("partner report API enforces tenant, file and audio boundaries", async () =
   assert.match(route, /NEEDS_CLARIFICATION/);
   assert.match(transcript, /fieldId \? 60 : 180/);
   assert.match(transcript, /не отправляет отчёт/i);
+  assert.match(transcript, /answers\.some\(\(item\) => item\.fieldId === fieldId\)/);
+  assert.match(reportCenter, /recognizedAnswers\[fieldId\]/);
 });
 
 test("reporting is available to both company and agent with evidence-based analysis", async () => {
