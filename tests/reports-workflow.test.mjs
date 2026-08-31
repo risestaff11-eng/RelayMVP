@@ -28,15 +28,17 @@ test("partner report API enforces tenant, file and audio boundaries", async () =
 });
 
 test("reporting is available to both company and agent with evidence-based analysis", async () => {
-  const [companyNav, agentNav, analysis] = await Promise.all([
+  const [companyNav, agentNav, analysis, constructor] = await Promise.all([
     read("app/dashboard/_components/dashboard-nav.tsx"),
     read("app/partner/_components/partner-nav.tsx"),
     read("app/api/company/reports/analyze/route.ts"),
+    read("app/dashboard/reports/reports-workspace.tsx"),
   ]);
   assert.match(companyNav, /dashboard\/reports/);
   assert.match(agentNav, /\/reports/);
   assert.match(analysis, /не придумывай/i);
   assert.match(analysis, /evidence/i);
+  assert.match(constructor, /Варианты через запятую/);
 });
 
 test("automatic report metrics include tasks, results and rewards", async () => {
