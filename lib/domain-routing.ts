@@ -18,7 +18,7 @@ function isCompanyPath(pathname: string) {
 }
 
 function isAgentPath(pathname: string) {
-  return pathname.startsWith("/p/") || pathname.startsWith("/partner/") || pathname.startsWith("/ref/");
+  return pathname === "/agent" || pathname === "/agent-login" || pathname.startsWith("/agent/") || pathname.startsWith("/p/") || pathname.startsWith("/partner/") || pathname.startsWith("/ref/");
 }
 
 function redirectUrl(url: URL, origin: string, pathname = url.pathname) {

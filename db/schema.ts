@@ -49,6 +49,65 @@ export const authSessions = sqliteTable("auth_sessions", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("idx_auth_sessions_user").on(table.userId)]);
 
+export const agentLoginCodes = sqliteTable(
+  "agent_login_codes",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull(),
+    phone: text("phone").notNull(),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    consumedAt: text("consumed_at"),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_agent_login_codes_identity_created").on(table.email, table.phone, table.createdAt),
+    index("idx_agent_login_codes_expires").on(table.expiresAt),
+  ],
+);
+
+export const agentSessions = sqliteTable(
+  "agent_sessions",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull(),
+    phone: text("phone").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    lastUsedAt: text("last_used_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_agent_sessions_identity").on(table.email, table.phone),
+    index("idx_agent_sessions_expires").on(table.expiresAt),
+  ],
+);
+
+export const agentApplications = sqliteTable(
+  "agent_applications",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    phone: text("phone").notNull(),
+    city: text("city").notNull().default(""),
+    industriesJson: text("industries_json").notNull().default("[]"),
+    experience: text("experience").notNull().default(""),
+    network: text("network").notNull().default(""),
+    preferredTypesJson: text("preferred_types_json").notNull().default("[]"),
+    availability: text("availability").notNull().default(""),
+    comment: text("comment").notNull().default(""),
+    status: text("status").notNull().default("NEW"),
+    reviewedAt: text("reviewed_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_agent_applications_status_created").on(table.status, table.createdAt),
+    index("idx_agent_applications_identity").on(table.email, table.phone),
+  ],
+);
+
 export const passwordResetAttempts = sqliteTable("password_reset_attempts", {
   id: text("id").primaryKey(),
   keyHash: text("key_hash").notNull(),
@@ -132,6 +191,23 @@ export const companyMethodologyBriefs = sqliteTable("company_methodology_briefs"
   language: text("language").notNull().default("Русский"),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const supportSessions = sqliteTable(
+  "support_sessions",
+  {
+    id: text("id").primaryKey(),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    reason: text("reason").notNull().default("Оперативная техподдержка"),
+    expiresAt: text("expires_at").notNull(),
+    lastUsedAt: text("last_used_at"),
+    endedAt: text("ended_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_support_sessions_company_created").on(table.companyId, table.createdAt),
+    index("idx_support_sessions_expires").on(table.expiresAt),
+  ],
+);
 
 export const companyAccountDeletionLogs = sqliteTable(
   "company_account_deletion_logs",

@@ -1,11 +1,13 @@
 import { cookies } from "next/headers";
 import { and, eq, gt, sql } from "drizzle-orm";
-import { authSessions, userRoles, users } from "../db/schema";
+import { authSessions, companies, supportSessions, userRoles, users } from "../db/schema";
 
 const SESSION_COOKIE = "relay_session";
 const ADMIN_COOKIE = "relay_admin";
+const SUPPORT_COOKIE = "yaler_support_session";
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const ADMIN_TTL_MS = 8 * 60 * 60 * 1000;
+const SUPPORT_TTL_MS = 2 * 60 * 60 * 1000;
 
 export type AccountUser = {
   userId: string;
@@ -15,6 +17,8 @@ export type AccountUser = {
   phone: string;
   companyName: string;
   status: string;
+  supportMode?: boolean;
+  supportCompanyId?: string;
 };
 
 function bytesToBase64Url(bytes: Uint8Array) {
@@ -81,9 +85,12 @@ export async function clearAuthSession() {
     await getDb().delete(authSessions).where(eq(authSessions.id, await sha256(rawToken)));
   }
   jar.set(SESSION_COOKIE, "", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", expires: new Date(0) });
+  await clearSupportSession();
 }
 
 export async function getAccountUser(): Promise<AccountUser | null> {
+  const supportUser = await getSupportUser();
+  if (supportUser) return supportUser;
   const rawToken = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!rawToken) return null;
   const { getDb } = await import("../db");
@@ -102,6 +109,60 @@ export async function getAccountUser(): Promise<AccountUser | null> {
   const user = rows[0];
   if (!user || user.status !== "active") return null;
   return { ...user, fullName: user.displayName || null };
+}
+
+async function getSupportUser(): Promise<AccountUser | null> {
+  const jar = await cookies();
+  const rawToken = jar.get(SUPPORT_COOKIE)?.value;
+  if (!rawToken || !(await hasAdminSession())) return null;
+  const now = new Date().toISOString();
+  const db = await getDbForSupport();
+  const row = (await db.select({
+    sessionId: supportSessions.id,
+    companyId: companies.id,
+    userId: users.id,
+    email: users.email,
+    displayName: users.displayName,
+    phone: users.phone,
+    companyName: companies.name,
+    status: users.status,
+  }).from(supportSessions)
+    .innerJoin(companies, eq(supportSessions.companyId, companies.id))
+    .innerJoin(users, eq(companies.ownerUserId, users.id))
+    .where(and(
+      eq(supportSessions.id, await sha256(rawToken)),
+      gt(supportSessions.expiresAt, now),
+      sql`${supportSessions.endedAt} is null`,
+    ))
+    .limit(1))[0];
+  if (!row || row.status === "blocked") return null;
+  await db.update(supportSessions).set({ lastUsedAt: now }).where(eq(supportSessions.id, row.sessionId));
+  return { userId: row.userId, email: row.email, displayName: row.displayName, fullName: row.displayName || null, phone: row.phone, companyName: row.companyName, status: row.status, supportMode: true, supportCompanyId: row.companyId };
+}
+
+async function getDbForSupport() {
+  const { getDb } = await import("../db");
+  return getDb();
+}
+
+export async function createSupportSession(companyId: string, reason = "Оперативная техподдержка") {
+  if (!(await hasAdminSession())) throw new Error("Доступ запрещён");
+  const rawToken = bytesToBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + SUPPORT_TTL_MS);
+  const db = await getDbForSupport();
+  const company = (await db.select({ id: companies.id }).from(companies).where(eq(companies.id, companyId)).limit(1))[0];
+  if (!company) throw new Error("Компания не найдена");
+  await db.insert(supportSessions).values({ id: await sha256(rawToken), companyId, reason: reason.slice(0, 240), expiresAt: expiresAt.toISOString(), createdAt: now });
+  const jar = await cookies();
+  jar.set(SUPPORT_COOKIE, rawToken, { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/", expires: expiresAt });
+}
+
+export async function clearSupportSession() {
+  const jar = await cookies();
+  const rawToken = jar.get(SUPPORT_COOKIE)?.value;
+  if (rawToken) await (await getDbForSupport()).update(supportSessions).set({ endedAt: new Date().toISOString() }).where(eq(supportSessions.id, await sha256(rawToken)));
+  jar.set(SUPPORT_COOKIE, "", { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/", expires: new Date(0) });
 }
 
 async function runtimeAdminSecret() {

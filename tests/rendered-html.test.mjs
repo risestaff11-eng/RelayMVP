@@ -34,6 +34,9 @@ test("routes each product surface to its canonical domain", async () => {
   const agent = await route("https://relay-agent-sales-rustam.frosty-whale-0805.chatgpt.site/p/demo?access=token");
   assert.equal(agent.headers.get("location"), "https://agents.risestaff.kz/p/demo?access=token");
 
+  const agentLogin = await route("https://risestaff.kz/agent-login");
+  assert.equal(agentLogin.headers.get("location"), "https://agents.risestaff.kz/agent-login");
+
   const referral = await route("https://risestaff.kz/ref/client-token");
   assert.equal(referral.headers.get("location"), "https://agents.risestaff.kz/ref/client-token");
 
@@ -54,6 +57,7 @@ test("renders the Yaler landing page", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Yaler/);
+  assert.match(html, /Вход для агента/);
   assert.match(html, /<html lang="ru"/);
   assert.match(html, /relay-language-switcher/);
   assert.match(html, />ҚАЗ</);

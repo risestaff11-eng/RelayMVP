@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb } from ".";
-import { companies, companyAccountDeletionLogs, userRoles, users } from "./schema";
+import { agentApplications, companies, companyAccountDeletionLogs, userRoles, users } from "./schema";
 
 export type CompanyAdminRow = {
   id: string;
@@ -48,6 +48,11 @@ export type DeletedCompanyAdminRow = {
   deletedAt: string;
 };
 
+export type AgentApplicationAdminRow = {
+  id: string; name: string; email: string; phone: string; city: string; industries: string[]; experience: string;
+  network: string; preferredTypes: string[]; availability: string; comment: string; status: string; reviewedAt: string | null; createdAt: string;
+};
+
 export async function listCompanyUsers(): Promise<CompanyAdminRow[]> {
   return getDb().select({
     id: users.id,
@@ -86,6 +91,12 @@ export async function listDeletedCompanyAccounts(): Promise<DeletedCompanyAdminR
   return getDb().select().from(companyAccountDeletionLogs).orderBy(desc(companyAccountDeletionLogs.deletedAt));
 }
 
+export async function listAgentApplications(): Promise<AgentApplicationAdminRow[]> {
+  const rows = await getDb().select().from(agentApplications).orderBy(desc(agentApplications.createdAt));
+  const parse = (value: string) => { try { const result = JSON.parse(value); return Array.isArray(result) ? result.map(String) : []; } catch { return []; } };
+  return rows.map((row) => ({ ...row, industries: parse(row.industriesJson), preferredTypes: parse(row.preferredTypesJson) }));
+}
+
 function maskedEmail(email: string) {
   const [local = "", domain = ""] = email.toLowerCase().split("@");
   const visible = local.slice(0, Math.min(2, local.length));
@@ -116,6 +127,11 @@ export async function deleteCompanyUser(userId: string) {
       .bind(deletionId, userId, source.companyId, source.company || source.name, maskedEmail(source.email), emailDomain, source.programCount, source.agentCount, source.submissionCount, source.paidRewardsCount, source.paidRewardsAmount, deletedAt),
   ];
   const deletionSql = [
+    "DELETE FROM support_sessions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM report_revisions WHERE report_id IN (SELECT id FROM agent_reports WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
+    "DELETE FROM report_files WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM agent_reports WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM report_templates WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM company_email_verification_codes WHERE user_id = ?",
     "DELETE FROM contact_verification_codes WHERE partner_id IN (SELECT id FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM partner_referral_links WHERE partner_id IN (SELECT id FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
