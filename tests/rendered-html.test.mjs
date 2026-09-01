@@ -58,6 +58,7 @@ test("renders the RiseStaff landing page", async () => {
   const html = await response.text();
   assert.match(html, /RiseStaff/);
   assert.match(html, /Заработать на рекомендациях/);
+  assert.match(html, /https:\/\/agents\.risestaff\.kz\/p\/relay-kz-13c34fa/);
   assert.match(html, /<html lang="ru"/);
   assert.match(html, /relay-language-switcher/);
   assert.match(html, />ҚАЗ</);

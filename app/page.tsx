@@ -161,7 +161,7 @@ export default async function Home() {
         <div className="lp-header-actions">
           <a
             className="lp-agent-login"
-            href={agentUrl("/agent-login")}
+            href={agentUrl("/p/relay-kz-13c34fa")}
             data-track="agent_login"
           >
             Заработать на рекомендациях
