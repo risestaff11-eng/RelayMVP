@@ -8,9 +8,9 @@ import { CompanyApplicationForm } from "./company-application-form";
 import { agentUrl, companyUrl } from "../lib/public-origins";
 
 export const metadata: Metadata = {
-  title: { absolute: "RiseStaff — сервис для программы «приведи клиента»" },
+  title: { absolute: "RiseStaff — новые клиенты через рекомендации" },
   description:
-    "Назначьте вознаграждение за приведённого клиента. RiseStaff покажет, кто кого привёл, что стало с заявкой и сколько нужно выплатить.",
+    "Ваши клиенты и партнёры рекомендуют вас покупателям. Вы видите, кто привёл каждого клиента, что стало с заявкой и сколько нужно выплатить.",
   alternates: { canonical: "https://risestaff.kz/" },
 };
 
@@ -20,23 +20,23 @@ const missionCards = [
   {
     index: "01",
     type: "ЛИДЫ",
-    title: "Найдите компанию для внедрения CRM",
-    reward: "30 000 ₸ за встречу",
+    title: "Пригласите родителей на пробный урок",
+    reward: "10 000 ₸ за оплату курса",
     icon: "↗",
     tone: "lime",
   },
   {
     index: "02",
     type: "СДЕЛКИ",
-    title: "Приведите клиента до первой сделки",
-    reward: "10% от первой оплаты",
+    title: "Помогите записать ученика на годовой курс",
+    reward: "25 000 ₸ после первой оплаты",
     icon: "◎",
     tone: "dark",
   },
   {
     index: "03",
     type: "ИМИДЖ",
-    title: "Поделитесь кейсом в сообществе",
+    title: "Расскажите о курсе в родительском сообществе",
     reward: "5 000 ₸ после проверки",
     icon: "✦",
     tone: "blue",
@@ -44,8 +44,8 @@ const missionCards = [
   {
     index: "04",
     type: "ВОВЛЕЧЕНИЕ",
-    title: "Пройдите продуктовый квиз",
-    reward: "Откройте новые задания",
+    title: "Пригласите знакомых на открытый урок",
+    reward: "Бонус за участие",
     icon: "✓",
     tone: "paper",
   },
@@ -74,7 +74,7 @@ const faqs = [
   ],
   [
     "А если приведут клиента, который и так к нам шёл?",
-    "Вы решаете, принимать заявку или нет, и указываете причину. Правило можно написать заранее: например, не принимать компании, которые уже есть в вашей CRM.",
+    "Вы решаете, принимать заявку или нет, и указываете причину. Правило можно написать заранее: например, не засчитывать ученика, который уже оставил заявку в вашем центре.",
   ],
   [
     "А если посыпятся неподходящие заявки?",
@@ -114,7 +114,7 @@ const structuredData = {
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       inLanguage: "ru-KZ",
-      description: "Сервис для программы «приведи клиента — получи вознаграждение».",
+      description: "Помогает компаниям получать новых клиентов через рекомендации покупателей и партнёров.",
       featureList: [
         "Правила и вознаграждения за приведённых клиентов",
         "Кто привёл каждого клиента",
@@ -184,16 +184,15 @@ export default async function Home() {
         <div className="lp-orbit lp-orbit-two" aria-hidden="true" />
         <div className="lp-hero-copy">
           <div className="lp-kicker">
-            <span>●</span> СЕРВИС ДЛЯ ПРОГРАММЫ «ПРИВЕДИ КЛИЕНТА — ПОЛУЧИ ВОЗНАГРАЖДЕНИЕ»
+            <span>●</span> БОЛЬШЕ НОВЫХ КЛИЕНТОВ ИЗ ТЕХ, КТО УЖЕ ВАМ ДОВЕРЯЕТ
           </div>
           <h1>
-            Пусть ваши клиенты и партнёры приводят вам покупателей{" "}
-            <span className="lp-color-word">за вознаграждение.</span>
+            Превратите рекомендации в стабильный источник{" "}
+            <span className="lp-color-word">новых клиентов.</span>
           </h1>
           <p>
-            Один раз напишите, за какого клиента и сколько платите. Отправьте одну
-            ссылку своим людям. RiseStaff запомнит, кто кого привёл, что стало с заявкой
-            и сколько вы должны выплатить.
+            Ваши клиенты и партнёры рекомендуют вас знакомым. Вы получаете новые
+            контакты и сразу видите, кто привёл покупателя и сколько ему заплатить.
           </p>
           <p className="lp-hero-definition"><strong>Амбассадор</strong> — ваш клиент, партнёр или знакомый, который рекомендует вас подходящему покупателю.</p>
           <div
@@ -204,7 +203,7 @@ export default async function Home() {
               <b>ДЛЯ КОГО</b>Собственник, продажи и маркетинг
             </span>
             <span>
-              <b>ЧТО ПОЛУЧАЕТЕ</b>Заявки, сделки и суммы к выплате
+              <b>ЧТО ПОЛУЧАЕТЕ</b>Новых клиентов из уже знакомого круга
             </span>
           </div>
           <div className="lp-hero-actions">
@@ -213,7 +212,7 @@ export default async function Home() {
               href={dashboardHref}
               data-track="hero_primary"
             >
-              {user ? "Открыть кабинет" : "Запустить программу бесплатно"}
+              {user ? "Открыть кабинет" : "Запустить рекомендации бесплатно"}
               <span>↗</span>
             </a>
             <a className="lp-secondary" href="#how" data-track="hero_secondary">
@@ -225,13 +224,13 @@ export default async function Home() {
           </p>
           <div className="lp-hero-facts">
             <span>
-              <b>10</b> минут на черновик
+              <b>0 ₸</b> за отклонённые заявки
             </span>
             <span>
-              <b>0 ₸</b> аванс за заявки
+              <b>100%</b> решений остаются за вами
             </span>
             <span>
-              <b>1</b> ссылка для приглашённых
+              <b>1</b> список клиентов и выплат
             </span>
           </div>
         </div>
@@ -248,18 +247,18 @@ export default async function Home() {
           <div className="lp-demo-heading">
             <div>
               <small>ЗАЯВКА №14 · ПРИМЕР</small>
-              <h2>ТОО «Алтын Строй»</h2>
+              <h2>Образовательный центр Qadam</h2>
             </div>
             <span>НУЖНО РЕШЕНИЕ</span>
           </div>
           <div className="lp-lead-example">
             <dl>
-              <div><dt>Контакт</dt><dd>Асхат · +7 701 000 00 00</dd></div>
-              <div><dt>Кто привёл</dt><dd>Данияр Т. · ваш клиент</dd></div>
-              <div><dt>Что нужно</dt><dd>Внедрение CRM для отдела продаж</dd></div>
-              <div><dt>Сумма сделки</dt><dd>1 200 000 ₸</dd></div>
+              <div><dt>Контакт</dt><dd>Алия · +7 701 000 00 00</dd></div>
+              <div><dt>Кто привёл</dt><dd>Данияр Т. · родитель ученика</dd></div>
+              <div><dt>Что нужно</dt><dd>Годовой курс английского для подростка</dd></div>
+              <div><dt>Сумма сделки</dt><dd>600 000 ₸</dd></div>
             </dl>
-            <div><span>К ВЫПЛАТЕ ПО ВАШЕМУ ПРАВИЛУ</span><strong>120 000 ₸</strong></div>
+            <div><span>К ВЫПЛАТЕ ПО ВАШЕМУ ПРАВИЛУ</span><strong>25 000 ₸</strong></div>
             <nav aria-label="Действия с примером заявки"><button type="button">Не подходит</button><button type="button">Принять заявку</button></nav>
           </div>
           <div className="lp-demo-event">
@@ -332,16 +331,16 @@ export default async function Home() {
       <section className="lp-example lp-section" id="example">
         <div className="lp-section-intro">
           <span>ОДИН ПРИМЕР С ЦИФРАМИ</span>
-          <h2>Допустим, вы продаёте внедрение CRM за 1 200 000 ₸.</h2>
-          <p>Это пример расчёта, чтобы показать механику. Ваши суммы и правила могут быть другими.</p>
+          <h2>Допустим, образовательный центр продаёт годовой курс за 600 000 ₸.</h2>
+          <p>Центр хочет получать новых учеников через родителей, выпускников и преподавателей.</p>
         </div>
         <div className="lp-example-steps">
-          <article><b>01</b><h3>Написали правило</h3><p>«Приведи компанию, которая купит CRM. Платим 10% с первой оплаты».</p><strong>4 минуты</strong></article>
-          <article><b>02</b><h3>Отправили одну ссылку</h3><p>Клиентам, двум партнёрам и знакомому консультанту. Одно сообщение в WhatsApp.</p><strong>14 человек</strong></article>
+          <article><b>01</b><h3>Назначили вознаграждение</h3><p>«Приведи ученика на годовой курс. Платим 25 000 ₸ после первой оплаты».</p><strong>25 000 ₸ за ученика</strong></article>
+          <article><b>02</b><h3>Отправили одну ссылку</h3><p>Родителям учеников, выпускникам и преподавателям. Одно сообщение в WhatsApp.</p><strong>30 человек</strong></article>
           <article><b>03</b><h3>Получили заявки</h3><p>По каждой сразу видны контакт, комментарий, дата и кто привёл.</p><strong>6 заявок</strong></article>
-          <article><b>04</b><h3>Приняли подходящих</h3><p>Если две сделки закрылись, компания получила 2 400 000 ₸ выручки.</p><strong>240 000 ₸ к выплате</strong></article>
+          <article><b>04</b><h3>Получили новых учеников</h3><p>Четыре семьи оплатили годовую программу. Центр получил 2 400 000 ₸ выручки.</p><strong>100 000 ₸ к выплате</strong></article>
         </div>
-        <div className="lp-example-total"><span>В ЭТОМ ПРИМЕРЕ</span><strong>Канал принёс 2 400 000 ₸. Вознаграждения — 240 000 ₸. Аванса нет.</strong></div>
+        <div className="lp-example-total"><span>В ЭТОМ ПРИМЕРЕ</span><strong>Рекомендации принесли 2 400 000 ₸. Вознаграждения — 100 000 ₸. За неподходящие заявки центр не платил.</strong></div>
       </section>
 
       <section className="lp-ai lp-section" id="product">
@@ -353,7 +352,7 @@ export default async function Home() {
           </div>
           <div className="lp-screen-wrap">
             <img
-              src="/company-cabinet.png?v=20260818"
+              src="/company-cabinet.png?v=20260901"
               width="1440"
               height="900"
               loading="lazy"
@@ -367,16 +366,16 @@ export default async function Home() {
           </div>
         </figure>
         <div className="lp-ai-copy">
-          <span>ОДИН СПИСОК ДЛЯ КОМПАНИИ</span>
-          <h2>Вы не спорите с партнёром, кто привёл клиента.</h2>
+          <span>ВЫРУЧКА ОТ РЕКОМЕНДАЦИЙ ПОД КОНТРОЛЕМ</span>
+          <h2>Вы знаете, кто приводит клиентов и сколько приносит этот канал.</h2>
           <p>
             Каждая заявка хранит контакт, дату, имя рекомендателя и ваше решение.
             Принятые суммы сразу попадают в список выплат.
           </p>
           <ul>
-            <li>Сразу видно, что требует вашего решения</li>
-            <li>Причина отказа не теряется в переписке</li>
-            <li>По каждой сделке видно, кому и сколько вы должны</li>
+            <li>Новые контакты не теряются в WhatsApp</li>
+            <li>Вы платите только за результат по своим правилам</li>
+            <li>В любой момент видны выручка и сумма вознаграждений</li>
           </ul>
           <small>На изображении — рабочий кабинет компании RiseStaff.</small>
         </div>
@@ -385,7 +384,7 @@ export default async function Home() {
       <section className="lp-how lp-section" id="how">
         <div className="lp-section-intro light">
           <span>КАК ЭТО РАБОТАЕТ</span>
-          <h2>От правила до первой заявки — четыре понятных шага.</h2>
+          <h2>Подключите первых рекомендателей за четыре понятных шага.</h2>
         </div>
         <span className="lp-swipe-hint">Листайте шаги →</span>
         <div className="lp-steps">
@@ -475,7 +474,7 @@ export default async function Home() {
         <i className="lp-motion-orbit orbit-lime" aria-hidden="true" />
         <div className="lp-partner-copy">
           <span>ЧТО ВИДИТ ТОТ, КТО ВАС РЕКОМЕНДУЕТ</span>
-          <h2>Человеку не должно быть ни стыдно, ни мутно.</h2>
+          <h2>Люди охотнее рекомендуют вас, когда правила понятны.</h2>
           <p>
             Он видит, кого вы ищете, сколько платите и что стало с его заявкой.
             Кабинет открывается по ссылке в браузере.
@@ -493,7 +492,7 @@ export default async function Home() {
           </div>
           <div className="lp-screen-wrap">
             <img
-              src="/agent-cabinet.png?v=20260818"
+              src="/agent-cabinet.png?v=20260901"
               width="1440"
               height="900"
               loading="lazy"
@@ -547,7 +546,7 @@ export default async function Home() {
       <section className="lp-offer lp-section" id="offer">
         <div className="lp-offer-copy">
           <span>ПИЛОТНЫЙ ЗАПУСК · ТОЛЬКО 20 КОМПАНИЙ</span>
-          <h2>Первую программу мы соберём вместе с вами.</h2>
+          <h2>Запустите рекомендации без долгой настройки.</h2>
           <p>
             Разберём ваш продукт, напишем правила и подготовим ссылку. За настройку
             денег не берём — нам нужны ваши первые заявки и честная обратная связь.
@@ -602,7 +601,7 @@ export default async function Home() {
       <section className="lp-payments lp-section" id="payments">
         <div className="lp-section-intro">
           <span>ДЕНЬГИ И ОФОРМЛЕНИЕ В КАЗАХСТАНЕ</span>
-          <h2>RiseStaff считает сумму. Деньги вы переводите напрямую.</h2>
+          <h2>Вы заранее знаете, кому, за что и сколько платить.</h2>
           <p>Сервис не берёт процент с вознаграждений и не выступает стороной вашей выплаты.</p>
         </div>
         <div className="lp-payment-grid">
@@ -640,12 +639,12 @@ export default async function Home() {
             </i>
           ))}
         </div>
-        <span>ПЕРВАЯ ЗАЯВКА МОЖЕТ ПРИЙТИ УЖЕ НА ЭТОЙ НЕДЕЛЕ</span>
+        <span>ПЕРВЫЕ РЕКОМЕНДАЦИИ МОГУТ ПРИЙТИ УЖЕ НА ЭТОЙ НЕДЕЛЕ</span>
         <h2>
-          Напишите, за какого клиента вы готовы заплатить и сколько.
+          Подключите тех, кто уже готов рекомендовать вашу компанию.
         </h2>
         <p>
-          Ссылку, кабинет и подсчёт выплат RiseStaff берёт на себя.
+          Получайте новые контакты, принимайте подходящих и платите только за результат.
         </p>
         <div className="lp-final-actions">
           <a className="lp-primary" href={dashboardHref} data-track="final_primary">{user ? "Открыть кабинет" : "Запустить программу бесплатно"}<span>↗</span></a>
@@ -667,7 +666,7 @@ export default async function Home() {
             <span>RiseStaff</span>
           </Link>
           <p>
-            Программа «приведи клиента» для вашей компании.
+            Новые клиенты через рекомендации тех, кто вам доверяет.
             <br />
             Казахстан ·{" "}
             <a href={whatsappHref} target="_blank" rel="noreferrer">

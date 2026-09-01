@@ -53,7 +53,7 @@ export function MethodologistEditor({ initialItems, initialBrief, tokenBalance, 
     const data = await response.json() as { needsInput?: boolean; message?: string; summary?: string; questions?: Question[]; uncertainties?: string[]; brief?: MethodologyBrief; tokenBalance?: number; error?: string };
     if (!response.ok || !data.brief) {
       setAssistantMessage(data.error || "Мне не удалось собрать достаточно данных автоматически. Давайте уточним главное.");
-      setQuestions([{ id: "recovery", label: "Расскажите своими словами", question: "Что вы продаёте, кому это полезно и к какому следующему шагу должен привести агент?", placeholder: "Например: внедрение CRM для строительных компаний; агент должен познакомить нас с собственником…" }]);
+      setQuestions([{ id: "recovery", label: "Расскажите своими словами", question: "Что вы продаёте, кому это полезно и к какому следующему шагу должен привести агент?", placeholder: "Например: годовой курс английского для подростков; агент должен познакомить нас с родителем ученика…" }]);
       setQuestionIndex(0); setFlow("questions"); return;
     }
     setBrief(data.brief); setAssistantMessage(data.message || "Проверьте, правильно ли я понял задачу."); setSummary(data.summary || ""); setUncertainties(data.uncertainties || []);

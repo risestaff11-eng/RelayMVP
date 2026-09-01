@@ -61,7 +61,7 @@ test("renders the RiseStaff landing page", async () => {
   assert.match(html, /<html lang="ru"/);
   assert.match(html, /relay-language-switcher/);
   assert.match(html, />ҚАЗ</);
-  assert.match(html, /RiseStaff — сервис для программы «приведи клиента»/);
+  assert.match(html, /RiseStaff — новые клиенты через рекомендации/);
   assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz"/);
   assert.match(html, /rel="icon" href="\/icon-192\.png"/);
   assert.match(html, /"@type":"WebSite"/);
@@ -69,11 +69,12 @@ test("renders the RiseStaff landing page", async () => {
   assert.match(html, /lp-color-word/);
   assert.match(html, /рекомендации/);
   assert.match(html, /четыре понятных шага/i);
-  assert.doesNotMatch(html, /Northstar CRM/);
-  assert.match(html, /Человеку не должно быть ни стыдно, ни мутно/);
+  assert.doesNotMatch(html, /Northstar CRM|внедрение CRM/i);
+  assert.match(html, /Люди охотнее рекомендуют вас, когда правила понятны/);
   assert.doesNotMatch(html, /ТЕКУЩИЙ ПИЛОТ RISESTAFF/);
   assert.match(html, /RiseStaff — не биржа людей/);
-  assert.match(html, /СЕРВИС ДЛЯ ПРОГРАММЫ «ПРИВЕДИ КЛИЕНТА — ПОЛУЧИ ВОЗНАГРАЖДЕНИЕ»/);
+  assert.match(html, /БОЛЬШЕ НОВЫХ КЛИЕНТОВ ИЗ ТЕХ, КТО УЖЕ ВАМ ДОВЕРЯЕТ/);
+  assert.match(html, /образовательный центр продаёт годовой курс за 600 000 ₸/i);
   assert.doesNotMatch(html, /B2B-клиент|B2B-лид|B2B-продаж/i);
   assert.match(html, /ИИ соберёт черновик/);
   assert.doesNotMatch(html, /ранний доступ|бета-тест/i);

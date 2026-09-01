@@ -25,13 +25,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const description = "Назначьте вознаграждение за приведённого клиента. RiseStaff покажет, кто кого привёл, что стало с заявкой и сколько нужно выплатить.";
+const description = "Ваши клиенты и партнёры рекомендуют вас покупателям. Вы видите, кто привёл каждого клиента, что стало с заявкой и сколько нужно выплатить.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://risestaff.kz"),
   applicationName: "RiseStaff",
   title: {
-    default: "RiseStaff — сервис для программы «приведи клиента»",
+    default: "RiseStaff — новые клиенты через рекомендации",
     template: "%s · RiseStaff",
   },
   description,
@@ -57,17 +57,17 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: "RiseStaff",
     locale: "ru_KZ",
-    title: "RiseStaff — сервис для программы «приведи клиента»",
+    title: "RiseStaff — новые клиенты через рекомендации",
     description,
     type: "website",
     url: "https://risestaff.kz/",
-    images: [{ url: "https://risestaff.kz/og.png", width: 1731, height: 909, alt: "RiseStaff — сервис для программы «приведи клиента»" }],
+    images: [{ url: "https://risestaff.kz/og.png?v=20260901", width: 1731, height: 909, alt: "RiseStaff — новые клиенты через рекомендации" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "RiseStaff — сервис для программы «приведи клиента»",
+    title: "RiseStaff — новые клиенты через рекомендации",
     description,
-    images: ["https://risestaff.kz/og.png"],
+    images: ["https://risestaff.kz/og.png?v=20260901"],
   },
 };
 
