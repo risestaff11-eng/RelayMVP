@@ -34,8 +34,8 @@ export default async function DashboardPage() {
     { mark: profile ? "✓" : "◎", title: profile ? "Профиль компании подтверждён" : "Профиль компании ждёт подтверждения", text: profile ? "Данные готовы для генерации заданий" : "Проверьте данные компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
     { mark: "○", title: "Следующий шаг", text: latestProgram.status === "ACTIVE" ? "Пригласите первых агентов" : "Опубликуйте внешнюю ссылку", date: latestProgram.updatedAt, href: latestProgram.status === "ACTIVE" ? "/dashboard/partners" : `/dashboard/programs/${latestProgram.id}`, action: latestProgram.status === "ACTIVE" ? "Перейти к агентам" : "Опубликовать" },
   ] : [
-    { mark: "✓", title: "Компания создана", text: `${company.name} добавлена в Yaler`, date: company.createdAt, href: "/dashboard/settings", action: "Проверить данные" },
-    { mark: profile ? "✓" : "◎", title: profile ? "Профиль компании подтверждён" : "Следующий шаг — профиль компании", text: profile ? "Основа для заданий готова" : "Yaler изучит сайт компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
+    { mark: "✓", title: "Компания создана", text: `${company.name} добавлена в RiseStaff`, date: company.createdAt, href: "/dashboard/settings", action: "Проверить данные" },
+    { mark: profile ? "✓" : "◎", title: profile ? "Профиль компании подтверждён" : "Следующий шаг — профиль компании", text: profile ? "Основа для заданий готова" : "RiseStaff изучит сайт компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
     { mark: "＋", title: "Создайте первую программу", text: "Соберите задания и условия выплат", date: company.createdAt, href: "/dashboard/programs/new", action: "Создать программу" },
   ];
 
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
       <section className="dashboard-grid">
         <div>
           {!showFirstRun && <article className="setup-card">
-            <div className="setup-card-top"><div><h3>Запуск программы</h3><p>{hasPublished ? "Программа опубликована. Теперь приглашайте агентов, проверяйте заявки и отмечайте выплаты." : "Yaler ведёт от профиля компании до внешней ссылки с понятными заданиями и наградами."}</p></div><span className="progress-badge">{progress}%</span></div>
+            <div className="setup-card-top"><div><h3>Запуск программы</h3><p>{hasPublished ? "Программа опубликована. Теперь приглашайте агентов, проверяйте заявки и отмечайте выплаты." : "RiseStaff ведёт от профиля компании до внешней ссылки с понятными заданиями и наградами."}</p></div><span className="progress-badge">{progress}%</span></div>
             <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
             <div className="setup-steps">
               <Link className="setup-step done" href="/dashboard/settings"><strong>✓ Компания →</strong>Основные данные сохранены</Link>

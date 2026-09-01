@@ -8,7 +8,7 @@ const sections = [
   ["/dashboard/partners", "Кто вас рекомендует"],
   ["/dashboard/rewards", "Выплаты агентам"],
   ["/dashboard/analytics", "Аналитика"],
-  ["/dashboard/assistant", "Yaler · программы"],
+  ["/dashboard/assistant", "RiseStaff · программы"],
   ["/dashboard/methodologist", "Материалы для агентов"],
   ["/dashboard/company-profile", "Данные компании"],
   ["/dashboard/settings", "Настройки"],

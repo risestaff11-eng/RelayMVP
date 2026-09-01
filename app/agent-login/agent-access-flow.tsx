@@ -158,8 +158,8 @@ export function AgentAccessFlow() {
       <section className="agent-access-card">
         <header>
           <a href="https://risestaff.kz/" className="agent-access-brand">
-            <i>Y</i>
-            <b>Yaler</b>
+            <i>R</i>
+            <b>RiseStaff</b>
           </a>
           <span>
             {stage.startsWith("APPLICATION")

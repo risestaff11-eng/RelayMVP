@@ -4,7 +4,8 @@ import { authSessions, companies, supportSessions, userRoles, users } from "../d
 
 const SESSION_COOKIE = "relay_session";
 const ADMIN_COOKIE = "relay_admin";
-const SUPPORT_COOKIE = "yaler_support_session";
+const SUPPORT_COOKIE = "risestaff_support_session";
+const LEGACY_SUPPORT_COOKIE = "yaler_support_session";
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const ADMIN_TTL_MS = 8 * 60 * 60 * 1000;
 const SUPPORT_TTL_MS = 2 * 60 * 60 * 1000;
@@ -113,7 +114,7 @@ export async function getAccountUser(): Promise<AccountUser | null> {
 
 async function getSupportUser(): Promise<AccountUser | null> {
   const jar = await cookies();
-  const rawToken = jar.get(SUPPORT_COOKIE)?.value;
+  const rawToken = jar.get(SUPPORT_COOKIE)?.value ?? jar.get(LEGACY_SUPPORT_COOKIE)?.value;
   if (!rawToken || !(await hasAdminSession())) return null;
   const now = new Date().toISOString();
   const db = await getDbForSupport();
@@ -160,9 +161,10 @@ export async function createSupportSession(companyId: string, reason = "Опер
 
 export async function clearSupportSession() {
   const jar = await cookies();
-  const rawToken = jar.get(SUPPORT_COOKIE)?.value;
+  const rawToken = jar.get(SUPPORT_COOKIE)?.value ?? jar.get(LEGACY_SUPPORT_COOKIE)?.value;
   if (rawToken) await (await getDbForSupport()).update(supportSessions).set({ endedAt: new Date().toISOString() }).where(eq(supportSessions.id, await sha256(rawToken)));
   jar.set(SUPPORT_COOKIE, "", { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/", expires: new Date(0) });
+  jar.set(LEGACY_SUPPORT_COOKIE, "", { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/", expires: new Date(0) });
 }
 
 async function runtimeAdminSecret() {

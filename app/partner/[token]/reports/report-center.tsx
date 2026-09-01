@@ -306,7 +306,7 @@ export function ReportCenter({
         <section className="report-empty">
           <b>Первый отчёт займёт несколько минут</b>
           <p>
-            Yaler разложит голосовой ответ по полям, а показатели из заявок и
+            RiseStaff разложит голосовой ответ по полям, а показатели из заявок и
             выплат добавятся автоматически.
           </p>
           <button onClick={() => open()}>Создать отчёт →</button>
@@ -408,7 +408,7 @@ export function ReportCenter({
             <section className="report-voice-hero">
               <div>
                 <b>Заполнить весь отчёт голосом</b>
-                <p>До 3 минут. Yaler заполнит поля, вы проверите каждое.</p>
+                <p>До 3 минут. RiseStaff заполнит поля, вы проверите каждое.</p>
               </div>
               {recording && !recording.fieldId ? (
                 <button className="recording" onClick={stop}>

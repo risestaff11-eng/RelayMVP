@@ -20,7 +20,7 @@ export async function GET() {
     getLatestCompanyProfile(company.id),
   ]);
   const exportData = {
-    format: "YALER_COMPANY_EXPORT_V1",
+    format: "RISESTAFF_COMPANY_EXPORT_V1",
     exportedAt: new Date().toISOString(),
     company: { id: company.id, name: company.name, website: company.website, industry: company.industry, planCode: company.planCode, createdAt: company.createdAt },
     profile,
@@ -35,7 +35,7 @@ export async function GET() {
   return new Response(JSON.stringify(exportData, null, 2), {
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "content-disposition": `attachment; filename="yaler-${safeName}-${new Date().toISOString().slice(0, 10)}.json"`,
+      "content-disposition": `attachment; filename="risestaff-${safeName}-${new Date().toISOString().slice(0, 10)}.json"`,
       "cache-control": "private, no-store",
     },
   });

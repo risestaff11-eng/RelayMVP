@@ -163,7 +163,7 @@ export function CompanyProfileEditor({
   return (
     <div className="dashboard-content module-content profile-editor-page">
       <div className="module-heading profile-page-heading">
-        <div><span className="module-kicker">ПРОФИЛЬ КОМПАНИИ</span><h1>Проверьте, что Yaler понял ваш бизнес</h1><p>Yaler собирает факты с сайта, а вы исправляете неточности и подтверждаете готовую версию.</p></div>
+        <div><span className="module-kicker">ПРОФИЛЬ КОМПАНИИ</span><h1>Проверьте, что RiseStaff понял ваш бизнес</h1><p>RiseStaff собирает факты с сайта, а вы исправляете неточности и подтверждаете готовую версию.</p></div>
         <div className="heading-actions"><Link className="button button-ghost compact-button" href="/dashboard/settings">Настройки профиля →</Link></div>
       </div>
 
@@ -175,7 +175,7 @@ export function CompanyProfileEditor({
           <label htmlFor="company-website">Сайт компании</label>
           <div><input id="company-website" type="url" value={website} onChange={(event) => setWebsite(event.target.value)} required /><button type="submit" disabled={pending !== null}>{pending === "website" ? "Сохраняем…" : "Сохранить сайт"}</button></div>
         </form>
-        <div className="website-actions-row"><a href={savedWebsite} target="_blank" rel="noreferrer">Открыть сайт ↗</a><span>Расход будет показан после анализа</span><button className="button button-primary" type="button" onClick={analyze} disabled={pending !== null}>{pending === "analysis" ? "Yaler анализирует сайт…" : profile ? "Обновить данные с Yaler" : "Собрать данные с Yaler"}<span>✦</span></button></div>
+        <div className="website-actions-row"><a href={savedWebsite} target="_blank" rel="noreferrer">Открыть сайт ↗</a><span>Расход будет показан после анализа</span><button className="button button-primary" type="button" onClick={analyze} disabled={pending !== null}>{pending === "analysis" ? "RiseStaff анализирует сайт…" : profile ? "Обновить данные с RiseStaff" : "Собрать данные с RiseStaff"}<span>✦</span></button></div>
       </section>
 
       <div className="profile-status-row">
@@ -184,7 +184,7 @@ export function CompanyProfileEditor({
       </div>
 
       {!profile ? (
-        <section className="panel profile-empty-state"><div className="profile-empty-icon">✦</div><h2>Профиль компании пока не собран</h2><p>Yaler прочитает открытые страницы сайта и создаст редактируемый черновик.</p></section>
+        <section className="panel profile-empty-state"><div className="profile-empty-icon">✦</div><h2>Профиль компании пока не собран</h2><p>RiseStaff прочитает открытые страницы сайта и создаст редактируемый черновик.</p></section>
       ) : !profileMatchesWebsite ? (
         <section className="panel profile-empty-state warning-state"><div className="profile-empty-icon">↻</div><h2>Сайт изменился</h2><p>Версия {profile.versionNumber} была создана для другого адреса. Запустите новый анализ; до подтверждения прежний профиль остаётся историей.</p></section>
       ) : (

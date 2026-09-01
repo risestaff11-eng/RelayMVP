@@ -25,19 +25,19 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const description = "Назначьте вознаграждение за приведённого клиента. Yaler покажет, кто кого привёл, что стало с заявкой и сколько нужно выплатить.";
+const description = "Назначьте вознаграждение за приведённого клиента. RiseStaff покажет, кто кого привёл, что стало с заявкой и сколько нужно выплатить.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://risestaff.kz"),
-  applicationName: "Yaler",
+  applicationName: "RiseStaff",
   title: {
-    default: "Yaler — сервис для программы «приведи клиента»",
-    template: "%s · Yaler",
+    default: "RiseStaff — сервис для программы «приведи клиента»",
+    template: "%s · RiseStaff",
   },
   description,
-  keywords: ["приведи клиента", "вознаграждение за клиента", "программа рекомендаций", "партнёрские продажи", "учёт выплат", "Yaler", "RiseStaff"],
-  creator: "Yaler",
-  publisher: "Yaler",
+  keywords: ["приведи клиента", "вознаграждение за клиента", "программа рекомендаций", "партнёрские продажи", "учёт выплат", "RiseStaff"],
+  creator: "RiseStaff",
+  publisher: "RiseStaff",
   category: "business",
   robots: {
     index: true,
@@ -53,19 +53,19 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Yaler" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "RiseStaff" },
   openGraph: {
-    siteName: "Yaler",
+    siteName: "RiseStaff",
     locale: "ru_KZ",
-    title: "Yaler — сервис для программы «приведи клиента»",
+    title: "RiseStaff — сервис для программы «приведи клиента»",
     description,
     type: "website",
     url: "https://risestaff.kz/",
-    images: [{ url: "https://risestaff.kz/og.png", width: 1731, height: 909, alt: "Yaler — сервис для программы «приведи клиента»" }],
+    images: [{ url: "https://risestaff.kz/og.png", width: 1731, height: 909, alt: "RiseStaff — сервис для программы «приведи клиента»" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Yaler — сервис для программы «приведи клиента»",
+    title: "RiseStaff — сервис для программы «приведи клиента»",
     description,
     images: ["https://risestaff.kz/og.png"],
   },
@@ -83,7 +83,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
-        <LanguageSwitcher locale={locale} />
+        <LanguageSwitcher locale={locale} className="global-language-switcher" />
       </body>
     </html>
   );

@@ -12,7 +12,7 @@ const starterPrompts = ["Проверь, что мешает запустить 
 
 export function AiAssistantChat({ companyName, initialTokenBalance }: { companyName: string; initialTokenBalance: number }) {
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([{ role: "assistant", content: `Я Yaler, помощник ${companyName} в Yaler. Помогу собрать программу, улучшить задания, активировать агентов и разобраться в заявках. Изменения внесу только после вашего подтверждения.`, suggestions: starterPrompts }]);
+  const [messages, setMessages] = useState<Message[]>([{ role: "assistant", content: `Я RiseStaff, помощник ${companyName} в RiseStaff. Помогу собрать программу, улучшить задания, активировать агентов и разобраться в заявках. Изменения внесу только после вашего подтверждения.`, suggestions: starterPrompts }]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -27,10 +27,10 @@ export function AiAssistantChat({ companyName, initialTokenBalance }: { companyN
     try {
       const response = await fetch("/api/company/assistant", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next.map(({ role, content: message }) => ({ role, content: message })) }) });
       const data = await response.json() as { error?: string; reply?: string; suggestions?: string[]; action?: Action; tokenBalance?: number; creditsSpent?: number };
-      if (!response.ok || !data.reply) throw new Error(data.error || "Yaler не ответил");
+      if (!response.ok || !data.reply) throw new Error(data.error || "RiseStaff не ответил");
       setMessages((current) => [...current, { role: "assistant", content: data.reply!, creditsSpent: data.creditsSpent, suggestions: data.suggestions, action: data.action?.type === "NONE" ? undefined : data.action }]);
       if (typeof data.tokenBalance === "number") setTokenBalance(data.tokenBalance);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Yaler временно недоступен"); } finally { setPending(false); }
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "RiseStaff временно недоступен"); } finally { setPending(false); }
   }
 
   async function apply(action: Action) {
@@ -58,7 +58,7 @@ export function AiAssistantChat({ companyName, initialTokenBalance }: { companyN
   }
 
   return <div className="dashboard-content module-content assistant-page">
-    <div className="module-heading"><div><span className="module-kicker">YALER · ПОМОЩНИК ПО ПРОГРАММАМ</span><h1>Развивайте сеть рекомендаций в диалоге</h1><p>Yaler предложит конкретное улучшение и применит его только после вашего подтверждения.</p></div><div className="assistant-token-balance"><small>БАЛАНС AI</small><strong>{formatInteger(tokenBalance)} кредитов</strong><span>Один ответ — до {formatInteger(aiCreditLimit("ASSISTANT_REPLY"))} кредитов</span></div></div>
+    <div className="module-heading"><div><span className="module-kicker">RISESTAFF · ПОМОЩНИК ПО ПРОГРАММАМ</span><h1>Развивайте сеть рекомендаций в диалоге</h1><p>RiseStaff предложит конкретное улучшение и применит его только после вашего подтверждения.</p></div><div className="assistant-token-balance"><small>БАЛАНС AI</small><strong>{formatInteger(tokenBalance)} кредитов</strong><span>Один ответ — до {formatInteger(aiCreditLimit("ASSISTANT_REPLY"))} кредитов</span></div></div>
     <section className="assistant-workspace">
       <aside><button className="assistant-help-trigger" type="button" onClick={() => void send("Проведи быструю диагностику моего кабинета и предложи одно самое полезное следующее действие") }><span>✦</span><h2>Чем могу помочь</h2><ul><li>Собрать новую программу</li><li>Улучшить задания и награды</li><li>Настроить правила и выплаты</li><li>Подготовить базу знаний</li></ul><small>Нажмите, чтобы начать. AI ничего не меняет без подтверждения.</small></button></aside>
       <div className="assistant-chat"><div className="assistant-messages" aria-live="polite">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><span>{message.role === "assistant" ? "✦" : "Вы"}</span><div><p>{message.content}</p>{typeof message.creditsSpent === "number" && <small>Списано: {message.creditsSpent} AI-кредитов</small>}{message.action && <div className="assistant-action"><small>ПРЕДЛОЖЕННОЕ ИЗМЕНЕНИЕ</small><strong>{message.action.summary}</strong><button type="button" disabled={applying} onClick={() => void apply(message.action!)}>{applying ? "Применяю…" : `${message.action.label} →`}</button></div>}{message.suggestions && <div className="assistant-suggestions">{message.suggestions.map((suggestion) => <button type="button" onClick={() => void send(suggestion)} key={suggestion}>{suggestion}</button>)}</div>}</div></article>)}{pending && <article className="assistant"><span>✦</span><div><p>Анализирую кабинет и готовлю следующий шаг…</p></div></article>}</div>{error && <div className="inline-notice error" role="alert">{error}</div>}<form onSubmit={(event) => { event.preventDefault(); void send(); }}><textarea value={input} onChange={(event) => setInput(event.target.value)} rows={3} placeholder="Например: создай программу для привлечения лидов в Казахстане" /><button type="submit" disabled={pending || !input.trim()} aria-label="Отправить сообщение">↑</button></form></div>

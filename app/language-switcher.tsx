@@ -36,11 +36,11 @@ function persistLocale(locale: Locale) {
   document.cookie = `relay_locale=${locale}; Path=/; Max-Age=31536000; SameSite=Lax${sharedDomain}`;
 }
 
-export function LanguageSwitcher({ locale }: { locale: Locale }) {
+export function LanguageSwitcher({ locale, className = "", manageTranslation = true, compact = false }: { locale: Locale; className?: string; manageTranslation?: boolean; compact?: boolean }) {
   const applying = useRef(false);
 
   useEffect(() => {
-    if (locale !== "kk") return;
+    if (!manageTranslation || locale !== "kk") return;
     let scheduled = 0;
     const apply = () => {
       if (applying.current) return;
@@ -60,7 +60,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
     });
     apply();
     return () => { cancelAnimationFrame(scheduled); observer.disconnect(); };
-  }, [locale]);
+  }, [locale, manageTranslation]);
 
   const choose = (nextLocale: Locale) => {
     if (nextLocale === locale) return;
@@ -68,7 +68,9 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
     location.reload();
   };
 
-  return <div className="relay-language-switcher" data-no-translate role="group" aria-label={locale === "kk" ? "Интерфейс тілі" : "Язык интерфейса"}>
+  if (compact) return <button className={`relay-language-toggle ${className}`.trim()} data-no-translate type="button" onClick={() => choose(locale === "ru" ? "kk" : "ru")} aria-label={locale === "ru" ? "Қазақшаға ауысу" : "Переключить на русский"} title={locale === "ru" ? "Қазақша" : "Русский"}>{locale === "ru" ? "ҚАЗ" : "RU"}</button>;
+
+  return <div className={`relay-language-switcher ${className}`.trim()} data-no-translate role="group" aria-label={locale === "kk" ? "Интерфейс тілі" : "Язык интерфейса"}>
     <button type="button" className={locale === "ru" ? "active" : ""} aria-pressed={locale === "ru"} onClick={() => choose("ru")}>RU</button>
     <button type="button" className={locale === "kk" ? "active" : ""} aria-pressed={locale === "kk"} onClick={() => choose("kk")}>ҚАЗ</button>
   </div>;

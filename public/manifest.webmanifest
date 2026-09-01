@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Yaler — агентские продажи",
-  "short_name": "Yaler",
+  "name": "RiseStaff — агентские продажи",
+  "short_name": "RiseStaff",
   "description": "Программы, задания, результаты и выплаты в одном кабинете.",
   "start_url": "/?source=pwa",
   "scope": "/",

@@ -54,7 +54,7 @@ export async function generateStructuredJsonFromAudio<T>({
   if (runtime.AI_PROVIDER && runtime.AI_PROVIDER !== "gemini") throw new Error("AI-провайдер настроен неверно");
   if (!runtime.GEMINI_API_KEY) throw new Error("Голосовая расшифровка ещё не подключена администратором");
   const model = runtime.GEMINI_AUDIO_MODEL || runtime.GEMINI_MODEL || "gemini-3.6-flash";
-  if (!/^[a-z0-9._-]+$/i.test(model)) throw new Error("Некорректная настройка AI-модели Yaler");
+  if (!/^[a-z0-9._-]+$/i.test(model)) throw new Error("Некорректная настройка AI-модели RiseStaff");
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
     signal: AbortSignal.timeout(60000),
@@ -66,13 +66,13 @@ export async function generateStructuredJsonFromAudio<T>({
     }),
   });
   const result = (await response.json()) as AiProviderResponse;
-  if (!response.ok) throw new Error(result.error?.message || `Yaler временно недоступен (HTTP ${response.status})`);
+  if (!response.ok) throw new Error(result.error?.message || `RiseStaff временно недоступен (HTTP ${response.status})`);
   const candidate = result.candidates?.[0];
   const text = candidate?.content?.parts?.filter((part) => !part.thought && typeof part.text === "string").map((part) => part.text).join("").trim();
-  if (!text) throw new Error(candidate?.finishMessage || "Yaler не смог расшифровать запись");
+  if (!text) throw new Error(candidate?.finishMessage || "RiseStaff не смог расшифровать запись");
   let data: T;
   try { data = JSON.parse(text) as T; }
-  catch { throw new Error("Yaler подготовил расшифровку в неверном формате. Повторите запись"); }
+  catch { throw new Error("RiseStaff подготовил расшифровку в неверном формате. Повторите запись"); }
   const inputTokens = result.usageMetadata?.promptTokenCount ?? 0;
   const outputTokens = result.usageMetadata?.candidatesTokenCount ?? 0;
   return { data, model: result.modelVersion || model, inputTokens, outputTokens, totalTokens: result.usageMetadata?.totalTokenCount ?? inputTokens + outputTokens, thoughtsTokens: result.usageMetadata?.thoughtsTokenCount ?? 0 };
@@ -95,10 +95,10 @@ export async function generateStructuredJson<T>({
 }): Promise<StructuredAiResult<T>> {
   const runtime = env as unknown as { AI_PROVIDER?: string; GEMINI_API_KEY?: string; GEMINI_MODEL?: string };
   if (runtime.AI_PROVIDER && runtime.AI_PROVIDER !== "gemini") throw new Error("AI-провайдер настроен неверно");
-  if (!runtime.GEMINI_API_KEY) throw new Error("Yaler ещё не подключён администратором");
+  if (!runtime.GEMINI_API_KEY) throw new Error("RiseStaff ещё не подключён администратором");
 
   const model = runtime.GEMINI_MODEL || "gemini-3.6-flash";
-  if (!/^[a-z0-9._-]+$/i.test(model)) throw new Error("Некорректная настройка AI-модели Yaler");
+  if (!/^[a-z0-9._-]+$/i.test(model)) throw new Error("Некорректная настройка AI-модели RiseStaff");
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
     signal: AbortSignal.timeout(60000),
@@ -116,8 +116,8 @@ export async function generateStructuredJson<T>({
     }),
   });
   const result = (await response.json()) as AiProviderResponse;
-  if (!response.ok) throw new Error(result.error?.message || `Yaler временно недоступен (HTTP ${response.status})`);
-  if (result.promptFeedback?.blockReason) throw new Error(`Yaler не может обработать запрос: ${result.promptFeedback.blockReason}`);
+  if (!response.ok) throw new Error(result.error?.message || `RiseStaff временно недоступен (HTTP ${response.status})`);
+  if (result.promptFeedback?.blockReason) throw new Error(`RiseStaff не может обработать запрос: ${result.promptFeedback.blockReason}`);
 
   const candidate = result.candidates?.[0];
   const text = candidate?.content?.parts
@@ -125,13 +125,13 @@ export async function generateStructuredJson<T>({
     .map((part) => part.text)
     .join("")
     .trim();
-  if (!text) throw new Error(candidate?.finishMessage || `Yaler не подготовил ответ (${candidate?.finishReason || "без причины"})`);
+  if (!text) throw new Error(candidate?.finishMessage || `RiseStaff не подготовил ответ (${candidate?.finishReason || "без причины"})`);
 
   let data: T;
   try {
     data = JSON.parse(text) as T;
   } catch {
-    throw new Error("Yaler подготовил ответ в неверном формате. Повторите запрос");
+    throw new Error("RiseStaff подготовил ответ в неверном формате. Повторите запрос");
   }
 
   const inputTokens = result.usageMetadata?.promptTokenCount ?? 0;

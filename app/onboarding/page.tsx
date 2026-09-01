@@ -17,7 +17,7 @@ export default async function OnboardingPage() {
   return (
     <main className="auth-page">
       <aside className="auth-aside">
-        <Link className="brand" href={marketingUrl()}><span className="brand-mark">R</span><span>Yaler</span></Link>
+        <Link className="brand" href={marketingUrl()}><span className="brand-mark">R</span><span>RiseStaff</span></Link>
         <div className="auth-message">
           <span className="auth-kicker">НАЧАЛО НАСТРОЙКИ</span>
           <h1>Начнём с вашей компании.</h1>

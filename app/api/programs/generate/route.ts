@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     };
 
     const ai = await generateStructuredJson<GeneratedProgram>({
-      systemInstruction: `Ты продуктовый архитектор агентских B2B-программ Yaler. Создавай честные, выполнимые и готовые к редактированию задания для внешних агентов.
+      systemInstruction: `Ты продуктовый архитектор агентских B2B-программ RiseStaff. Создавай честные, выполнимые и готовые к редактированию задания для внешних агентов.
 Для каждой плитки работай в отдельной роли:
 - LEAD: руководитель лидогенерации. Опиши ICP, обязательные данные квалифицированного контакта, проверку дубля и критерий принятия.
 - DEAL: руководитель партнёрских продаж. Привяжи результат к подтверждаемому этапу сделки или оплате, не обещай выплату до выполнения условия.
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     });
 
     const byType = new Map(ai.data.missions.map((mission) => [mission.type, mission]));
-    if (selectedTypes.some((type) => !byType.has(type)) || byType.size !== selectedTypes.length) throw new Error("Yaler подготовил неполный набор заданий. Повторите генерацию.");
+    if (selectedTypes.some((type) => !byType.has(type)) || byType.size !== selectedTypes.length) throw new Error("RiseStaff подготовил неполный набор заданий. Повторите генерацию.");
 
     const programId = crypto.randomUUID();
     const slug = `${slugPart(name)}-${crypto.randomUUID().slice(0, 7)}`;

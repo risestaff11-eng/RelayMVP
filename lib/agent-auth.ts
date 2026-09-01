@@ -4,7 +4,8 @@ import { getDb } from "../db";
 import { agentSessions } from "../db/schema";
 import { createPartnerToken, hashPartnerToken } from "./partner-token";
 
-const AGENT_SESSION_COOKIE = "yaler_agent_session";
+const AGENT_SESSION_COOKIE = "risestaff_agent_session";
+const LEGACY_AGENT_SESSION_COOKIE = "yaler_agent_session";
 const AGENT_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function normalizeAgentEmail(value: unknown) {
@@ -41,7 +42,8 @@ export async function createAgentSession(email: string, phone: string) {
 }
 
 export async function getAgentSession() {
-  const rawToken = (await cookies()).get(AGENT_SESSION_COOKIE)?.value;
+  const jar = await cookies();
+  const rawToken = jar.get(AGENT_SESSION_COOKIE)?.value ?? jar.get(LEGACY_AGENT_SESSION_COOKIE)?.value;
   if (!rawToken) return null;
   const now = new Date().toISOString();
   const row = (await getDb().select().from(agentSessions).where(and(
@@ -55,7 +57,8 @@ export async function getAgentSession() {
 
 export async function clearAgentSession() {
   const jar = await cookies();
-  const rawToken = jar.get(AGENT_SESSION_COOKIE)?.value;
+  const rawToken = jar.get(AGENT_SESSION_COOKIE)?.value ?? jar.get(LEGACY_AGENT_SESSION_COOKIE)?.value;
   if (rawToken) await getDb().delete(agentSessions).where(eq(agentSessions.id, await hashPartnerToken(rawToken)));
   jar.set(AGENT_SESSION_COOKIE, "", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", expires: new Date(0) });
+  jar.set(LEGACY_AGENT_SESSION_COOKIE, "", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", expires: new Date(0) });
 }

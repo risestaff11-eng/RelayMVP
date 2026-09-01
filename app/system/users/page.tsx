@@ -3,7 +3,7 @@ import { hasAdminSession } from "../../../lib/account-auth";
 import { listAgentApplications, listCompanyUsers, listDeletedCompanyAccounts } from "../../../db/admin";
 import { SystemUsers } from "./system-users";
 
-export const metadata: Metadata = { title: "Yaler system users", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "RiseStaff system users", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function SystemUsersPage() {

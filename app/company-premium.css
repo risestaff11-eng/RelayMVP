@@ -58,6 +58,8 @@
 .dashboard-context small { color: #171914; font-size: 12px; font-weight: 850; }
 .dashboard-context p { max-width: 680px; color: #696c64; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dashboard-shell .top-actions { display: flex; align-items: center; gap: 10px; }
+.dashboard-shell .company-language-switcher { order: -2; }
+.dashboard-shell .tour-launch { order: -1; }
 .dashboard-shell .account-menu > button { min-height: 48px; border-radius: 14px; box-shadow: 0 3px 12px rgba(23,25,20,.04); }
 .dashboard-shell .account-menu > button > span { width: 34px; height: 34px; font-size: 11px; }
 .dashboard-shell .account-menu > button strong { font-size: 11px; }

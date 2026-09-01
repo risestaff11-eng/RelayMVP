@@ -18,7 +18,7 @@ export function PartnerEarningStrip({ token, activeCount, bestReward, currency }
 
   useEffect(() => {
     const readGoal = () => {
-      try { setGoal(JSON.parse(localStorage.getItem(`yaler-agent-earnings-goal-${currency}`) || "null")); } catch { setGoal(null); }
+      try { setGoal(JSON.parse(localStorage.getItem(`risestaff-agent-earnings-goal-${currency}`) || localStorage.getItem(`yaler-agent-earnings-goal-${currency}`) || "null")); } catch { setGoal(null); }
     };
     const timer = window.setTimeout(readGoal, 0);
     const onGoal = (event: Event) => setGoal((event as CustomEvent<GoalData>).detail);

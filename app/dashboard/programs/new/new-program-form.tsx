@@ -41,7 +41,7 @@ export function NewProgramForm({ profileVersion, profileStatus }: { profileVersi
 
   return (
     <div className="dashboard-content module-content program-builder-page">
-      <div className="builder-back"><Link href="/dashboard/programs">← Все программы</Link><span>{profileVersion ? `Профиль компании v${profileVersion}${profileStatus === "CONFIRMED" ? " · подтверждён" : " · черновик"}` : "Профиль компании не заполнен"} · Yaler поможет собрать задания</span></div>
+      <div className="builder-back"><Link href="/dashboard/programs">← Все программы</Link><span>{profileVersion ? `Профиль компании v${profileVersion}${profileStatus === "CONFIRMED" ? " · подтверждён" : " · черновик"}` : "Профиль компании не заполнен"} · RiseStaff поможет собрать задания</span></div>
       <div className="module-heading"><div><span className="module-kicker">НОВАЯ ПРОГРАММА · ЭТАП 1</span><h1>Что вы хотите запустить?</h1><p>Выберите направление. На следующем экране вы настроите задания по одному — без длинной формы.</p></div></div>
       <div className="builder-stepper"><span className="active"><b>1</b>Основное</span><span><b>2</b>Задания</span><span><b>3</b>Условия</span><span><b>4</b>Проверка</span></div>
 
@@ -58,7 +58,7 @@ export function NewProgramForm({ profileVersion, profileStatus }: { profileVersi
         </section>
 
         {error && <div className="inline-notice error builder-error" role="alert">{error}</div>}
-        <div className="builder-submit-bar"><div><strong>Выберите удобный старт</strong><p>Yaler может заполнить задания за вас, либо вы начнёте с простых шаблонов и настроите всё вручную.</p></div><div className="new-program-actions"><button className="button button-ghost" type="button" onClick={(event) => void generate(event, "manual")} disabled={pending !== null || selected.length === 0}>{pending === "manual" ? "Создаём…" : "Настроить вручную"}</button><button className="button button-primary" type="submit" disabled={pending !== null || selected.length === 0}>{pending === "ai" ? "Yaler создаёт задания…" : "Создать черновик с Yaler"}<span>✦</span></button></div></div>
+        <div className="builder-submit-bar"><div><strong>Выберите удобный старт</strong><p>RiseStaff может заполнить задания за вас, либо вы начнёте с простых шаблонов и настроите всё вручную.</p></div><div className="new-program-actions"><button className="button button-ghost" type="button" onClick={(event) => void generate(event, "manual")} disabled={pending !== null || selected.length === 0}>{pending === "manual" ? "Создаём…" : "Настроить вручную"}</button><button className="button button-primary" type="submit" disabled={pending !== null || selected.length === 0}>{pending === "ai" ? "RiseStaff создаёт задания…" : "Создать черновик с RiseStaff"}<span>✦</span></button></div></div>
       </form>
     </div>
   );

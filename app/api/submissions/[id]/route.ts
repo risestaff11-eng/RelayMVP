@@ -55,7 +55,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const mission = (await db.select({ rewardMode: missions.rewardMode, rewardValue: missions.rewardValue }).from(missions).where(eq(missions.id, submission.missionId)).limit(1))[0];
     const program = (await db.select({ currency: programs.currency }).from(programs).where(eq(programs.id, submission.programId)).limit(1))[0];
-    if (salesStatus === "WON" && mission?.rewardMode === "PERCENT" && dealAmount <= 0) throw new Error("Укажите сумму сделки — Yaler рассчитает вознаграждение автоматически");
+    if (salesStatus === "WON" && mission?.rewardMode === "PERCENT" && dealAmount <= 0) throw new Error("Укажите сумму сделки — RiseStaff рассчитает вознаграждение автоматически");
     const amount = mission?.rewardMode === "PERCENT" ? Math.round(dealAmount * mission.rewardValue / 100) : requestedAmount;
     const existingReward = (await db.select().from(rewards).where(eq(rewards.submissionId, id)).limit(1))[0];
     const nextRewardStatus = salesStatus === "WON" ? "APPROVED" : salesStatus === "LOST" && existingReward ? "CANCELLED" : existingReward?.status ?? "PENDING";

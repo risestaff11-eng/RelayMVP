@@ -1,6 +1,6 @@
-# Yaler
+# RiseStaff
 
-Yaler — платформа для запуска агентских программ: компания создаёт задания и награды, приглашает агентов по одной ссылке и ведёт каждую рекомендацию от передачи до проверки и выплаты.
+RiseStaff — платформа для запуска агентских программ: компания создаёт задания и награды, приглашает агентов по одной ссылке и ведёт каждую рекомендацию от передачи до проверки и выплаты.
 
 ## Рабочие поверхности
 
@@ -26,8 +26,8 @@ Yaler — платформа для запуска агентских прогр
 Требуется Node.js `>=22.13.0` и pnpm 11.
 
 ```bash
-git clone https://github.com/risestaff11-eng/YalerMVP.git
-cd YalerMVP
+git clone https://github.com/risestaff11-eng/RelayMVP.git
+cd RelayMVP
 corepack enable
 pnpm install --frozen-lockfile
 pnpm dev

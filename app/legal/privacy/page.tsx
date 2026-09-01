@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { SafeLink as Link } from "@/app/safe-link";
 import { MarketingLogo } from "@/app/marketing-logo";
 
-export const metadata: Metadata = { title: "Политика конфиденциальности", description: "Как Yaler обрабатывает и защищает данные компаний и агентов.", alternates: { canonical: "https://risestaff.kz/legal/privacy" } };
+export const metadata: Metadata = { title: "Политика конфиденциальности", description: "Как RiseStaff обрабатывает и защищает данные компаний и агентов.", alternates: { canonical: "https://risestaff.kz/legal/privacy" } };
 
 export default function PrivacyPage() {
   return <main className="legal-page"><article className="legal-document">
-    <Link className="lp-brand" href="/" aria-label="Yaler — главная"><MarketingLogo /><span>Yaler</span></Link>
+    <Link className="lp-brand" href="/" aria-label="RiseStaff — главная"><MarketingLogo /><span>RiseStaff</span></Link>
     <h1>Политика конфиденциальности</h1>
-    <p>Версия от 6 августа 2026 года. Yaler обрабатывает данные, необходимые для работы агентской программы и сохранения прогресса пользователя.</p>
+    <p>Версия от 6 августа 2026 года. RiseStaff обрабатывает данные, необходимые для работы агентской программы и сохранения прогресса пользователя.</p>
     <h2>Какие данные сохраняются</h2>
     <ul><li>email, имя, телефон и данные профиля;</li><li>принятые задания, переданные результаты, файлы и комментарии;</li><li>история статусов, начислений и подтверждения контактов;</li><li>дата принятия условий и технические записи безопасности.</li></ul>
     <h2>Для чего они используются</h2>

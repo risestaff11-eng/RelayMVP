@@ -15,7 +15,7 @@ const items = [
   { group: "СЕТЬ", href: "/dashboard/methodologist", label: "Материалы для агентов", hint: "Скрипты, ответы и обучение", icon: "methodologist" },
   { group: "КОНТРОЛЬ", href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "analytics" },
   { group: "КОНТРОЛЬ", href: "/dashboard/notifications", label: "Уведомления", hint: "Срочные действия и история", icon: "reports" },
-  { group: "НАСТРОЙКИ", href: "/dashboard/assistant", label: "Yaler AI", hint: "Помощник по программам", icon: "assistant" },
+  { group: "НАСТРОЙКИ", href: "/dashboard/assistant", label: "RiseStaff AI", hint: "Помощник по программам", icon: "assistant" },
   { group: "НАСТРОЙКИ", href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для заданий", icon: "company" },
   { group: "НАСТРОЙКИ", href: "/dashboard/settings", label: "Настройки", hint: "Доступ, тариф и экспорт", icon: "settings" },
 ] as const;
@@ -42,11 +42,11 @@ export function DashboardNav() {
     <button className="mobile-menu-trigger company-menu-trigger" type="button" aria-label="Открыть меню" aria-expanded={open} aria-controls="company-mobile-drawer" onClick={() => setOpen(true)}><i /><i /><i /></button>
     {open && <button className="mobile-drawer-scrim" type="button" aria-label="Закрыть меню" onClick={() => setOpen(false)} />}
     <aside className={`mobile-side-drawer company-side-drawer ${open ? "open" : ""}`} id="company-mobile-drawer" aria-hidden={!open} inert={!open} role="dialog" aria-modal="true" aria-label="Меню кабинета компании">
-      <header><div className="mobile-drawer-brand"><span>R</span><div><small>YALER</small><strong>КАБИНЕТ КОМПАНИИ</strong></div></div><button type="button" aria-label="Закрыть меню" onClick={() => setOpen(false)}>×</button></header>
+      <header><div className="mobile-drawer-brand"><span>R</span><div><small>RISESTAFF</small><strong>КАБИНЕТ КОМПАНИИ</strong></div></div><button type="button" aria-label="Закрыть меню" onClick={() => setOpen(false)}>×</button></header>
       <nav aria-label="Мобильная навигация компании">
         {groups.map((group) => <div className="mobile-nav-group" key={group}><small>{group}</small>{items.filter((item) => item.group === group).map((item) => <Link key={item.href} className={isActive(item) ? "active" : undefined} href={item.href} aria-current={isActive(item) ? "page" : undefined} onClick={() => setOpen(false)}><i><DashboardIcon name={item.icon} /></i><span><strong>{item.label}</strong><small>{item.hint}</small></span><b aria-hidden="true">→</b></Link>)}</div>)}
       </nav>
-      <footer><span>YALER · АГЕНТСКИЕ ПРОДАЖИ</span><p>Все основные разделы доступны из этого меню.</p></footer>
+      <footer><span>RISESTAFF · АГЕНТСКИЕ ПРОДАЖИ</span><p>Все основные разделы доступны из этого меню.</p></footer>
     </aside>
   </>;
 }

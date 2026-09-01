@@ -198,6 +198,8 @@
     padding: 0 13px;
     background: rgba(247,247,242,.96);
   }
+  .partner-top-actions { margin-left: auto; gap: 6px; }
+  .partner-top-actions .agent-language-switcher { padding: 3px; }
   .partner-top-identity { min-width: 0; }
   .partner-top-identity > div:last-child { min-width: 0; }
   .partner-top-identity strong { max-width: 145px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

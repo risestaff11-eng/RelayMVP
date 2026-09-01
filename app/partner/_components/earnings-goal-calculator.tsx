@@ -3,12 +3,17 @@
 import { useEffect, useState } from "react";
 
 type GoalData = { target: number; commission: number; resultType: "lead" | "deal" };
-const storageKey = (currency: string) => `yaler-agent-earnings-goal-${currency}`;
+const storageKey = (currency: string) => `risestaff-agent-earnings-goal-${currency}`;
+const legacyStorageKey = (currency: string) => `yaler-agent-earnings-goal-${currency}`;
 
 function loadGoal(currency: string): GoalData {
   if (typeof window === "undefined") return { target: 0, commission: 0, resultType: "deal" };
   try {
-    return JSON.parse(localStorage.getItem(storageKey(currency)) || "null") || { target: 0, commission: 0, resultType: "deal" };
+    const current = localStorage.getItem(storageKey(currency));
+    const legacy = localStorage.getItem(legacyStorageKey(currency));
+    const value = JSON.parse(current || legacy || "null") || { target: 0, commission: 0, resultType: "deal" };
+    if (!current && legacy) localStorage.setItem(storageKey(currency), legacy);
+    return value;
   } catch {
     return { target: 0, commission: 0, resultType: "deal" };
   }
@@ -40,7 +45,7 @@ export function EarningsGoalCalculator({ currency }: { currency: string }) {
 
   return (
     <section className="earnings-goal-card">
-      <div className="earnings-goal-copy"><small>ЦЕЛЬ ЗАРАБОТКА</small><h2>Сколько рекомендаций нужно?</h2><p>Введите цель — Yaler рассчитает темп.</p></div>
+      <div className="earnings-goal-copy"><small>ЦЕЛЬ ЗАРАБОТКА</small><h2>Сколько рекомендаций нужно?</h2><p>Введите цель — RiseStaff рассчитает темп.</p></div>
       <div className="earnings-goal-fields">
         <label><span>Хочу в месяц</span><div><input type="number" min="0" inputMode="numeric" value={goal.target || ""} placeholder="500 000" onChange={(event) => update({ ...goal, target: Number(event.target.value) })} /><b>{currencySymbol(currency)}</b></div></label>
         <label><span>Средняя комиссия</span><div><input type="number" min="0" inputMode="numeric" value={goal.commission || ""} placeholder="50 000" onChange={(event) => update({ ...goal, commission: Number(event.target.value) })} /><b>{currencySymbol(currency)}</b></div></label>

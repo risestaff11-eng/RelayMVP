@@ -136,7 +136,7 @@ test("authorized public program puts tasks first and collapses secondary details
   assert.doesNotMatch(publicPage, /partner-program-hero/);
 });
 
-test("user-facing application uses the Yaler assistant name", async () => {
+test("user-facing application uses the RiseStaff assistant name", async () => {
   const files = [
     "../app/dashboard/programs/new/new-program-form.tsx",
     "../app/dashboard/programs/page.tsx",
@@ -144,6 +144,6 @@ test("user-facing application uses the Yaler assistant name", async () => {
     "../app/dashboard/settings/plan-settings.tsx",
   ];
   const source = (await Promise.all(files.map((file) => readFile(new URL(file, import.meta.url), "utf8")))).join("\n");
-  assert.match(source, /Yaler/);
+  assert.match(source, /RiseStaff/);
   assert.doesNotMatch(source, /Gemini/i);
 });

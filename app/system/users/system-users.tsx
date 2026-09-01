@@ -380,7 +380,7 @@ export function SystemUsers({
     return (
       <main className="system-gate">
         <form onSubmit={login}>
-          <h1>Yaler · управление</h1>
+          <h1>RiseStaff · управление</h1>
           <label>
             Секретный пароль
             <input
@@ -400,7 +400,7 @@ export function SystemUsers({
     <main className="system-users system-admin-v2">
       <header className="system-admin-header">
         <div>
-          <span>YALER · SYSTEM</span>
+          <span>RISESTAFF · SYSTEM</span>
           <h1>Состояние проекта</h1>
           <p>Компании, активность и деньги. Дата и время указаны по Астане.</p>
         </div>

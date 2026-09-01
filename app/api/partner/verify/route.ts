@@ -20,7 +20,7 @@ async function deliverCode(channel: string, destination: string, code: string) {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { authorization: `Bearer ${runtime.RESEND_API_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({ from: runtime.MAGIC_FROM_EMAIL, to: [destination], subject: "Код подтверждения Yaler", html: `<p>Код подтверждения: <strong>${code}</strong></p><p>Он действует 10 минут.</p>` }),
+      body: JSON.stringify({ from: runtime.MAGIC_FROM_EMAIL, to: [destination], subject: "Код подтверждения RiseStaff", html: `<p>Код подтверждения: <strong>${code}</strong></p><p>Он действует 10 минут.</p>` }),
     });
     if (!response.ok) throw new Error("Не удалось отправить код на email");
     return;
@@ -29,7 +29,7 @@ async function deliverCode(channel: string, destination: string, code: string) {
   const response = await fetch(runtime.WHATSAPP_VERIFY_WEBHOOK_URL, {
     method: "POST",
     headers: { "content-type": "application/json", ...(runtime.WHATSAPP_VERIFY_WEBHOOK_TOKEN ? { authorization: `Bearer ${runtime.WHATSAPP_VERIFY_WEBHOOK_TOKEN}` } : {}) },
-    body: JSON.stringify({ to: destination, code, message: `Код подтверждения Yaler: ${code}. Действует 10 минут.` }),
+    body: JSON.stringify({ to: destination, code, message: `Код подтверждения RiseStaff: ${code}. Действует 10 минут.` }),
   });
   if (!response.ok) throw new Error("Не удалось отправить код в WhatsApp");
 }

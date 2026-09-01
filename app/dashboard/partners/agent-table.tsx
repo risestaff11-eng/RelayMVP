@@ -8,7 +8,7 @@ type Agent = { id: string; name: string; email: string; phone: string; status: s
 
 function whatsapp(phone: string, name: string) {
   const digits = phone.replace(/\D/g, "");
-  const text = encodeURIComponent(`Здравствуйте, ${name}! Пишу вам как представитель компании, к агентской программе которой вы присоединились через Yaler.`);
+  const text = encodeURIComponent(`Здравствуйте, ${name}! Пишу вам как представитель компании, к агентской программе которой вы присоединились через RiseStaff.`);
   return digits ? `https://wa.me/${digits}?text=${text}` : "";
 }
 

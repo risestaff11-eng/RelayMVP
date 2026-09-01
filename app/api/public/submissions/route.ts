@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     const db = getDb();
     const duplicateConditions = [contactEmail ? eq(submissions.contactEmail, contactEmail) : null, contactPhone ? eq(submissions.contactPhone, contactPhone) : null].filter(Boolean);
     const duplicateRows = duplicateConditions.length && ["LEAD", "DEAL"].includes(target.mission.type) ? await db.select({ id: submissions.id }).from(submissions).where(and(eq(submissions.companyId, target.company.id), gte(submissions.createdAt, duplicateCutoff()), notInArray(submissions.reviewStatus, ["REJECTED"]), duplicateConditions.length === 2 ? or(duplicateConditions[0]!, duplicateConditions[1]!) : duplicateConditions[0]!)).limit(1) : [];
-    if (duplicateRows.length) return Response.json({ error: "Этот контакт уже закреплён за другой рекомендацией компании. Yaler сохранил первоначальное авторство; данные другого участника не раскрываются." }, { status: 409 });
+    if (duplicateRows.length) return Response.json({ error: "Этот контакт уже закреплён за другой рекомендацией компании. RiseStaff сохранил первоначальное авторство; данные другого участника не раскрываются." }, { status: 409 });
 
     const allFiles = fields.flatMap((field) => form.getAll(`file__${field.id}`).filter((item): item is File => item instanceof File && item.size > 0).map((file) => ({ field, file })));
     if (allFiles.length > 5) throw new Error("Можно приложить не более 5 файлов");

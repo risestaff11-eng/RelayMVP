@@ -187,7 +187,7 @@ export function ReportsWorkspace({
           <span className="module-kicker">ОТЧЁТЫ АГЕНТОВ</span>
           <h1>Работа команды в динамике</h1>
           <p>
-            Отчёты, реальные показатели из Yaler и повторяющиеся сигналы — без
+            Отчёты, реальные показатели из RiseStaff и повторяющиеся сигналы — без
             ручных таблиц.
           </p>
         </div>
@@ -233,7 +233,7 @@ export function ReportsWorkspace({
       <section className="reports-ai-panel">
         <div>
           <small>НАКОПИТЕЛЬНАЯ АНАЛИТИКА</small>
-          <h2>Yaler помнит выводы, а не пересылает всю историю</h2>
+          <h2>RiseStaff помнит выводы, а не пересылает всю историю</h2>
           <p>
             Анализ строится только по сохранённым отчётам и показателям. Каждый
             вывод содержит основание.
@@ -455,7 +455,7 @@ export function ReportsWorkspace({
         <div className="report-accepted-backdrop" role="presentation">
           <section className="report-accepted-dialog" role="dialog" aria-modal="true" aria-labelledby="report-accepted-title">
             <i>✓</i><small>ГОТОВО</small><h2 id="report-accepted-title">Отчёт принят</h2><p>{acceptedReport.partnerName} увидит новый статус в кабинете. Можно сразу подтвердить это в WhatsApp.</p>
-            <div>{acceptedReport.partnerPhone ? <a href={`https://wa.me/${acceptedReport.partnerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(`Здравствуйте, ${acceptedReport.partnerName}! Это команда ${companyName}. Ваш отчёт за ${acceptedReport.periodStart} — ${acceptedReport.periodEnd} принят. Спасибо, данные и показатели сохранены в Yaler.`)}`} target="_blank" rel="noreferrer">Написать агенту в WhatsApp ↗</a> : <span>Телефон агента не указан</span>}<button type="button" onClick={() => setAcceptedReport(null)}>Закрыть</button></div>
+            <div>{acceptedReport.partnerPhone ? <a href={`https://wa.me/${acceptedReport.partnerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(`Здравствуйте, ${acceptedReport.partnerName}! Это команда ${companyName}. Ваш отчёт за ${acceptedReport.periodStart} — ${acceptedReport.periodEnd} принят. Спасибо, данные и показатели сохранены в RiseStaff.`)}`} target="_blank" rel="noreferrer">Написать агенту в WhatsApp ↗</a> : <span>Телефон агента не указан</span>}<button type="button" onClick={() => setAcceptedReport(null)}>Закрыть</button></div>
           </section>
         </div>
       )}

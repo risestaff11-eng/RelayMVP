@@ -4,7 +4,7 @@ import { requireChatGPTUser } from "../../chatgpt-auth";
 import { getCompanyForUser } from "../../../db/company";
 import { AiAssistantChat } from "./ai-assistant-chat";
 
-export const metadata: Metadata = { title: "Yaler · помощник по программам" };
+export const metadata: Metadata = { title: "RiseStaff · помощник по программам" };
 export const dynamic = "force-dynamic";
 
 export default async function AssistantPage() {

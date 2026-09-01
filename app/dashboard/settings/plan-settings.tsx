@@ -32,7 +32,7 @@ export function PlanSettings({ user, company }: { user: { name: string; email: s
   }
 
   return <div className="dashboard-content module-content settings-page">
-    <div className="module-heading"><div><span className="module-kicker">ПРОФИЛЬ И ДОСТУП</span><h1>Настройки компании</h1><p>Аккаунт владельца, текущий тариф и запас Yaler.</p></div><Link className="button button-ghost compact-button" href="/dashboard/company-profile">← Вернуться к профилю компании</Link></div>
+    <div className="module-heading"><div><span className="module-kicker">ПРОФИЛЬ И ДОСТУП</span><h1>Настройки компании</h1><p>Аккаунт владельца, текущий тариф и запас RiseStaff.</p></div><Link className="button button-ghost compact-button" href="/dashboard/company-profile">← Вернуться к профилю компании</Link></div>
     {notice && <div className="inline-notice" role="status">{notice}</div>}
     <div className="settings-overview-grid">
       <section className="panel account-card"><div className="panel-header"><h2>Профиль владельца</h2><span>OWNER</span></div><dl><div><dt>Имя</dt><dd>{user.name}</dd></div><div><dt>Email</dt><dd>{user.email}</dd></div><div><dt>Компания</dt><dd>{company.name}</dd></div><div><dt>Сайт</dt><dd>{company.website}</dd></div></dl></section>

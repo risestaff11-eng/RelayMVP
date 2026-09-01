@@ -8,9 +8,9 @@ import { CompanyApplicationForm } from "./company-application-form";
 import { agentUrl, companyUrl } from "../lib/public-origins";
 
 export const metadata: Metadata = {
-  title: { absolute: "Yaler — сервис для программы «приведи клиента»" },
+  title: { absolute: "RiseStaff — сервис для программы «приведи клиента»" },
   description:
-    "Назначьте вознаграждение за приведённого клиента. Yaler покажет, кто кого привёл, что стало с заявкой и сколько нужно выплатить.",
+    "Назначьте вознаграждение за приведённого клиента. RiseStaff покажет, кто кого привёл, что стало с заявкой и сколько нужно выплатить.",
   alternates: { canonical: "https://risestaff.kz/" },
 };
 
@@ -54,19 +54,19 @@ const missionCards = [
 const faqs = [
   [
     "Где взять людей, которые будут нас рекомендовать?",
-    "Начните с тех, кто уже знает вашу работу: клиентов, партнёров, консультантов и знакомых. Yaler не продаёт базу людей. Вы сами решаете, кого пригласить.",
+    "Начните с тех, кто уже знает вашу работу: клиентов, партнёров, консультантов и знакомых. RiseStaff не продаёт базу людей. Вы сами решаете, кого пригласить.",
   ],
   [
     "Сколько это стоит?",
-    "Сейчас Yaler работает в пилотном формате. Оставьте заявку — мы покажем подходящий вариант и заранее назовём стоимость. Вознаграждения людям вы платите напрямую, Yaler не удерживает процент с выплат.",
+    "Сейчас RiseStaff работает в пилотном формате. Оставьте заявку — мы покажем подходящий вариант и заранее назовём стоимость. Вознаграждения людям вы платите напрямую, RiseStaff не удерживает процент с выплат.",
   ],
   [
     "Это заменит CRM?",
-    "Нет. CRM ведёт продажи после получения контакта. Yaler помогает до этого: объясняет, кого вы ищете, принимает заявки от рекомендателей и считает, кому сколько вы должны.",
+    "Нет. CRM ведёт продажи после получения контакта. RiseStaff помогает до этого: объясняет, кого вы ищете, принимает заявки от рекомендателей и считает, кому сколько вы должны.",
   ],
   [
     "Как оформить выплату человеку в Казахстане?",
-    "Yaler хранит основание, сумму и отметку о выплате. Саму выплату компания оформляет своим способом. Для физлица обычно проверяют договор ГПХ и обязательные платежи, для ИП — договор и документы ИП. Точный порядок согласуйте с бухгалтером под ваш случай.",
+    "RiseStaff хранит основание, сумму и отметку о выплате. Саму выплату компания оформляет своим способом. Для физлица обычно проверяют договор ГПХ и обязательные платежи, для ИП — договор и документы ИП. Точный порядок согласуйте с бухгалтером под ваш случай.",
   ],
   [
     "Сколько времени нужно на запуск?",
@@ -89,16 +89,15 @@ const structuredData = {
       "@type": "WebSite",
       "@id": "https://risestaff.kz/#website",
       url: "https://risestaff.kz/",
-      name: "Yaler",
-      alternateName: ["RiseStaff", "Yaler by RiseStaff"],
+      name: "RiseStaff",
+      alternateName: ["RiseStaff"],
       inLanguage: "ru-KZ",
       publisher: { "@id": "https://risestaff.kz/#organization" },
     },
     {
       "@type": "Organization",
       "@id": "https://risestaff.kz/#organization",
-      name: "Yaler",
-      alternateName: "RiseStaff",
+      name: "RiseStaff",
       url: "https://risestaff.kz/",
       logo: {
         "@type": "ImageObject",
@@ -110,7 +109,7 @@ const structuredData = {
     {
       "@type": "SoftwareApplication",
       "@id": "https://risestaff.kz/#software",
-      name: "Yaler",
+      name: "RiseStaff",
       url: "https://risestaff.kz/",
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
@@ -135,7 +134,7 @@ export default async function Home() {
   const loginHref = companyUrl(
     user ? "/dashboard" : chatGPTSignInPath("/dashboard"),
   );
-  const whatsappHref = "https://wa.me/77765086000?text=%D0%A5%D0%BE%D1%87%D1%83%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D1%82%D1%8C%20%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA%20Yaler";
+  const whatsappHref = "https://wa.me/77765086000?text=%D0%A5%D0%BE%D1%87%D1%83%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D1%82%D1%8C%20%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA%20RiseStaff";
 
   return (
     <main className="lp-shell">
@@ -148,9 +147,9 @@ export default async function Home() {
         К основному содержанию
       </a>
       <header className="lp-header">
-        <Link className="lp-brand" href="/" aria-label="Yaler — главная">
+        <Link className="lp-brand" href="/" aria-label="RiseStaff — главная">
           <MarketingLogo />
-          <span>Yaler</span>
+          <span>RiseStaff</span>
         </Link>
         <nav className="lp-nav" aria-label="Основная навигация">
           <a href="#how">Как работает</a>
@@ -193,13 +192,13 @@ export default async function Home() {
           </h1>
           <p>
             Один раз напишите, за какого клиента и сколько платите. Отправьте одну
-            ссылку своим людям. Yaler запомнит, кто кого привёл, что стало с заявкой
+            ссылку своим людям. RiseStaff запомнит, кто кого привёл, что стало с заявкой
             и сколько вы должны выплатить.
           </p>
           <p className="lp-hero-definition"><strong>Амбассадор</strong> — ваш клиент, партнёр или знакомый, который рекомендует вас подходящему покупателю.</p>
           <div
             className="lp-mobile-audience"
-            aria-label="Для кого и какую задачу решает Yaler"
+            aria-label="Для кого и какую задачу решает RiseStaff"
           >
             <span>
               <b>ДЛЯ КОГО</b>Собственник, продажи и маркетинг
@@ -236,11 +235,11 @@ export default async function Home() {
             </span>
           </div>
         </div>
-        <div className="lp-demo" aria-label="Пример страницы заданий Yaler">
+        <div className="lp-demo" aria-label="Пример страницы заданий RiseStaff">
           <div className="lp-demo-top">
             <div>
               <MarketingLogo />
-              <b>Yaler</b>
+              <b>RiseStaff</b>
             </div>
             <span>
               ПРОГРАММА АКТИВНА <i>●</i>
@@ -301,7 +300,7 @@ export default async function Home() {
           <h2>Клиенты уже приходят по знакомству, но этим каналом никто не управляет.</h2>
           <p>
             Узнали себя хотя бы в двух пунктах? Значит, рекомендации уже работают.
-            Yaler помогает сделать их понятным каналом продаж.
+            RiseStaff помогает сделать их понятным каналом продаж.
           </p>
         </div>
         <div className="lp-compare">
@@ -317,7 +316,7 @@ export default async function Home() {
             <strong>Непонятно, сколько денег дают рекомендации</strong>
           </article>
           <article className="lp-after">
-            <small>С YALER</small>
+            <small>С RISESTAFF</small>
             <h3>Каждая заявка сразу попадает в один список</h3>
             <ul>
               <li>Видны контакт, дата и человек, который его прислал</li>
@@ -350,7 +349,7 @@ export default async function Home() {
         <figure className="lp-ai-visual lp-live-screen">
           <div className="lp-live-screen-label">
             <span>РЕАЛЬНЫЙ КАБИНЕТ КОМПАНИИ</span>
-            <b>Рабочий стол Yaler</b>
+            <b>Рабочий стол RiseStaff</b>
           </div>
           <div className="lp-screen-wrap">
             <img
@@ -358,7 +357,7 @@ export default async function Home() {
               width="1440"
               height="900"
               loading="lazy"
-              alt="Рабочий стол компании в Yaler с заявками, приглашёнными участниками и выплатами"
+              alt="Рабочий стол компании в RiseStaff с заявками, приглашёнными участниками и выплатами"
             />
             <div className="lp-screen-callouts" aria-hidden="true">
               <span>Кто привёл</span>
@@ -379,7 +378,7 @@ export default async function Home() {
             <li>Причина отказа не теряется в переписке</li>
             <li>По каждой сделке видно, кому и сколько вы должны</li>
           </ul>
-          <small>На изображении — рабочий кабинет компании Yaler.</small>
+          <small>На изображении — рабочий кабинет компании RiseStaff.</small>
         </div>
       </section>
 
@@ -498,7 +497,7 @@ export default async function Home() {
               width="1440"
               height="900"
               loading="lazy"
-              alt="Кабинет приглашённого участника Yaler с задачами и суммами вознаграждения"
+              alt="Кабинет приглашённого участника RiseStaff с задачами и суммами вознаграждения"
             />
             <div className="lp-screen-callouts agent" aria-hidden="true">
               <span>Кого искать</span>
@@ -540,7 +539,7 @@ export default async function Home() {
           </article>
         </div>
         <p className="lp-marketplace-note">
-          <strong>Yaler — не биржа людей.</strong> Вы приглашаете своих. Сервис даёт
+          <strong>RiseStaff — не биржа людей.</strong> Вы приглашаете своих. Сервис даёт
           им понятные правила, ссылку для передачи контакта и статус каждой заявки.
         </p>
       </section>
@@ -603,15 +602,15 @@ export default async function Home() {
       <section className="lp-payments lp-section" id="payments">
         <div className="lp-section-intro">
           <span>ДЕНЬГИ И ОФОРМЛЕНИЕ В КАЗАХСТАНЕ</span>
-          <h2>Yaler считает сумму. Деньги вы переводите напрямую.</h2>
+          <h2>RiseStaff считает сумму. Деньги вы переводите напрямую.</h2>
           <p>Сервис не берёт процент с вознаграждений и не выступает стороной вашей выплаты.</p>
         </div>
         <div className="lp-payment-grid">
           <article><b>01</b><h3>Физическому лицу</h3><p>Обычно компания проверяет договор ГПХ и обязательные платежи. Порядок зависит от вида работы и статуса получателя.</p></article>
           <article><b>02</b><h3>ИП или компании</h3><p>Используйте договор и документы, которые приняты у вас для работы с подрядчиками.</p></article>
-          <article><b>03</b><h3>Что хранит Yaler</h3><p>Кто привёл клиента, за что начислена сумма, дата решения и отметка о выплате.</p></article>
+          <article><b>03</b><h3>Что хранит RiseStaff</h3><p>Кто привёл клиента, за что начислена сумма, дата решения и отметка о выплате.</p></article>
         </div>
-        <p className="lp-payment-note">Yaler не даёт налоговых консультаций. Перед запуском согласуйте схему выплат с бухгалтером.</p>
+        <p className="lp-payment-note">RiseStaff не даёт налоговых консультаций. Перед запуском согласуйте схему выплат с бухгалтером.</p>
       </section>
 
       <CompanyApplicationForm />
@@ -646,7 +645,7 @@ export default async function Home() {
           Напишите, за какого клиента вы готовы заплатить и сколько.
         </h2>
         <p>
-          Ссылку, кабинет и подсчёт выплат Yaler берёт на себя.
+          Ссылку, кабинет и подсчёт выплат RiseStaff берёт на себя.
         </p>
         <div className="lp-final-actions">
           <a className="lp-primary" href={dashboardHref} data-track="final_primary">{user ? "Открыть кабинет" : "Запустить программу бесплатно"}<span>↗</span></a>
@@ -665,7 +664,7 @@ export default async function Home() {
         <div>
           <Link className="lp-brand" href="/">
             <MarketingLogo />
-            <span>Yaler</span>
+            <span>RiseStaff</span>
           </Link>
           <p>
             Программа «приведи клиента» для вашей компании.
@@ -685,7 +684,7 @@ export default async function Home() {
           <Link href="/legal/privacy">Конфиденциальность</Link>
           <Link href="/legal/license">Соглашение</Link>
         </nav>
-        <span>© 2026 Yaler</span>
+        <span>© 2026 RiseStaff</span>
       </footer>
     </main>
   );
