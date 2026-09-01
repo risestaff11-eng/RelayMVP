@@ -33,11 +33,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const payload = await request.json() as Record<string, unknown>;
     const comment = cleanString(payload.comment, 1200);
     const requestedAmount = Math.max(0, Math.round(Number(payload.amount) || 0));
-    const dealAmount = Math.max(0, Number(payload.dealAmount) || 0);
-    const plannedAt = cleanString(payload.plannedAt, 30) || null;
+    const requestedPlannedAt = cleanString(payload.plannedAt, 30) || null;
     const db = getDb();
     const submission = (await db.select().from(submissions).where(eq(submissions.id, id)).limit(1))[0];
     if (!submission || submission.companyId !== company.id) return Response.json({ error: "Результат не найден" }, { status: 404 });
+    const dealAmount = payload.dealAmount === undefined || payload.dealAmount === "" ? submission.dealAmount : Math.max(0, Math.round(Number(payload.dealAmount) || 0));
+    const estimatedDealAmount = payload.estimatedDealAmount === undefined || payload.estimatedDealAmount === "" ? submission.estimatedDealAmount : Math.max(0, Math.round(Number(payload.estimatedDealAmount) || 0));
 
     const currentReview = (submission.reviewStatus || legacyReview(submission.status)) as ReviewStatus;
     const currentSales = (submission.salesStatus || legacySales(submission.status)) as SalesStatus;
@@ -56,8 +57,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const mission = (await db.select({ rewardMode: missions.rewardMode, rewardValue: missions.rewardValue }).from(missions).where(eq(missions.id, submission.missionId)).limit(1))[0];
     const program = (await db.select({ currency: programs.currency }).from(programs).where(eq(programs.id, submission.programId)).limit(1))[0];
     if (salesStatus === "WON" && mission?.rewardMode === "PERCENT" && dealAmount <= 0) throw new Error("Укажите сумму сделки — RiseStaff рассчитает вознаграждение автоматически");
-    const amount = mission?.rewardMode === "PERCENT" ? Math.round(dealAmount * mission.rewardValue / 100) : requestedAmount;
     const existingReward = (await db.select().from(rewards).where(eq(rewards.submissionId, id)).limit(1))[0];
+    const plannedAt = payload.plannedAt === undefined ? existingReward?.plannedAt ?? null : requestedPlannedAt;
+    const amount = mission?.rewardMode === "PERCENT" ? Math.round(dealAmount * mission.rewardValue / 100) : requestedAmount || existingReward?.amount || mission?.rewardValue || 0;
     const nextRewardStatus = salesStatus === "WON" ? "APPROVED" : salesStatus === "LOST" && existingReward ? "CANCELLED" : existingReward?.status ?? "PENDING";
     const nextLegacyStatus = legacyStatus(reviewStatus, salesStatus, nextRewardStatus);
     const now = new Date().toISOString();
@@ -67,7 +69,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       comment,
     ].filter(Boolean).join(" · ");
     const baseStatements = [
-      db.update(submissions).set({ status: nextLegacyStatus, reviewStatus, salesStatus, companyComment: comment, updatedAt: now }).where(eq(submissions.id, id)),
+      db.update(submissions).set({ status: nextLegacyStatus, reviewStatus, salesStatus, companyComment: comment, estimatedDealAmount, dealAmount, updatedAt: now }).where(eq(submissions.id, id)),
       db.insert(submissionStatusEvents).values({ id: crypto.randomUUID(), submissionId: id, fromStatus: submission.status, toStatus: nextLegacyStatus, actorType: "COMPANY", comment: transitionComment || "Карточка заявки обновлена", createdAt: now }),
     ] as const;
 
@@ -79,7 +81,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     } else if (existingReward && salesStatus === "LOST") {
       await db.batch([...baseStatements, db.update(rewards).set({ status: "CANCELLED", updatedAt: now }).where(eq(rewards.id, existingReward.id))]);
     } else await db.batch(baseStatements);
-    return Response.json({ ok: true, status: nextLegacyStatus, reviewStatus, salesStatus, rewardStatus: nextRewardStatus });
+    return Response.json({ ok: true, status: nextLegacyStatus, reviewStatus, salesStatus, rewardStatus: nextRewardStatus, estimatedDealAmount, dealAmount, rewardAmount: amount });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось обновить результат" }, { status: 400 });
   }

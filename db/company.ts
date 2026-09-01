@@ -19,6 +19,11 @@ export async function getCompanyForUser(userId: string) {
       planCode: companies.planCode,
       aiTokenBalance: companies.aiTokenBalance,
       aiTokensUsed: companies.aiTokensUsed,
+      crmMonthlyGoal: companies.crmMonthlyGoal,
+      crmAverageCheck: companies.crmAverageCheck,
+      crmConversionRate: companies.crmConversionRate,
+      crmLeadsPerAmbassador: companies.crmLeadsPerAmbassador,
+      crmGoalCurrency: companies.crmGoalCurrency,
       role: companyMembers.role,
       createdAt: companies.createdAt,
     })

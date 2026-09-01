@@ -15,7 +15,7 @@ function parseList(value: string) {
 
 function parseSubmissionPayload(value: string) {
   try {
-    const parsed = JSON.parse(value) as { partnerComment?: unknown; customAnswers?: unknown; audioTranscript?: unknown; audioDurationSeconds?: unknown; audioConfirmed?: unknown; submittedByClient?: unknown };
+    const parsed = JSON.parse(value) as { partnerComment?: unknown; customAnswers?: unknown; audioTranscript?: unknown; audioDurationSeconds?: unknown; audioConfirmed?: unknown; submittedByClient?: unknown; referralSource?: unknown };
     return {
       partnerComment: typeof parsed.partnerComment === "string" ? parsed.partnerComment : "",
       customAnswers: Array.isArray(parsed.customAnswers) ? parsed.customAnswers.filter((item): item is { fieldId: string; label: string; type: string; value: string | string[] } => Boolean(item && typeof item === "object" && typeof (item as { label?: unknown }).label === "string")) : [],
@@ -23,9 +23,10 @@ function parseSubmissionPayload(value: string) {
       audioDurationSeconds: typeof parsed.audioDurationSeconds === "number" ? parsed.audioDurationSeconds : 0,
       audioConfirmed: parsed.audioConfirmed === true,
       submittedByClient: parsed.submittedByClient === true,
+      referralSource: typeof parsed.referralSource === "string" ? parsed.referralSource : "AMBASSADOR_SUBMISSION",
     };
   } catch {
-    return { partnerComment: "", customAnswers: [] as Array<{ fieldId: string; label: string; type: string; value: string | string[] }>, audioTranscript: "", audioDurationSeconds: 0, audioConfirmed: false, submittedByClient: false };
+    return { partnerComment: "", customAnswers: [] as Array<{ fieldId: string; label: string; type: string; value: string | string[] }>, audioTranscript: "", audioDurationSeconds: 0, audioConfirmed: false, submittedByClient: false, referralSource: "AMBASSADOR_SUBMISSION" };
   }
 }
 
@@ -174,10 +175,11 @@ export async function getSubmissionsForCompany(companyId: string) {
     .where(eq(submissions.companyId, companyId))
     .orderBy(desc(submissions.createdAt));
   const ids = rows.map((row) => row.submission.id);
-  const [attachmentRows, eventRows] = ids.length ? await Promise.all([
+  const [attachmentRows, eventRows, rewardRows] = ids.length ? await Promise.all([
     db.select().from(submissionAttachments).where(inArray(submissionAttachments.submissionId, ids)).orderBy(asc(submissionAttachments.createdAt)),
     db.select().from(submissionStatusEvents).where(inArray(submissionStatusEvents.submissionId, ids)).orderBy(desc(submissionStatusEvents.createdAt)),
-  ]) : [[], []];
+    db.select().from(rewards).where(inArray(rewards.submissionId, ids)),
+  ]) : [[], [], []];
   return rows.map((row) => ({
     ...row.submission,
     partnerName: row.partner.name,
@@ -190,6 +192,7 @@ export async function getSubmissionsForCompany(companyId: string) {
     currency: row.program.currency,
     programName: row.program.name,
     ...parseSubmissionPayload(row.submission.payloadJson),
+    reward: rewardRows.find((reward) => reward.submissionId === row.submission.id) ?? null,
     attachments: attachmentRows.filter((attachment) => attachment.submissionId === row.submission.id),
     events: eventRows.filter((event) => event.submissionId === row.submission.id),
   }));

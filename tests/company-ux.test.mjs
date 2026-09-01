@@ -34,7 +34,7 @@ test("company CRM combines clients, deals and recommenders while ranking stays s
   assert.doesNotMatch(navigation, /href: "\/dashboard\/partners"/);
   assert.match(crm, /Клиенты и сделки/);
   assert.match(crm, /Рекомендатели/);
-  assert.match(crm, /SubmissionReviewList/);
+  assert.match(crm, /CrmWorkspace/);
   assert.match(crm, /AgentTable/);
   assert.match(rating, /Рейтинг агентов/);
   assert.match(rating, /AnalyticsFilters/);
