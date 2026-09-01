@@ -38,7 +38,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const submittedToAccepted = reviewedResults.length ? Math.round(reviewedResults.filter((result) => result.reviewStatus === "ACCEPTED").length / reviewedResults.length * 100) : null;
   const submittedToDeal = reviewedResults.length ? Math.round(reviewedResults.filter((result) => result.salesStatus === "WON").length / reviewedResults.length * 100) : null;
   const inactiveAgents = analytics.byAgent.filter((agent) => agent.results === 0).slice(0, 5);
-  const reportAgents = analytics.byAgent.map((agent) => ({ ...agent, paidLabel: formatMoneyGroups(agent.paidByCurrency) }));
+  const reportAgents = analytics.byAgent.map((agent) => ({ ...agent, dueLabel: formatMoneyGroups(agent.dueByCurrency), paidLabel: formatMoneyGroups(agent.paidByCurrency) }));
   const exportRows = analytics.byAgent.map((agent) => [agent.name, agent.email, agent.phone, agent.programName, agent.results, agent.accepted, agent.deals, agent.acceptanceRate, agent.dealRate, formatMoneyGroups(agent.dueByCurrency), formatMoneyGroups(agent.paidByCurrency), agent.lastActivity]);
 
   return (

@@ -7,13 +7,13 @@ import { DashboardIcon } from "./dashboard-icon";
 
 const items = [
   { group: "РАБОТА", href: "/dashboard", label: "Рабочий стол", hint: "Сводка и следующие действия", icon: "home", exact: true },
-  { group: "РАБОТА", href: "/dashboard/submissions", label: "Заявки", hint: "Проверка, продажи и SLA", icon: "results" },
+  { group: "РАБОТА", href: "/dashboard/crm", label: "CRM", hint: "Клиенты, сделки и агенты", icon: "results" },
   { group: "РАБОТА", href: "/dashboard/rewards", label: "Выплаты", hint: "Начисления и подтверждения", icon: "rewards" },
   { group: "РАБОТА", href: "/dashboard/reports", label: "Отчёты агентов", hint: "История, KPI и сигналы", icon: "reports" },
   { group: "СЕТЬ", href: "/dashboard/programs", label: "Программы", hint: "Задания, условия и ссылки", icon: "programs" },
-  { group: "СЕТЬ", href: "/dashboard/partners", label: "Кто вас рекомендует", hint: "Люди, ссылки и вклад", icon: "agents" },
   { group: "СЕТЬ", href: "/dashboard/methodologist", label: "Материалы для агентов", hint: "Скрипты, ответы и обучение", icon: "methodologist" },
   { group: "КОНТРОЛЬ", href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "analytics" },
+  { group: "КОНТРОЛЬ", href: "/dashboard/agent-rating", label: "Рейтинг агентов", hint: "Сделки, деньги и конверсия", icon: "agents" },
   { group: "КОНТРОЛЬ", href: "/dashboard/notifications", label: "Уведомления", hint: "Срочные действия и история", icon: "reports" },
   { group: "НАСТРОЙКИ", href: "/dashboard/assistant", label: "RiseStaff AI", hint: "Помощник по программам", icon: "assistant" },
   { group: "НАСТРОЙКИ", href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для заданий", icon: "company" },

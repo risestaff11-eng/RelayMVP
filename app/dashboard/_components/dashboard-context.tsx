@@ -4,8 +4,8 @@ import { usePathname } from "next/navigation";
 
 const sections = [
   ["/dashboard/programs", "Программы и задания"],
-  ["/dashboard/submissions", "Проверка результатов"],
-  ["/dashboard/partners", "Кто вас рекомендует"],
+  ["/dashboard/crm", "CRM · клиенты и сделки"],
+  ["/dashboard/agent-rating", "Рейтинг агентов"],
   ["/dashboard/rewards", "Выплаты агентам"],
   ["/dashboard/analytics", "Аналитика"],
   ["/dashboard/assistant", "RiseStaff · программы"],

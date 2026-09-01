@@ -64,11 +64,11 @@ test("a new result notifies the company and opens the exact review card", async 
     readFile(new URL("../app/api/public/submissions/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/public/referrals/submit/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/agent-email.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/dashboard/submissions/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/crm/page.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(route, /sendCompanyNewSubmissionNotification/);
   assert.match(referralRoute, /sendCompanyNewSubmissionNotification/);
-  assert.match(email, /dashboard\/submissions\?submission=/);
+  assert.match(email, /dashboard\/crm\?submission=/);
   assert.match(email, /Для доступа введите почту и пароль компании/);
   assert.match(page, /initialSelectedId/);
 });

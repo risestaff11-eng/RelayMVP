@@ -37,7 +37,7 @@ export function AiAssistantChat({ companyName, initialTokenBalance }: { companyN
     setApplying(true); setError("");
     try {
       if (action.type === "OPEN_SECTION") {
-        const allowed: Record<string, string> = { results: "/dashboard/submissions", agents: "/dashboard/partners", rewards: "/dashboard/rewards", analytics: "/dashboard/analytics", programs: "/dashboard/programs", profile: "/dashboard/company-profile", settings: "/dashboard/settings", knowledge: "/dashboard/methodologist" };
+        const allowed: Record<string, string> = { results: "/dashboard/crm", agents: "/dashboard/crm?view=agents", rewards: "/dashboard/rewards", analytics: "/dashboard/analytics", programs: "/dashboard/programs", profile: "/dashboard/company-profile", settings: "/dashboard/settings", knowledge: "/dashboard/methodologist" };
         router.push(allowed[String(action.payload.section)] || "/dashboard");
         return;
       }

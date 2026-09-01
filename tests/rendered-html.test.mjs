@@ -57,7 +57,7 @@ test("renders the RiseStaff landing page", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /RiseStaff/);
-  assert.match(html, /Вход по приглашению/);
+  assert.match(html, /Заработать на рекомендациях/);
   assert.match(html, /<html lang="ru"/);
   assert.match(html, /relay-language-switcher/);
   assert.match(html, />ҚАЗ</);

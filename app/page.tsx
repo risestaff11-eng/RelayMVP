@@ -164,7 +164,7 @@ export default async function Home() {
             href={agentUrl("/agent-login")}
             data-track="agent_login"
           >
-            Вход по приглашению
+            Заработать на рекомендациях
           </a>
           <a className="lp-login" href={loginHref} data-track="header_primary">
             {user ? "Открыть кабинет" : "Начать бесплатно"}

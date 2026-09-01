@@ -21,18 +21,18 @@ export default async function DashboardPage() {
   const hasPublished = programs.some((program) => program.status === "ACTIVE");
   const showFirstRun = !hasPublished || stats.partners === 0 || stats.submissions === 0 || stats.awaitingReview > 0;
   const progress = hasPublished ? 100 : hasProgram ? 75 : profile ? 50 : 25;
-  const nextHref = stats.awaitingReview > 0 ? "/dashboard/submissions" : !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
+  const nextHref = stats.awaitingReview > 0 ? "/dashboard/crm" : !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
   const nextLabel = stats.awaitingReview > 0 ? `${countRu(stats.awaitingReview, "новая заявка", "новые заявки", "новых заявок")} — посмотреть` : !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
   const latestProgram = programs[0];
   const latestResult = submissions[0];
   const activities = latestResult ? [
-    { mark: "↗", title: "Получена новая заявка", text: `${latestResult.contactName} · ${latestResult.programName}`, date: latestResult.createdAt, href: "/dashboard/submissions", action: "Посмотреть заявку" },
+    { mark: "↗", title: "Получена новая заявка", text: `${latestResult.contactName} · ${latestResult.programName}`, date: latestResult.createdAt, href: "/dashboard/crm", action: "Открыть в CRM" },
     { mark: "◇", title: latestProgram?.status === "ACTIVE" ? "Программа опубликована" : "Программа обновлена", text: latestProgram?.name ?? company.name, date: latestProgram?.updatedAt ?? company.createdAt, href: latestProgram ? `/dashboard/programs/${latestProgram.id}` : "/dashboard/programs", action: "Открыть программу" },
-    { mark: "○", title: "Агенты подключаются по ссылке", text: `${stats.partners} зарегистрировано`, date: latestResult.createdAt, href: "/dashboard/partners", action: "Посмотреть агентов" },
+    { mark: "○", title: "Агенты подключаются по ссылке", text: `${stats.partners} зарегистрировано`, date: latestResult.createdAt, href: "/dashboard/crm?view=agents", action: "Посмотреть в CRM" },
   ] : latestProgram ? [
     { mark: "◇", title: latestProgram.status === "ACTIVE" ? "Программа опубликована" : "Черновик программы сохранён", text: latestProgram.name, date: latestProgram.updatedAt, href: `/dashboard/programs/${latestProgram.id}`, action: latestProgram.status === "ACTIVE" ? "Скопировать ссылку" : "Продолжить настройку" },
     { mark: profile ? "✓" : "◎", title: profile ? "Профиль компании подтверждён" : "Профиль компании ждёт подтверждения", text: profile ? "Данные готовы для генерации заданий" : "Проверьте данные компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
-    { mark: "○", title: "Следующий шаг", text: latestProgram.status === "ACTIVE" ? "Пригласите первых агентов" : "Опубликуйте внешнюю ссылку", date: latestProgram.updatedAt, href: latestProgram.status === "ACTIVE" ? "/dashboard/partners" : `/dashboard/programs/${latestProgram.id}`, action: latestProgram.status === "ACTIVE" ? "Перейти к агентам" : "Опубликовать" },
+    { mark: "○", title: "Следующий шаг", text: latestProgram.status === "ACTIVE" ? "Пригласите первых агентов" : "Опубликуйте внешнюю ссылку", date: latestProgram.updatedAt, href: latestProgram.status === "ACTIVE" ? "/dashboard/crm?view=agents" : `/dashboard/programs/${latestProgram.id}`, action: latestProgram.status === "ACTIVE" ? "Открыть CRM" : "Опубликовать" },
   ] : [
     { mark: "✓", title: "Компания создана", text: `${company.name} добавлена в RiseStaff`, date: company.createdAt, href: "/dashboard/settings", action: "Проверить данные" },
     { mark: profile ? "✓" : "◎", title: profile ? "Профиль компании подтверждён" : "Следующий шаг — профиль компании", text: profile ? "Основа для заданий готова" : "RiseStaff изучит сайт компании", date: profile?.confirmedAt ?? company.createdAt, href: "/dashboard/company-profile", action: "Открыть профиль" },
@@ -50,8 +50,8 @@ export default async function DashboardPage() {
 
       <section className="metrics" aria-label="Основные показатели">
         <Link className="metric metric-link" href="/dashboard/programs"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>{countRu(stats.programs, "созданная программа", "созданные программы", "созданных программ")} · открыть →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/partners"><div className="metric-top"><span>КТО ВАС РЕКОМЕНДУЕТ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{countRu(stats.contributedPartners, "уже привёл заявку", "уже привели заявку", "уже привели заявку")} · открыть →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/submissions"><div className="metric-top"><span>ПОЛУЧЕНО ЗАЯВОК</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{countRu(stats.awaitingReview, "ждёт решения", "ждут решения", "ждут решения")} · перейти →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/crm?view=agents"><div className="metric-top"><span>КТО ВАС РЕКОМЕНДУЕТ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{countRu(stats.contributedPartners, "уже привёл заявку", "уже привели заявку", "уже привели заявку")} · открыть CRM →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/crm"><div className="metric-top"><span>КЛИЕНТЫ В CRM</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{countRu(stats.awaitingReview, "ждёт решения", "ждут решения", "ждут решения")} · перейти →</small></Link>
         <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">¤</span></div><strong>{formatMoneyGroups(stats.approvedRewardsByCurrency)}</strong><small>Начислено компанией · открыть →</small></Link>
         <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>АГЕНТЫ ПОДТВЕРДИЛИ</span><span className="metric-icon">✓</span></div><strong>{formatMoneyGroups(stats.paidRewardsByCurrency)}</strong><small>Деньги фактически получены · открыть →</small></Link>
       </section>

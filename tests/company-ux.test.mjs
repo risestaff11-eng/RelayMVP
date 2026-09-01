@@ -14,13 +14,30 @@ test("company dashboard prioritizes results that require review", async () => {
   const dashboard = await readFile(new URL("../app/dashboard/page.tsx", import.meta.url), "utf8");
   const startGuide = await readFile(new URL("../app/dashboard/_components/first-run-guide.tsx", import.meta.url), "utf8");
   const tour = await readFile(new URL("../app/dashboard/_components/dashboard-tour.tsx", import.meta.url), "utf8");
-  assert.match(dashboard, /stats\.awaitingReview > 0 \? "\/dashboard\/submissions"/);
+  assert.match(dashboard, /stats\.awaitingReview > 0 \? "\/dashboard\/crm"/);
   assert.match(dashboard, /countRu\(stats\.awaitingReview, "новая заявка", "новые заявки", "новых заявок"\)/);
   assert.match(dashboard, /href="\/dashboard\/rewards"/);
   assert.match(dashboard, /<FirstRunGuide/);
   assert.match(startGuide, /Сделайте один полезный шаг/);
   assert.match(startGuide, /приблизит программу к первым продажам/);
   assert.doesNotMatch(tour, /setTimeout\(\(\) => setStep\(0\)/);
+});
+
+test("company CRM combines clients, deals and recommenders while ranking stays separate", async () => {
+  const [navigation, crm, rating] = await Promise.all([
+    readFile(new URL("../app/dashboard/_components/dashboard-nav.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/crm/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/agent-rating/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(navigation, /href: "\/dashboard\/crm", label: "CRM"/);
+  assert.doesNotMatch(navigation, /href: "\/dashboard\/submissions"/);
+  assert.doesNotMatch(navigation, /href: "\/dashboard\/partners"/);
+  assert.match(crm, /Клиенты и сделки/);
+  assert.match(crm, /Рекомендатели/);
+  assert.match(crm, /SubmissionReviewList/);
+  assert.match(crm, /AgentTable/);
+  assert.match(rating, /Рейтинг агентов/);
+  assert.match(rating, /AnalyticsFilters/);
 });
 
 test("company cabinet refinement covers responsive and accessible states", async () => {

@@ -27,8 +27,8 @@ export function FirstRunGuide(props: GuideProps) {
         : props.partnerCount === 0
           ? { number: "04", title: "Пригласите первого агента", text: "Откройте опубликованную программу, скопируйте ссылку и отправьте её человеку, который может рекомендовать клиентов.", href: `/dashboard/programs/${props.programId}`, action: "Получить ссылку" }
           : props.submissionCount === 0
-            ? { number: "05", title: "Помогите агенту передать первый результат", text: "Агент уже подключён. Он выбирает задание, передаёт контакт или подтверждение и видит статус в своём кабинете.", href: "/dashboard/partners", action: "Открыть агентов" }
-            : { number: "04", title: "Новые заявки ждут решения", text: "Откройте карточку клиента и решите: взять в работу или отклонить с причиной.", href: "/dashboard/submissions", action: `Посмотреть заявки${props.awaitingReview ? ` · ${props.awaitingReview}` : ""}` };
+            ? { number: "05", title: "Помогите агенту передать первый результат", text: "Агент уже подключён. Он выбирает задание, передаёт контакт или подтверждение и видит статус в своём кабинете.", href: "/dashboard/crm?view=agents", action: "Открыть CRM" }
+            : { number: "04", title: "Новые заявки ждут решения", text: "Откройте карточку клиента и решите: взять в работу или отклонить с причиной.", href: "/dashboard/crm", action: `Открыть CRM${props.awaitingReview ? ` · ${props.awaitingReview}` : ""}` };
 
   const stages = [
     { label: "Подготовить предложение", text: "Данные компании, программа и задания", done: props.hasPublished },

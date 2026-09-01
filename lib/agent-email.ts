@@ -54,7 +54,7 @@ export async function sendCompanyApplicationNotification(application: { name: st
 }
 
 export async function sendCompanyNewSubmissionNotification(input: { destination: string; companyName: string; agentName: string; missionTitle: string; programName: string; contactName: string; contactCompany: string; submissionId: string }) {
-  const reviewUrl = `https://company.risestaff.kz/auth?returnTo=${encodeURIComponent(`/dashboard/submissions?submission=${input.submissionId}`)}`;
+  const reviewUrl = `https://company.risestaff.kz/auth?returnTo=${encodeURIComponent(`/dashboard/crm?submission=${input.submissionId}`)}`;
   const contact = input.contactCompany ? `${input.contactName || "Новый контакт"} · ${input.contactCompany}` : input.contactName || "Новый результат";
   await sendEmail({
     to: input.destination,
