@@ -1,0 +1,260 @@
+/*
+ * System readability layer
+ *
+ * This file is intentionally imported last. It raises the minimum readable
+ * size for real text and controls across the public site and both workspaces,
+ * while keeping the visual hierarchy and compact CRM layout intact.
+ */
+
+:root {
+  --readable-label: 12px;
+  --readable-copy: 15px;
+  --readable-control: 15px;
+}
+
+body { font-size: 16px; }
+
+:is(
+  .dashboard-shell,
+  .partner-portal-shell,
+  .partner-program-page,
+  .landing-shell,
+  .relay-auth-page,
+  .auth-page,
+  .public-mission-action,
+  .lead-submission-form,
+  .subpage-page,
+  .integrator-page
+) {
+  font-size: 16px;
+}
+
+/* Text that used to be rendered as a very small UI label stays secondary,
+   but is no longer difficult to read on a normal laptop screen. */
+:is(
+  .dashboard-shell,
+  .partner-portal-shell,
+  .partner-program-page,
+  .landing-shell,
+  .relay-auth-page,
+  .auth-page,
+  .public-mission-action,
+  .lead-submission-form,
+  .subpage-page,
+  .integrator-page
+) :where(small) {
+  font-size: max(var(--readable-label), .82em) !important;
+  line-height: 1.42;
+}
+
+:is(
+  .dashboard-shell,
+  .partner-portal-shell,
+  .partner-program-page,
+  .landing-shell,
+  .relay-auth-page,
+  .auth-page,
+  .public-mission-action,
+  .lead-submission-form,
+  .subpage-page,
+  .integrator-page
+) :where(p, li, dd) {
+  font-size: max(var(--readable-copy), 1em);
+  line-height: 1.58;
+}
+
+:is(.dashboard-shell, .partner-portal-shell, .partner-program-page, .relay-auth-page, .auth-page, .lead-submission-form)
+  :where(label, label > span, legend) {
+  font-size: max(13px, .9em);
+  line-height: 1.4;
+}
+
+/* Large, repeatable touch targets make both mouse and touch use more relaxed. */
+:is(.dashboard-shell, .partner-portal-shell, .partner-program-page, .relay-auth-page, .auth-page, .lead-submission-form)
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea, button, .button) {
+  font-size: var(--readable-control) !important;
+}
+
+:is(.dashboard-shell, .partner-portal-shell, .partner-program-page, .relay-auth-page, .auth-page, .lead-submission-form)
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, button, .button) {
+  min-height: 46px;
+}
+
+:is(.dashboard-shell, .partner-portal-shell, .partner-program-page, .relay-auth-page, .auth-page, .lead-submission-form)
+  :where(textarea) {
+  min-height: 108px;
+}
+
+/* Company workspace */
+.dashboard-shell .sidebar-nav-label,
+.dashboard-shell .mobile-nav-group > small,
+.dashboard-shell .module-kicker,
+.dashboard-shell .metric-top,
+.dashboard-shell .operations-metrics small,
+.dashboard-shell .program-summary-strip small,
+.dashboard-shell .result-summary-card small,
+.dashboard-shell .payout-record-body small,
+.dashboard-shell .analytics-filters label > span,
+.dashboard-shell .result-decision-form label span,
+.dashboard-shell .result-state-grid small,
+.dashboard-shell .result-event-history > span {
+  font-size: 11px !important;
+}
+
+.dashboard-shell .sidebar-nav a > span { font-size: 15px; }
+.dashboard-shell .sidebar-nav a > span > small { font-size: 12px !important; }
+.dashboard-shell .sidebar-ai-agent strong { font-size: 14px; }
+.dashboard-shell .sidebar-ai-agent small { font-size: 12px !important; }
+.dashboard-context small { font-size: 14px !important; }
+.dashboard-context p { font-size: 13px !important; }
+.dashboard-shell .account-menu > button strong { font-size: 13px; }
+.dashboard-shell .account-menu > button small { font-size: 11px !important; }
+.dashboard-shell .account-popover strong { font-size: 14px; }
+
+.dashboard-shell .first-run-guide > header p,
+.dashboard-shell .panel-header > div > p,
+.dashboard-shell .program-list-card > p,
+.dashboard-shell .payout-record header p,
+.dashboard-shell .activity p,
+.dashboard-shell .plan-card p,
+.dashboard-shell .plan-card li { font-size: 14px; }
+.dashboard-shell .first-run-current p,
+.dashboard-shell .first-run-stages small,
+.dashboard-shell .metric > small,
+.dashboard-shell .operations-metrics article > span { font-size: 12px !important; }
+.dashboard-shell .first-run-stages strong,
+.dashboard-shell .setup-step strong,
+.dashboard-shell .result-summary-card strong,
+.dashboard-shell .payout-record-body strong,
+.dashboard-shell .funnel-list b { font-size: 14px; }
+.dashboard-shell .panel-header > a,
+.dashboard-shell .panel-header > button,
+.dashboard-shell .agent-directory-card header a,
+.dashboard-shell .agent-directory-card footer label,
+.dashboard-shell .payout-toolbar button,
+.dashboard-shell .agent-directory-card footer button { font-size: 13px; }
+
+.dashboard-shell .results-controls input,
+.dashboard-shell .results-controls select,
+.dashboard-shell .directory-controls input,
+.dashboard-shell .directory-controls select,
+.dashboard-shell .payout-toolbar input,
+.dashboard-shell .analytics-local-controls input,
+.dashboard-shell .analytics-local-controls select,
+.dashboard-shell .analytics-filters select { min-height: 48px; font-size: 14px !important; }
+
+/* Agent workspace */
+.partner-portal-topbar > div:first-child small { font-size: 12px !important; }
+.partner-portal-topbar > div:first-child strong { font-size: 16px !important; }
+.partner-portal-sidebar :where(a, button, summary) { font-size: 14px; }
+.partner-portal-content :where(.wallet-card, .partner-feed-card, .next-reward-card, .new-offers-card, .opportunity-card, .my-missions-list article, .partner-submission-list > article, .materials-grid article) :where(p, span, small) { font-size: max(13px, .88em) !important; }
+.partner-portal-content :where(.wallet-card, .partner-feed-card, .next-reward-card, .new-offers-card, .opportunity-card, .my-missions-list article, .partner-submission-list > article, .materials-grid article) :where(h2, h3, strong) { font-size: max(16px, 1em); }
+.partner-portal-content .submission-detail-grid :where(strong, span) { font-size: 14px; }
+
+/* CRM has dense operational information, so its own hierarchy is tuned rather
+   than globally inflated. The client name and money remain the strongest cues. */
+.crm-page-immersive .crm-column > header span { font-size: 13px; }
+.crm-page-immersive .crm-column > header b { font-size: 12px; }
+.crm-page-immersive .crm-column > header strong { font-size: 16px; }
+.crm-page-immersive .crm-column > header small { font-size: 11px !important; }
+.crm-page-immersive .crm-lead-card { padding: 16px; }
+.crm-page-immersive .crm-card-top small,
+.crm-page-immersive .crm-card-top time { font-size: 11px !important; }
+.crm-page-immersive .crm-lead-card h3 { font-size: 20px; }
+.crm-client-contact a,
+.crm-client-contact span { font-size: 14px; }
+.crm-page-immersive .crm-lead-card > p { height: 46px; font-size: 13px; }
+.crm-card-amount small { font-size: 10px !important; }
+.crm-card-amount strong { font-size: 18px; }
+.crm-lead-card footer small { font-size: 11px !important; }
+.crm-lead-card footer strong { font-size: 13px; }
+.crm-lead-card footer a,
+.crm-lead-card footer em,
+.crm-payout-state { font-size: 12px; }
+
+.crm-fullscreen-context { font-size: 13px; }
+.crm-fullscreen-person small { font-size: 11px !important; }
+.crm-fullscreen-person strong { font-size: 20px; }
+.crm-fullscreen-person a,
+.crm-fullscreen-person span { font-size: 15px; }
+.crm-fullscreen-person select { min-height: 46px; font-size: 14px !important; }
+.crm-fullscreen-body > main { padding: 26px 30px 48px; }
+.crm-fullscreen-body > aside { padding: 26px 28px 44px; }
+.crm-detail-section { padding: 22px; }
+.crm-section-heading small { font-size: 11px !important; }
+.crm-section-heading h3 { font-size: 21px; }
+.crm-detail-grid { gap: 12px; }
+.crm-detail-grid article { padding: 15px; }
+.crm-detail-grid small { font-size: 11px !important; }
+.crm-detail-grid strong { font-size: 15px; }
+.crm-comment-block small { font-size: 11px !important; }
+.crm-comment-block p { font-size: 15px; }
+.crm-file-list span { font-size: 14px; }
+.crm-file-list small { font-size: 11px !important; }
+.crm-timeline article { grid-template-columns: 145px 1fr; }
+.crm-timeline time { font-size: 11px; }
+.crm-timeline strong { font-size: 14px; }
+.crm-payout-panel small { font-size: 11px !important; }
+.crm-payout-panel span { font-size: 14px; }
+.crm-payout-panel p { font-size: 12px; }
+.crm-service-state small { font-size: 11px !important; }
+.crm-service-state strong { font-size: 13px; }
+.crm-inline-editor :where(input, select, textarea, button) { font-size: 15px !important; }
+
+/* Public marketing and authenticated entry points */
+.landing-shell :where(.lp-nav, .lp-header-actions, .landing-nav-links) :where(a, button) { font-size: 15px; }
+.landing-shell :where(.lp-section-intro > p, .lp-ai-copy > p, .lp-partner-copy > p, .lp-access p, .lp-plan-teasers p, .lp-audience-grid p, .lp-bento article > p, .lp-faq details p) { font-size: 15px; }
+.landing-shell :where(.lp-compare li, .lp-ai-copy li, .lp-payment-grid p, .lp-example-steps p, .lp-application-copy li) { font-size: 14px; }
+.landing-shell :where(.lp-company-application label > span, .lp-lead-example dt, .lp-lead-example > div span) { font-size: 11px; }
+.landing-shell :where(.lp-company-application input, .lp-company-application textarea, .lp-company-application form > button) { font-size: 15px !important; }
+.relay-auth-page :where(p, label, .relay-auth-notice, .relay-auth-error, .relay-auth-success) { font-size: 15px; }
+.relay-auth-page :where(input, button, .relay-auth-primary) { min-height: 50px; font-size: 16px !important; }
+
+@media (max-width: 760px) {
+  :root {
+    --readable-label: 12px;
+    --readable-copy: 15px;
+    --readable-control: 16px;
+  }
+
+  :is(.dashboard-shell, .partner-portal-shell, .partner-program-page, .relay-auth-page, .auth-page, .lead-submission-form)
+    :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, button, .button) {
+    min-height: 48px;
+  }
+
+  .dashboard-shell .sidebar-nav a > span { font-size: 16px; }
+  .dashboard-shell .dashboard-heading p,
+  .dashboard-shell .module-heading p { font-size: 16px; }
+  .dashboard-shell .panel { padding: 20px; }
+  .dashboard-shell .panel-header h2 { font-size: 21px; }
+  .dashboard-shell .metric,
+  .dashboard-shell .operations-metrics article { min-height: 160px; padding: 22px; }
+  .dashboard-shell .metric > strong,
+  .dashboard-shell .operations-metrics article > strong { font-size: 35px; }
+
+  .partner-portal-content { padding-inline: 18px; }
+  .partner-portal-content :where(h1, h2) { line-height: 1.08; }
+  .partner-portal-content :where(.wallet-card, .partner-feed-card, .next-reward-card, .new-offers-card, .opportunity-card, .my-missions-list article, .partner-submission-list > article, .materials-grid article) :where(p, span, small) { font-size: 14px !important; }
+
+  .crm-page-immersive .crm-mobile-stages button { min-height: 44px; font-size: 13px; }
+  .crm-page-immersive .crm-column > header { min-height: 76px; }
+  .crm-page-immersive .crm-lead-card { padding: 18px; }
+  .crm-page-immersive .crm-lead-card h3 { font-size: 22px; }
+  .crm-page-immersive .crm-lead-card > p { max-height: 56px; font-size: 14px; }
+  .crm-card-stage-select { min-height: 48px; font-size: 14px !important; }
+  .crm-fullscreen-header { padding: 20px 56px 20px 18px; }
+  .crm-fullscreen-person { gap: 17px; }
+  .crm-fullscreen-person h2 { font-size: 32px; }
+  .crm-fullscreen-person strong { font-size: 21px; }
+  .crm-fullscreen-body > main,
+  .crm-fullscreen-body > aside { padding: 18px; }
+  .crm-detail-section { padding: 18px; }
+  .crm-section-heading h3 { font-size: 22px; }
+  .crm-detail-grid strong { font-size: 16px; }
+  .crm-comment-block p { font-size: 16px; }
+  .crm-timeline article { grid-template-columns: 1fr; }
+
+  .landing-shell :where(.lp-hero-copy > p, .lp-section-intro > p, .lp-ai-copy > p, .lp-partner-copy > p, .lp-access p, .lp-plan-teasers p, .lp-audience-grid p, .lp-bento article > p, .lp-faq details p) { font-size: 15px; }
+  .landing-shell :where(.lp-compare li, .lp-ai-copy li, .lp-payment-grid p, .lp-example-steps p, .lp-application-copy li) { font-size: 14px; }
+  .landing-shell :where(.lp-primary, .lp-secondary, .lp-final-secondary, .lp-nav-cta) { min-height: 50px; font-size: 14px; }
+}

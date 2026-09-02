@@ -14,6 +14,7 @@ import "./ui-polish.css";
 import "./marketing-polish.css";
 import "./agent-polish.css";
 import "./company-premium.css";
+import "./readability.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
