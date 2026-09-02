@@ -1,12 +1,11 @@
-import { eq, sql } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
 import { getLatestCompanyProfile } from "../../../../db/profile";
 import { getCompanyOperations, getProgramsForCompany } from "../../../../db/programs";
-import { companies } from "../../../../db/schema";
 import { generateStructuredJson } from "../../../../lib/ai";
 import { aiCreditLimit, calculateAiCredits, minimumAiCredits } from "../../../../lib/ai-credits";
+import { reserveCompanyAiCredits, settleCompanyAiCredits } from "../../../../lib/company-credit-reservation";
 import { cleanString, sameOrigin } from "../_utils";
 
 type AssistantReply = {
@@ -68,7 +67,10 @@ export async function POST(request: Request) {
         },
       }, required: ["reply", "suggestions", "action"],
     };
-    const ai = await generateStructuredJson<AssistantReply>({
+    const reservation = await reserveCompanyAiCredits(company.id, aiCreditLimit("ASSISTANT_REPLY"));
+    if (!reservation) return Response.json({ error: "Недостаточно AI-кредитов для ответа. Попробуйте позже." }, { status: 402 });
+    let ai: Awaited<ReturnType<typeof generateStructuredJson<AssistantReply>>>;
+    try { ai = await generateStructuredJson<AssistantReply>({
       systemInstruction: `Ты — AI-агент RiseStaff и практический руководитель агентских B2B-продаж. Твоя зона ответственности: профиль компании, агентские программы, задания, награды, правила, публикации, привлечение и активация агентов, проверка результатов, выплаты и аналитика внутри RiseStaff.
 Отвечай по-русски, конкретно: сначала вывод, затем 2–4 ближайших действия. Всегда учитывай реальные данные кабинета и не выдумывай факты. Предлагай только то, что можно сделать в RiseStaff.
 Если вопрос не относится к RiseStaff или развитию агентской/амбассадорской сети, коротко и доброжелательно верни разговор к продукту: например «С этим не помогу, зато могу за две минуты собрать вам план запуска агентской сети в RiseStaff». Не развивай постороннюю тему.
@@ -81,10 +83,9 @@ export async function POST(request: Request) {
         programs: programs.slice(0, 6).map((program) => ({ id: program.id, name: program.name, status: program.status, goal: program.goal, missions: program.missions.slice(0, 4).map((mission) => ({ type: mission.type, title: mission.title, reward: mission.rewardLabel })) })),
         conversation: messages,
       }), schema, maxOutputTokens: 850, thinkingLevel: "minimal",
-    });
-    const spent = Math.min(company.aiTokenBalance, calculateAiCredits("ASSISTANT_REPLY", ai));
-    await getDb().update(companies).set({ aiTokenBalance: sql`max(${companies.aiTokenBalance} - ${spent}, 0)`, aiTokensUsed: sql`${companies.aiTokensUsed} + ${spent}`, updatedAt: new Date().toISOString() }).where(eq(companies.id, company.id));
-    return Response.json({ ...ai.data, tokenBalance: Math.max(0, company.aiTokenBalance - spent), creditsSpent: spent, creditLimit: aiCreditLimit("ASSISTANT_REPLY") });
+    }); } catch (error) { await settleCompanyAiCredits(company.id, reservation.reserved, 0); throw error; }
+    const spent = await settleCompanyAiCredits(company.id, reservation.reserved, calculateAiCredits("ASSISTANT_REPLY", ai));
+    return Response.json({ ...ai.data, tokenBalance: reservation.balance + (reservation.reserved - spent), creditsSpent: spent, creditLimit: aiCreditLimit("ASSISTANT_REPLY") });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "AI-агент временно недоступен" }, { status: 400 });
   }
