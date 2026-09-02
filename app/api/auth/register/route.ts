@@ -25,7 +25,11 @@ export async function POST(request: Request) {
     const user = existing[0];
     if (user) {
       const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
-      if (roles.some((role) => role.role === "COMPANY")) throw new Error("Аккаунт с этим email уже существует");
+      if (roles.some((role) => role.role === "COMPANY")) return Response.json({
+        code: "ACCOUNT_EXISTS",
+        nextStep: "LOGIN",
+        error: "Аккаунт с этим email уже существует. Войдите или восстановите пароль.",
+      }, { status: 409 });
     }
     const userId = user?.id ?? crypto.randomUUID();
     const now = new Date().toISOString();

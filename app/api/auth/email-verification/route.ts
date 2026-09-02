@@ -2,6 +2,7 @@ import { and, count, desc, eq, gte, isNull } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { companyEmailVerificationCodes, userRoles, users } from "../../../../db/schema";
 import { createAuthSession } from "../../../../lib/account-auth";
+import { companyReturnTo } from "../../../../lib/auth-navigation";
 import { companyEmailCodeExpiresAt, createCompanyEmailCode, hashCompanyEmailCode, sendCompanyEmailCode } from "../../../../lib/company-email-verification";
 import { cleanString, sameOrigin } from "../../company/_utils";
 
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
         db.update(users).set({ emailVerifiedAt: now, status: "active", updatedAt: now }).where(eq(users.id, user.id)),
       ]);
       await createAuthSession(user.id);
-      return Response.json({ ok: true, redirectTo: "/dashboard" });
+      return Response.json({ ok: true, redirectTo: companyReturnTo(payload.returnTo) });
     }
 
     throw new VerificationError("Неизвестное действие");

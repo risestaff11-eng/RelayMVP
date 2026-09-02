@@ -87,6 +87,19 @@ test("renders the RiseStaff landing page", async () => {
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
 });
 
+test("built company auth screen serves login immediately and never caches authentication pages", async () => {
+  const response = await route("https://company.risestaff.kz/auth?returnTo=%2Fdashboard%2Fcrm");
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("cache-control"), /no-store/);
+  const html = await response.text();
+  assert.match(html, /Вход в кабинет компании/);
+  assert.match(html, /autoComplete="current-password"/i);
+  assert.match(html, /name="email"/);
+  assert.match(html, /Забыли пароль/);
+  assert.match(html, /Нет аккаунта\? Создать аккаунт/);
+  assert.doesNotMatch(html, /name="intent"|Введите email, затем выберите/);
+});
+
 test("renders pricing without publishing prices", async () => {
   const response = await render("/pricing");
   assert.equal(response.status, 200);

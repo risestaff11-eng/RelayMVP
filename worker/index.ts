@@ -51,7 +51,13 @@ const worker = {
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    const response = await handler.fetch(request, env, ctx);
+    if (url.pathname === "/auth" || url.pathname.startsWith("/api/auth/")) {
+      const privateResponse = new Response(response.body, response);
+      privateResponse.headers.set("Cache-Control", "no-store, private, max-age=0");
+      return privateResponse;
+    }
+    return response;
   },
 };
 
