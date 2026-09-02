@@ -521,7 +521,9 @@
   .mobile-menu-trigger.company-menu-trigger { top: max(14px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); width: 42px; height: 42px; }
   .dashboard-topbar .top-actions { min-width: 0; margin-left: 0; display: flex; align-items: center; gap: 4px; }
   .dashboard-topbar .embedded-language-switcher { flex: 0 0 auto; }
-  .dashboard-topbar .embedded-language-switcher button { min-width: 31px; min-height: 34px; padding: 0 7px; font-size: 9px; }
+  .dashboard-topbar .embedded-language-switcher { padding: 3px; gap: 2px; }
+  .dashboard-topbar .embedded-language-switcher button { width: 33px; min-width: 33px; min-height: 34px; padding: 0; font-size: 9px; }
+  .dashboard-topbar .tour-launch { display: none; }
   .dashboard-topbar .account-menu > button { min-width: 38px; min-height: 38px; padding: 1px; }
   .dashboard-topbar .account-menu > button > div,
   .dashboard-topbar .account-menu > button > i { display: none; }
