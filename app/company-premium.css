@@ -502,3 +502,56 @@
   .crm-goal-modal { max-height: 92dvh; overflow-y: auto; }
   .crm-close-modal > div { display: grid; }
 }
+
+/* Mobile company workspace: keep the app bar and lead data usable above the fold. */
+@media (max-width:760px) {
+  .dashboard-shell .dashboard-topbar {
+    min-width: 0;
+    height: var(--mobile-appbar);
+    min-height: var(--mobile-appbar);
+    padding: 0 max(10px, env(safe-area-inset-right)) 0 max(66px, calc(56px + env(safe-area-inset-left)));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+  .dashboard-topbar .mobile-company-identity { min-width: 0; max-width: none; }
+  .mobile-company-identity strong { max-width: none; font-size: 12px; }
+  .mobile-company-identity small { font-size: 7px; }
+  .mobile-menu-trigger.company-menu-trigger { top: max(14px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); width: 42px; height: 42px; }
+  .dashboard-topbar .top-actions { min-width: 0; margin-left: 0; display: flex; align-items: center; gap: 4px; }
+  .dashboard-topbar .embedded-language-switcher { flex: 0 0 auto; }
+  .dashboard-topbar .embedded-language-switcher button { min-width: 31px; min-height: 34px; padding: 0 7px; font-size: 9px; }
+  .dashboard-topbar .account-menu > button { min-width: 38px; min-height: 38px; padding: 1px; }
+  .dashboard-topbar .account-menu > button > div,
+  .dashboard-topbar .account-menu > button > i { display: none; }
+  .dashboard-topbar .account-menu > button > span { width: 36px; height: 36px; }
+
+  .crm-lead-fullscreen { height: 100dvh; min-height: 100dvh; }
+  .crm-fullscreen-header { padding: 11px 54px 10px 15px; flex: 0 0 auto; }
+  .crm-fullscreen-context { display: block; min-width: 0; overflow: hidden; }
+  .crm-fullscreen-context span { display: block; overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+  .crm-fullscreen-context strong,.crm-fullscreen-context time { display: none; }
+  .crm-fullscreen-person { margin-top: 6px; display: block; }
+  .crm-fullscreen-person > div:first-child { gap: 2px; }
+  .crm-fullscreen-person > div:first-child small { display: none; }
+  .crm-fullscreen-person > div:nth-child(2),
+  .crm-fullscreen-person > div:nth-child(3) { display: none; }
+  .crm-fullscreen-person h2 { font-size: 24px; line-height: 1.08; white-space: nowrap; }
+  .crm-fullscreen-person a,.crm-fullscreen-person span { font-size: 12px; }
+  .crm-mobile-summary-toggle { min-height: 30px; margin-top: 8px; padding: 0 9px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #4b5146; border-radius: 8px; color: #f5f7f1; background: #282c26; font: inherit; font-size: 10px; font-weight: 850; }
+  .crm-mobile-summary-toggle span { color: #b8ff32; font-size: 13px; }
+  .crm-fullscreen-header.mobile-summary-open .crm-fullscreen-context strong { display: block; margin-top: 3px; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  .crm-fullscreen-header.mobile-summary-open .crm-fullscreen-context time { display: block; margin-top: 4px; color: #aeb5aa; font-size: 9px; }
+  .crm-fullscreen-header.mobile-summary-open .crm-fullscreen-person { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+  .crm-fullscreen-header.mobile-summary-open .crm-fullscreen-person > div:nth-child(2),
+  .crm-fullscreen-header.mobile-summary-open .crm-fullscreen-person > div:nth-child(3) { padding-top: 10px; display: grid; border-top: 1px solid #3a3f36; }
+  .crm-fullscreen-header.mobile-summary-open .crm-fullscreen-person strong { font-size: 15px; }
+  .crm-fullscreen-body { display: block; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .crm-fullscreen-body > main,
+  .crm-fullscreen-body > aside { min-height: auto; padding: 14px; overflow: visible; }
+}
+
+@media (min-width:761px) {
+  .crm-mobile-summary-toggle { display: none; }
+}

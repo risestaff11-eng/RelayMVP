@@ -40,6 +40,8 @@ test("company CRM keeps the client funnel primary while ranking stays separate",
   assert.match(workspace, /onDrop=/);
   assert.match(workspace, /Карточка возвращена на прежний этап/);
   assert.match(workspace, /crm-lead-fullscreen/);
+  assert.match(workspace, /mobileSummaryOpen/);
+  assert.match(workspace, /Этап и амбассадор/);
   assert.match(workspace, /договор \/ предоплата/i);
   assert.match(workspace, /Компания отметила перевод/);
   assert.doesNotMatch(workspace, />WhatsApp</);
@@ -68,5 +70,7 @@ test("company cabinet refinement covers responsive and accessible states", async
   assert.match(rootLayout, /import "\.\/company-premium\.css"/);
   assert.match(styles, /:focus-visible/);
   assert.match(styles, /@media \(max-width: 900px\)/);
+  assert.match(styles, /Mobile company workspace/);
+  assert.match(styles, /crm-mobile-summary-toggle/);
   assert.match(styles, /prefers-reduced-motion/);
 });
