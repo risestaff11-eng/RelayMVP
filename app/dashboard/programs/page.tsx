@@ -3,6 +3,7 @@ import { SafeLink as Link } from "@/app/safe-link";
 import { redirect } from "next/navigation";
 import { requireChatGPTUser } from "../../chatgpt-auth";
 import { getCompanyForUser } from "../../../db/company";
+import { getConfirmedCompanyProfile, getLatestCompanyProfile } from "../../../db/profile";
 import { getProgramsForCompany } from "../../../db/programs";
 import { ProgramQuickActions } from "../_components/program-quick-actions";
 import { countRu, formatDate } from "@/lib/format-display";
@@ -17,7 +18,8 @@ export default async function ProgramsPage() {
   const user = await requireChatGPTUser("/dashboard/programs");
   const company = await getCompanyForUser(user.userId);
   if (!company) redirect("/onboarding");
-  const programList = await getProgramsForCompany(company.id);
+  const [confirmedProfile, latestProfile, programList] = await Promise.all([getConfirmedCompanyProfile(company.id), getLatestCompanyProfile(company.id), getProgramsForCompany(company.id)]);
+  const profile = confirmedProfile ?? latestProfile;
   const activePrograms = programList.filter((program) => ["ACTIVE", "PAUSED"].includes(program.status));
   const archivedPrograms = programList.filter((program) => program.status === "ARCHIVED");
 
