@@ -1,5 +1,4 @@
 import { getChatGPTUser } from "../../../chatgpt-auth";
-import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
 import { getLatestCompanyProfile } from "../../../../db/profile";
 import { getCompanyOperations, getProgramsForCompany } from "../../../../db/programs";
