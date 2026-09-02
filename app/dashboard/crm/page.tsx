@@ -20,6 +20,6 @@ export default async function CrmPage({ searchParams }: { searchParams: Promise<
   const submissions = await getSubmissionsForCompany(company.id);
 
   return <div className="dashboard-content crm-page crm-page-immersive">
-    <CrmWorkspace companyName={company.name} initialItems={submissions as CrmLead[]} initialSelectedId={query.submission || ""} initialSettings={{ monthlyGoal: company.crmMonthlyGoal, averageCheck: company.crmAverageCheck, conversionRate: company.crmConversionRate, leadsPerAmbassador: company.crmLeadsPerAmbassador, currency: company.crmGoalCurrency }} />
+    <CrmWorkspace companyName={company.name} initialItems={submissions as CrmLead[]} initialSelectedId={query.submission || ""} initialSettings={{ monthlyGoal: company.crmMonthlyGoal, averageCheck: company.crmAverageCheck, conversionRate: company.crmConversionRate, currency: company.crmGoalCurrency }} />
   </div>;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { calculateCrmGoal, CRM_STAGES, crmStage, crmStageMutation, potentialForLead, type CrmStageId } from "@/lib/crm";
+import { calculateCrmGoal, conversionFromLeadsPerPayment, CRM_STAGES, crmStage, crmStageMutation, leadsPerPaymentFromConversion, potentialForLead, type CrmStageId } from "@/lib/crm";
 import { countRu, formatDateTime, formatMoney } from "@/lib/format-display";
 import { reviewStatusNames, salesStatusNames, slaState } from "@/lib/workflow";
 
@@ -19,7 +19,7 @@ export type CrmLead = {
   events: Event[]; attachments: Attachment[]; reward: Reward;
 };
 
-export type CrmSettings = { monthlyGoal: number; averageCheck: number; conversionRate: number; leadsPerAmbassador: number; currency: string };
+export type CrmSettings = { monthlyGoal: number; averageCheck: number; conversionRate: number; currency: string };
 
 const quickFilters = [
   ["ALL", "Все клиенты"], ["ACTION", "Требуют внимания"], ["WORK", "В работе"], ["MONEY", "Деньги в воронке"], ["CLOSED", "Отказ / брак"],
@@ -94,7 +94,7 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
     return haystack.includes(query.trim().toLowerCase()) && quickMatch && (program === "ALL" || item.programName === program) && (ambassador === "ALL" || item.partnerEmail === ambassador);
   }), [items, query, quick, program, ambassador]);
 
-  const goal = calculateCrmGoal(settings.monthlyGoal, settings.averageCheck, settings.conversionRate, settings.leadsPerAmbassador);
+  const goal = calculateCrmGoal(settings.monthlyGoal, settings.averageCheck, settings.conversionRate);
   const paid = items.filter((item) => crmStage(item) === "PAID" && item.currency === settings.currency);
   const fact = paid.reduce((sum, item) => sum + Math.max(0, item.dealAmount || 0), 0);
   const openItems = items.filter((item) => !["PAID", "CLOSED"].includes(crmStage(item)) && item.currency === settings.currency);
@@ -181,17 +181,19 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
 
 function GoalModal({ value, onClose, onSaved }: { value: CrmSettings; onClose: () => void; onSaved: (value: CrmSettings) => void }) {
   const [draft, setDraft] = useState(value);
+  const [leadsPerPayment, setLeadsPerPayment] = useState(() => leadsPerPaymentFromConversion(value.conversionRate) || 5);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const math = calculateCrmGoal(draft.monthlyGoal, draft.averageCheck, draft.conversionRate, draft.leadsPerAmbassador);
+  const conversionRate = conversionFromLeadsPerPayment(leadsPerPayment);
+  const math = calculateCrmGoal(draft.monthlyGoal, draft.averageCheck, conversionRate);
   const rangeMax = Math.max(1_000_000, Math.ceil(Math.max(draft.monthlyGoal * 2, draft.averageCheck * 20) / 100_000) * 100_000);
   const rangeStep = rangeMax >= 10_000_000 ? 100_000 : 10_000;
-  async function save() { setPending(true); setError(""); try { const response = await fetch("/api/company/crm-settings", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(draft) }); const data = await response.json() as { error?: string }; if (!response.ok) throw new Error(data.error || "Не удалось сохранить"); onSaved({ ...draft, monthlyGoal: math.goal, averageCheck: math.check, conversionRate: math.conversion, leadsPerAmbassador: math.perAmbassador }); } catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось сохранить"); } finally { setPending(false); } }
-  return <div className="relay-modal-backdrop"><button className="relay-modal-dismiss-layer" type="button" onClick={onClose} aria-label="Закрыть" /><section className="relay-modal crm-goal-modal" role="dialog" aria-modal="true" aria-labelledby="crm-goal-title"><button className="relay-modal-close" type="button" onClick={onClose}>×</button><small>ПЛАН ПРОДАЖ</small><h2 id="crm-goal-title">Моя цель в месяц</h2><p>Задайте ориентиры — RiseStaff посчитает, сколько нужно оплат, лидов и активных амбассадоров.</p>
+  async function save() { setPending(true); setError(""); const next = { ...draft, monthlyGoal: math.goal, averageCheck: math.check, conversionRate: math.conversion }; try { const response = await fetch("/api/company/crm-settings", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(next) }); const data = await response.json() as { error?: string }; if (!response.ok) throw new Error(data.error || "Не удалось сохранить"); onSaved(next); } catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось сохранить"); } finally { setPending(false); } }
+  return <div className="relay-modal-backdrop"><button className="relay-modal-dismiss-layer" type="button" onClick={onClose} aria-label="Закрыть" /><section className="relay-modal crm-goal-modal" role="dialog" aria-modal="true" aria-labelledby="crm-goal-title"><button className="relay-modal-close" type="button" onClick={onClose}>×</button><small>ПЛАН ПРОДАЖ</small><h2 id="crm-goal-title">Моя цель в месяц</h2><p>Укажите план, средний чек и обычное качество заявок. Не нужно заранее угадывать, сколько лидов даст один амбассадор.</p>
     <div className="crm-goal-main"><input type="number" min="0" value={draft.monthlyGoal || ""} onChange={(event) => setDraft({ ...draft, monthlyGoal: Number(event.target.value) })} placeholder="0" /><select value={draft.currency} onChange={(event) => setDraft({ ...draft, currency: event.target.value })}><option>KZT</option><option>RUB</option><option>USD</option><option>EUR</option></select><span>/ мес</span></div>
     <input className="crm-goal-range" type="range" min="0" max={rangeMax} step={rangeStep} value={Math.min(rangeMax, draft.monthlyGoal)} onChange={(event) => setDraft({ ...draft, monthlyGoal: Number(event.target.value) })} /><div className="crm-goal-checkpoints"><span>0</span><span>{formatMoney(rangeMax / 2, draft.currency)}</span><span>{formatMoney(rangeMax, draft.currency)}</span></div>
-    <div className="crm-goal-inputs"><label><span>Средний чек</span><input type="number" min="0" value={draft.averageCheck || ""} onChange={(event) => setDraft({ ...draft, averageCheck: Number(event.target.value) })} /></label><label><span>Конверсия в оплату, %</span><input type="number" min="0" max="100" value={draft.conversionRate || ""} onChange={(event) => setDraft({ ...draft, conversionRate: Number(event.target.value) })} /></label><label><span>Лидов на амбассадора</span><input type="number" min="0" value={draft.leadsPerAmbassador || ""} onChange={(event) => setDraft({ ...draft, leadsPerAmbassador: Number(event.target.value) })} /></label></div>
-    <div className="crm-goal-chain"><span><b>{math.payments}</b><small>{countRu(math.payments, "оплата", "оплаты", "оплат").replace(/^\d+\s/, "")}</small></span><i>→</i><span><b>{math.leads}</b><small>{countRu(math.leads, "лид", "лида", "лидов").replace(/^\d+\s/, "")}</small></span><i>→</i><span><b>{math.ambassadors}</b><small>{countRu(math.ambassadors, "амбассадор", "амбассадора", "амбассадоров").replace(/^\d+\s/, "")}</small></span></div>
+    <div className="crm-goal-inputs"><label><span>Средний чек</span><input type="number" min="0" value={draft.averageCheck || ""} onChange={(event) => setDraft({ ...draft, averageCheck: Number(event.target.value) })} /><small>Сколько обычно платит один клиент</small></label><label><span>На одну оплату нужно лидов</span><input type="number" min="1" max="100" value={leadsPerPayment || ""} onChange={(event) => setLeadsPerPayment(Number(event.target.value))} /><small>Например: 5 означает одну оплату из пяти заявок</small></label></div>
+    <div className="crm-goal-chain"><span><b>{math.payments}</b><small>{countRu(math.payments, "оплата", "оплаты", "оплат").replace(/^\d+\s/, "")}</small></span><i>→</i><span><b>{math.leads}</b><small>{countRu(math.leads, "лид", "лида", "лидов").replace(/^\d+\s/, "")}</small></span></div><p className="crm-goal-note">Количество активных амбассадоров станет понятным по их фактической активности — этот прогноз не нужно задавать заранее.</p>
     {error && <div className="form-error">{error}</div>}<button className="button button-primary crm-save-goal" type="button" disabled={pending} onClick={() => void save()}>{pending ? "Сохраняем…" : `Зафиксировать цель — ${formatMoney(math.goal, draft.currency)}`}</button>
   </section></div>;
 }

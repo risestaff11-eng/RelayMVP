@@ -1,13 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateCrmGoal, crmStage, crmStageMutation, potentialForLead } from "../lib/crm.ts";
+import { calculateCrmGoal, conversionFromLeadsPerPayment, crmStage, crmStageMutation, leadsPerPaymentFromConversion, potentialForLead } from "../lib/crm.ts";
 
-test("CRM goal math is stable for empty and invalid values", () => {
-  assert.deepEqual(calculateCrmGoal(0, 0, 0, 0), { goal: 0, check: 0, conversion: 0, perAmbassador: 0, payments: 0, leads: 0, ambassadors: 0 });
-  assert.equal(calculateCrmGoal(450000, 230016, 20, 3).payments, 2);
-  assert.equal(calculateCrmGoal(450000, 230016, 20, 3).leads, 10);
-  assert.equal(calculateCrmGoal(450000, 230016, 20, 3).ambassadors, 4);
-  assert.equal(calculateCrmGoal(100, Number.NaN, 50, 1).payments, 0);
+test("CRM goal math asks only for a sales target and conversion assumptions", () => {
+  assert.deepEqual(calculateCrmGoal(0, 0, 0), { goal: 0, check: 0, conversion: 0, leadsPerPayment: 0, payments: 0, leads: 0 });
+  assert.equal(calculateCrmGoal(450000, 230016, 20).payments, 2);
+  assert.equal(calculateCrmGoal(450000, 230016, 20).leads, 10);
+  assert.equal(calculateCrmGoal(450000, 230016, 20).leadsPerPayment, 5);
+  assert.equal(leadsPerPaymentFromConversion(33), 3);
+  assert.equal(conversionFromLeadsPerPayment(5), 20);
+  assert.equal(calculateCrmGoal(100, Number.NaN, 50).payments, 0);
 });
 
 test("CRM stage uses existing review, sales and payout statuses", () => {

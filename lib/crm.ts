@@ -38,15 +38,23 @@ export function safeAmount(value: unknown) {
   return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
 }
 
-export function calculateCrmGoal(monthlyGoal: unknown, averageCheck: unknown, conversionRate: unknown, leadsPerAmbassador: unknown) {
+export function leadsPerPaymentFromConversion(conversionRate: unknown) {
+  const conversion = Math.min(100, safeAmount(conversionRate));
+  return conversion > 0 ? Math.max(1, Math.round(100 / conversion)) : 0;
+}
+
+export function conversionFromLeadsPerPayment(leadsPerPayment: unknown) {
+  const leads = safeAmount(leadsPerPayment);
+  return leads > 0 ? Math.max(1, Math.min(100, Math.round(100 / leads))) : 0;
+}
+
+export function calculateCrmGoal(monthlyGoal: unknown, averageCheck: unknown, conversionRate: unknown) {
   const goal = safeAmount(monthlyGoal);
   const check = safeAmount(averageCheck);
   const conversion = Math.min(100, safeAmount(conversionRate));
-  const perAmbassador = safeAmount(leadsPerAmbassador);
   const payments = goal > 0 && check > 0 ? Math.ceil(goal / check) : 0;
   const leads = payments > 0 && conversion > 0 ? Math.ceil(payments / (conversion / 100)) : 0;
-  const ambassadors = leads > 0 && perAmbassador > 0 ? Math.ceil(leads / perAmbassador) : 0;
-  return { goal, check, conversion, perAmbassador, payments, leads, ambassadors };
+  return { goal, check, conversion, leadsPerPayment: leadsPerPaymentFromConversion(conversion), payments, leads };
 }
 
 export function potentialForLead(item: { dealAmount?: unknown; estimatedDealAmount?: unknown }, averageCheck: unknown) {

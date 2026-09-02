@@ -27,7 +27,6 @@ export async function PATCH(request: Request) {
       crmMonthlyGoal: amount(body.monthlyGoal),
       crmAverageCheck: amount(body.averageCheck),
       crmConversionRate: amount(body.conversionRate, 100),
-      crmLeadsPerAmbassador: amount(body.leadsPerAmbassador, 100_000),
       crmGoalCurrency: currency,
       updatedAt: new Date().toISOString(),
     };
