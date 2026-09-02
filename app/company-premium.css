@@ -402,6 +402,8 @@
 .crm-fullscreen-person strong { font-size: 17px; }
 .crm-fullscreen-person a,.crm-fullscreen-person span { color: #dfe4da; font-size: 12px; text-decoration: none; }
 .crm-fullscreen-person select { width: 100%; min-height: 38px; padding: 0 34px 0 10px; border: 1px solid #50564c; border-radius: 9px; color: #fff; background: #2b3028; font: inherit; font-size: 11px; font-weight: 900; }
+.crm-fullscreen-person select option { color: #171914; background: #fff; }
+.crm-fullscreen-person select option:checked { color: #fff; background: #2463d4; }
 .crm-lead-fullscreen > .crm-notice { margin: 0; border-radius: 0; }
 .crm-fullscreen-body { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0,1.65fr) minmax(340px,.72fr); overflow: hidden; }
 .crm-fullscreen-body > main { min-width: 0; padding: 22px 24px 44px 28px; overflow-y: auto; }
