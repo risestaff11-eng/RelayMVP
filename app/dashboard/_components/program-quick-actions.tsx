@@ -23,7 +23,7 @@ export function ProgramQuickActions({ id, initialStatus }: { id: string; initial
   }
 
   return <div className="program-quick-actions" aria-label="Управление программой">
-    {status === "ACTIVE" ? <button type="button" title="Поставить на паузу" aria-label="Поставить программу на паузу" disabled={Boolean(pending)} onClick={() => void change("PAUSED")}>Ⅱ</button> : status !== "ARCHIVED" && <button type="button" title="Возобновить" aria-label="Возобновить программу" disabled={Boolean(pending)} onClick={() => void change("ACTIVE")}>▶</button>}
+    {status === "ARCHIVED" ? <button className="program-restore-button" type="button" disabled={Boolean(pending)} onClick={() => void change("PAUSED")}>{pending ? "Возвращаем…" : "Вернуть на паузу"}</button> : status === "ACTIVE" ? <button type="button" title="Поставить на паузу" aria-label="Поставить программу на паузу" disabled={Boolean(pending)} onClick={() => void change("PAUSED")}>Ⅱ</button> : <button type="button" title="Возобновить" aria-label="Возобновить программу" disabled={Boolean(pending)} onClick={() => void change("ACTIVE")}>▶</button>}
     {status !== "ARCHIVED" && <button type="button" title="Переместить в архив" aria-label="Переместить программу в архив" disabled={Boolean(pending)} onClick={() => void change("ARCHIVED")}>⌑</button>}
     {notice && <small role="status">{notice}</small>}
   </div>;
