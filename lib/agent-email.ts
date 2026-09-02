@@ -37,7 +37,8 @@ export async function sendAgentApplicationNotification(application: { name: stri
 }
 
 export async function sendCompanyApplicationNotification(application: { name: string; company: string; email: string; phone: string; comment: string }) {
-  const destination = "rtarzhakayev@gmail.com";
+  const destination = (env as unknown as EmailRuntime).ADMIN_NOTIFY_EMAIL?.trim();
+  if (!destination) throw new Error("Не настроен адрес для уведомлений о заявках компаний");
   const rows = [
     ["Имя", application.name],
     ["Компания", application.company],
