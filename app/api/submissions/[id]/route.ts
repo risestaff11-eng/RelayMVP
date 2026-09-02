@@ -7,7 +7,7 @@ import { legacyStatus, type ReviewStatus, type SalesStatus } from "../../../../l
 import { cleanString, sameOrigin } from "../../company/_utils";
 
 const reviewStatuses = new Set<ReviewStatus>(["PENDING", "REVIEWING", "ACCEPTED", "REJECTED"]);
-const salesStatuses = new Set<SalesStatus>(["NONE", "IN_PROGRESS", "WON", "LOST"]);
+const salesStatuses = new Set<SalesStatus>(["NONE", "IN_PROGRESS", "AGREEMENT", "WON", "LOST"]);
 
 function legacyReview(status: string): ReviewStatus {
   if (status === "REVIEWING") return "REVIEWING";
@@ -58,11 +58,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const program = (await db.select({ currency: programs.currency }).from(programs).where(eq(programs.id, submission.programId)).limit(1))[0];
     if (salesStatus === "WON" && mission?.rewardMode === "PERCENT" && dealAmount <= 0) throw new Error("Укажите сумму сделки — RiseStaff рассчитает вознаграждение автоматически");
     const existingReward = (await db.select().from(rewards).where(eq(rewards.submissionId, id)).limit(1))[0];
+    const now = new Date().toISOString();
     const plannedAt = payload.plannedAt === undefined ? existingReward?.plannedAt ?? null : requestedPlannedAt;
     const amount = mission?.rewardMode === "PERCENT" ? Math.round(dealAmount * mission.rewardValue / 100) : requestedAmount || existingReward?.amount || mission?.rewardValue || 0;
-    const nextRewardStatus = salesStatus === "WON" ? "APPROVED" : salesStatus === "LOST" && existingReward ? "CANCELLED" : existingReward?.status ?? "PENDING";
+    const nextRewardStatus = salesStatus === "WON" ? "APPROVED" : salesStatus === "LOST" && existingReward ? "CANCELLED" : existingReward?.status === "PAID" ? "PAID" : "PENDING";
+    const nextApprovedAt = salesStatus === "WON" ? existingReward?.approvedAt || now : existingReward?.status === "PAID" ? existingReward.approvedAt : null;
     const nextLegacyStatus = legacyStatus(reviewStatus, salesStatus, nextRewardStatus);
-    const now = new Date().toISOString();
     const transitionComment = [
       currentReview !== reviewStatus ? `Проверка: ${currentReview} → ${reviewStatus}` : "",
       currentSales !== salesStatus ? `Продажа: ${currentSales} → ${salesStatus}` : "",
@@ -75,8 +76,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (reviewStatus === "ACCEPTED" && amount > 0) {
       const rewardStatement = existingReward
-        ? db.update(rewards).set({ amount, currency: program?.currency || existingReward.currency, plannedAt, status: nextRewardStatus, approvedAt: salesStatus === "WON" ? existingReward.approvedAt || now : existingReward.approvedAt, updatedAt: now }).where(eq(rewards.id, existingReward.id))
-        : db.insert(rewards).values({ id: crypto.randomUUID(), companyId: company.id, submissionId: id, partnerId: submission.partnerId, amount, currency: program?.currency || "KZT", status: nextRewardStatus, approvedAt: salesStatus === "WON" ? now : null, plannedAt, createdAt: now, updatedAt: now });
+        ? db.update(rewards).set({ amount, currency: program?.currency || existingReward.currency, plannedAt, status: nextRewardStatus, approvedAt: nextApprovedAt, updatedAt: now }).where(eq(rewards.id, existingReward.id))
+        : db.insert(rewards).values({ id: crypto.randomUUID(), companyId: company.id, submissionId: id, partnerId: submission.partnerId, amount, currency: program?.currency || "KZT", status: nextRewardStatus, approvedAt: nextApprovedAt, plannedAt, createdAt: now, updatedAt: now });
       await db.batch([...baseStatements, rewardStatement]);
     } else if (existingReward && salesStatus === "LOST") {
       await db.batch([...baseStatements, db.update(rewards).set({ status: "CANCELLED", updatedAt: now }).where(eq(rewards.id, existingReward.id))]);

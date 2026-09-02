@@ -2,7 +2,7 @@ export const REVIEW_SLA_HOURS = 48;
 export const PAYOUT_SLA_DAYS = 7;
 
 export type ReviewStatus = "PENDING" | "REVIEWING" | "ACCEPTED" | "REJECTED";
-export type SalesStatus = "NONE" | "IN_PROGRESS" | "WON" | "LOST";
+export type SalesStatus = "NONE" | "IN_PROGRESS" | "AGREEMENT" | "WON" | "LOST";
 
 export const reviewStatusNames: Record<ReviewStatus, string> = {
   PENDING: "Ждёт проверки",
@@ -14,7 +14,8 @@ export const reviewStatusNames: Record<ReviewStatus, string> = {
 export const salesStatusNames: Record<SalesStatus, string> = {
   NONE: "Продажа ещё не началась",
   IN_PROGRESS: "Клиент в работе",
-  WON: "Сделка состоялась",
+  AGREEMENT: "Договор / предоплата",
+  WON: "Оплачено клиентом",
   LOST: "Сделка не состоялась",
 };
 
@@ -43,7 +44,7 @@ export function legacyStatus(reviewStatus: ReviewStatus, salesStatus: SalesStatu
   if (reviewStatus === "REVIEWING") return "REVIEWING";
   if (reviewStatus === "REJECTED") return "REJECTED";
   if (salesStatus === "WON") return rewardStatus === "APPROVED" || rewardStatus === "PAID" ? "REWARDED" : "DEAL";
-  if (salesStatus === "IN_PROGRESS") return "IN_PROGRESS";
+  if (salesStatus === "IN_PROGRESS" || salesStatus === "AGREEMENT") return "IN_PROGRESS";
   return "ACCEPTED";
 }
 

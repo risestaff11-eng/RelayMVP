@@ -23,19 +23,26 @@ test("company dashboard prioritizes results that require review", async () => {
   assert.doesNotMatch(tour, /setTimeout\(\(\) => setStep\(0\)/);
 });
 
-test("company CRM combines clients, deals and recommenders while ranking stays separate", async () => {
-  const [navigation, crm, rating] = await Promise.all([
+test("company CRM keeps the client funnel primary while ranking stays separate", async () => {
+  const [navigation, crm, workspace, rating] = await Promise.all([
     readFile(new URL("../app/dashboard/_components/dashboard-nav.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/dashboard/crm/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/crm/crm-workspace.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/dashboard/agent-rating/page.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(navigation, /href: "\/dashboard\/crm", label: "CRM"/);
   assert.doesNotMatch(navigation, /href: "\/dashboard\/submissions"/);
   assert.doesNotMatch(navigation, /href: "\/dashboard\/partners"/);
-  assert.match(crm, /Клиенты и сделки/);
-  assert.match(crm, /Рекомендатели/);
   assert.match(crm, /CrmWorkspace/);
-  assert.match(crm, /AgentTable/);
+  assert.doesNotMatch(crm, /AgentTable/);
+  assert.doesNotMatch(crm, /CopyProgramLink/);
+  assert.match(workspace, /draggable=\{pending !== item\.id\}/);
+  assert.match(workspace, /onDrop=/);
+  assert.match(workspace, /Карточка возвращена на прежний этап/);
+  assert.match(workspace, /crm-lead-fullscreen/);
+  assert.match(workspace, /договор \/ предоплата/i);
+  assert.match(workspace, /Компания отметила перевод/);
+  assert.doesNotMatch(workspace, />WhatsApp</);
   assert.match(rating, /Рейтинг агентов/);
   assert.match(rating, /AnalyticsFilters/);
 });

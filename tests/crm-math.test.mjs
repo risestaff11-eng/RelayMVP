@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateCrmGoal, crmStage, potentialForLead } from "../lib/crm.ts";
+import { calculateCrmGoal, crmStage, crmStageMutation, potentialForLead } from "../lib/crm.ts";
 
 test("CRM goal math is stable for empty and invalid values", () => {
   assert.deepEqual(calculateCrmGoal(0, 0, 0, 0), { goal: 0, check: 0, conversion: 0, perAmbassador: 0, payments: 0, leads: 0, ambassadors: 0 });
@@ -13,8 +13,11 @@ test("CRM goal math is stable for empty and invalid values", () => {
 test("CRM stage uses existing review, sales and payout statuses", () => {
   assert.equal(crmStage({ reviewStatus: "PENDING", salesStatus: "NONE" }), "NEW");
   assert.equal(crmStage({ reviewStatus: "ACCEPTED", salesStatus: "IN_PROGRESS" }), "WORK");
+  assert.equal(crmStage({ reviewStatus: "ACCEPTED", salesStatus: "AGREEMENT" }), "AGREEMENT");
   assert.equal(crmStage({ reviewStatus: "ACCEPTED", salesStatus: "WON", reward: { status: "PAID", partnerConfirmedAt: "2026-01-01" } }), "PAID");
   assert.equal(crmStage({ reviewStatus: "REJECTED", salesStatus: "LOST" }), "CLOSED");
+  assert.deepEqual(crmStageMutation("AGREEMENT"), { reviewStatus: "ACCEPTED", salesStatus: "AGREEMENT" });
+  assert.deepEqual(crmStageMutation("PAID"), { reviewStatus: "ACCEPTED", salesStatus: "WON" });
 });
 
 test("potential distinguishes exact, estimate and average fallback", () => {
