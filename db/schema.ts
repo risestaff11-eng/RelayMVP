@@ -6,8 +6,11 @@ export const marketingEvents = sqliteTable("marketing_events", {
   id: text("id").primaryKey(),
   event: text("event").notNull(),
   path: text("path").notNull().default("/"),
+  utmSource: text("utm_source").notNull().default(""),
+  utmMedium: text("utm_medium").notNull().default(""),
+  utmCampaign: text("utm_campaign").notNull().default(""),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [index("idx_marketing_events_event_created").on(table.event, table.createdAt)]);
+}, (table) => [index("idx_marketing_events_event_created").on(table.event, table.createdAt), index("idx_marketing_events_utm_created").on(table.utmSource, table.utmCampaign, table.createdAt)]);
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),

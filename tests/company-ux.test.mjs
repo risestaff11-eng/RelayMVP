@@ -40,11 +40,28 @@ test("company CRM keeps the client funnel primary while ranking stays separate",
   assert.match(workspace, /onDrop=/);
   assert.match(workspace, /Карточка возвращена на прежний этап/);
   assert.match(workspace, /crm-lead-fullscreen/);
+  assert.match(workspace, /mobileSummaryOpen/);
+  assert.match(workspace, /Этап и амбассадор/);
   assert.match(workspace, /договор \/ предоплата/i);
   assert.match(workspace, /Компания отметила перевод/);
   assert.doesNotMatch(workspace, />WhatsApp</);
   assert.match(rating, /Рейтинг агентов/);
   assert.match(rating, /AnalyticsFilters/);
+});
+
+test("company can set a reward that is then visible to the ambassador", async () => {
+  const [workspace, submissionApi, agentList, agentDetail] = await Promise.all([
+    readFile(new URL("../app/dashboard/crm/crm-workspace.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/submissions/[id]/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/partner/[token]/submissions/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/partner/[token]/submissions/[id]/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(workspace, /Сумма вознаграждения/);
+  assert.match(workspace, /amount: calculatedReward/);
+  assert.match(workspace, /После сохранения сумма появится в кабинете амбассадора/);
+  assert.match(submissionApi, /requestedAmount/);
+  assert.match(agentList, /К ВЫПЛАТЕ/);
+  assert.match(agentDetail, /formatMoney\(submission\.reward\.amount/);
 });
 
 test("company cabinet refinement covers responsive and accessible states", async () => {
@@ -53,5 +70,7 @@ test("company cabinet refinement covers responsive and accessible states", async
   assert.match(rootLayout, /import "\.\/company-premium\.css"/);
   assert.match(styles, /:focus-visible/);
   assert.match(styles, /@media \(max-width: 900px\)/);
+  assert.match(styles, /Mobile company workspace/);
+  assert.match(styles, /crm-mobile-summary-toggle/);
   assert.match(styles, /prefers-reduced-motion/);
 });

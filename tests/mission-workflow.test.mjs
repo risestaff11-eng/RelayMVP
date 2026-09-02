@@ -49,6 +49,21 @@ test("program creation keeps AI optional and draft saves allow incomplete missio
   assert.match(updateRoute, /publish && \(!title/);
 });
 
+test("program archive keeps the working list focused and restores safely", async () => {
+  const [programs, archive, actions, statusRoute] = await Promise.all([
+    readFile(new URL("../app/dashboard/programs/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/programs/archive/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/_components/program-quick-actions.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/programs/[id]/status/route.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(programs, /\["ACTIVE", "PAUSED"\]/);
+  assert.match(programs, /\/dashboard\/programs\/archive/);
+  assert.match(archive, /program\.status === "ARCHIVED"/);
+  assert.match(actions, /Вернуть на паузу/);
+  assert.match(actions, /change\("PAUSED"\)/);
+  assert.match(statusRoute, /ARCHIVED/);
+});
+
 test("public submission saves dynamic answers and files", async () => {
   const route = await readFile(new URL("../app/api/public/submissions/route.ts", import.meta.url), "utf8");
   const form = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/lead-submission-form.tsx", import.meta.url), "utf8");

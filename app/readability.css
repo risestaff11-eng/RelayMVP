@@ -206,6 +206,26 @@ body { font-size: 16px; }
 .crm-service-state small { font-size: 11px !important; }
 .crm-service-state strong { font-size: 13px; }
 .crm-inline-editor :where(input, select, textarea, button) { font-size: 15px !important; }
+.crm-fullscreen-person .crm-current-stage { min-height: 46px; padding: 11px 13px; display: flex; align-items: center; border: 1px solid #50564c; border-radius: 10px; color: #fff; background: #2b3028; font-size: 15px; }
+.crm-company-editor { gap: 18px; }
+.crm-company-editor .crm-section-heading { display: grid; gap: 3px; }
+.crm-company-editor .crm-section-heading p { margin: 0; color: #656b61; font-size: 13px; line-height: 1.45; }
+.crm-editor-section { padding-top: 16px; border-top: 1px solid #e4e6df; }
+.crm-editor-section > header { margin-bottom: 12px; display: grid; gap: 4px; }
+.crm-editor-section > header small,.crm-reward-editor header small { color: #7d8378; font-size: 10px !important; font-weight: 950; letter-spacing: .06em; }
+.crm-editor-section > header strong { color: #22271f; font-size: 16px; }
+.crm-control-hint { margin-top: 1px; color: #737a70 !important; font-size: 11px !important; font-weight: 500 !important; line-height: 1.35; }
+.crm-reward-editor { padding: 16px; display: grid; gap: 12px; border: 1px solid #d8e7b5; border-radius: 13px; background: #f5fae8; }
+.crm-reward-editor header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.crm-reward-editor header > div { display: grid; gap: 5px; }
+.crm-reward-editor header strong { color: #1c2118; font-size: 22px; }
+.crm-reward-editor > p { margin: -4px 0 0; color: #5e6854; font-size: 13px; line-height: 1.4; }
+.crm-reward-editor label { gap: 5px; }
+.crm-reward-editor output { min-height: 46px; padding: 12px; display: block; border: 1px solid #d4ddc4; border-radius: 9px; color: #303b28; background: #fff; font-size: 14px; font-weight: 800; }
+.crm-reward-status { max-width: 160px; padding: 7px 9px; border-radius: 8px; color: #5d653b; background: #e9efdc; font-size: 11px; font-weight: 850; line-height: 1.3; text-align: right; }
+.crm-reward-status.waiting { color: #76540b; background: #fff0ca; }
+.crm-reward-status.paid { color: #2d581c; background: #e0f6d7; }
+.crm-company-comment { padding-top: 16px; border-top: 1px solid #e4e6df; }
 
 /* Public marketing and authenticated entry points */
 .landing-shell :where(.lp-nav, .lp-header-actions, .landing-nav-links) :where(a, button) { font-size: 15px; }
@@ -258,6 +278,9 @@ body { font-size: 16px; }
   .crm-fullscreen-person strong { font-size: 21px; }
   .crm-fullscreen-body > main,
   .crm-fullscreen-body > aside { padding: 18px; }
+  .crm-reward-editor { padding: 15px; }
+  .crm-reward-editor header { display: grid; }
+  .crm-reward-status { max-width: none; text-align: left; }
   .crm-detail-section { padding: 18px; }
   .crm-section-heading h3 { font-size: 22px; }
   .crm-detail-grid strong { font-size: 16px; }

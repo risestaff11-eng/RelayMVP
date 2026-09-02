@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date("2026-08-19T00:00:00.000Z");
+  const lastModified = new Date();
   return ["", "/pricing", "/integrators", "/legal/privacy", "/legal/license"].map((path, index) => ({
     url: `https://risestaff.kz${path || "/"}`,
     lastModified,

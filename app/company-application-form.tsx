@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { readMarketingAttribution } from "./marketing-analytics";
 
 export function CompanyApplicationForm() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -26,7 +27,7 @@ export function CompanyApplicationForm() {
     setPending(true);
     setError("");
     const form = event.currentTarget;
-    const data = Object.fromEntries(new FormData(form).entries());
+    const data = { ...Object.fromEntries(new FormData(form).entries()), ...readMarketingAttribution() };
     try {
       const response = await fetch("/api/marketing/company-application", {
         method: "POST",
