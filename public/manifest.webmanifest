@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "RiseStaff — агентские продажи",
+  "name": "RiseStaff — новые клиенты через рекомендации",
   "short_name": "RiseStaff",
-  "description": "Программы, задания, результаты и выплаты в одном кабинете.",
+  "description": "Получайте новых клиентов через рекомендации покупателей и партнёров.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

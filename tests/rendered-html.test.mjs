@@ -66,7 +66,7 @@ test("renders the RiseStaff landing page", async () => {
   assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz"/);
   assert.match(html, /rel="icon" href="\/icon-192\.png"/);
   assert.match(html, /"@type":"WebSite"/);
-  assert.match(html, /"alternateName":\["RiseStaff"\]/);
+  assert.match(html, /"alternateName":\["risestaff\.kz"\]/);
   assert.match(html, /lp-color-word/);
   assert.match(html, /рекомендации/);
   assert.match(html, /четыре понятных шага/i);

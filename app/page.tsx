@@ -90,7 +90,7 @@ const structuredData = {
       "@id": "https://risestaff.kz/#website",
       url: "https://risestaff.kz/",
       name: "RiseStaff",
-      alternateName: ["RiseStaff"],
+      alternateName: ["risestaff.kz"],
       inLanguage: "ru-KZ",
       publisher: { "@id": "https://risestaff.kz/#organization" },
     },
