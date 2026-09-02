@@ -1,5 +1,9 @@
 import { sendCompanyApplicationNotification } from "../../../../lib/agent-email";
 import { cleanString, sameOrigin } from "../../company/_utils";
+import { getDb } from "@/db";
+import { marketingEvents } from "@/db/schema";
+
+function utm(value: unknown) { return cleanString(value, 120); }
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) {
@@ -29,6 +33,7 @@ export async function POST(request: Request) {
 
   try {
     await sendCompanyApplicationNotification(application);
+    await getDb().insert(marketingEvents).values({ id: crypto.randomUUID(), event: "company_application_submitted", path: "/", utmSource: utm(body.utmSource), utmMedium: utm(body.utmMedium), utmCampaign: utm(body.utmCampaign) });
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось отправить заявку" }, { status: 503 });

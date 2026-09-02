@@ -62,13 +62,13 @@ export const metadata: Metadata = {
     description,
     type: "website",
     url: "https://risestaff.kz/",
-    images: [{ url: "https://risestaff.kz/og.png?v=20260901", width: 1731, height: 909, alt: "RiseStaff — новые клиенты через рекомендации" }],
+    images: [{ url: "https://risestaff.kz/og.jpg?v=20260902", width: 1731, height: 909, alt: "RiseStaff — новые клиенты через рекомендации" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "RiseStaff — новые клиенты через рекомендации",
     description,
-    images: ["https://risestaff.kz/og.png?v=20260901"],
+    images: ["https://risestaff.kz/og.jpg?v=20260902"],
   },
 };
 

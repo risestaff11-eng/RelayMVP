@@ -352,9 +352,9 @@ export default async function Home() {
           </div>
           <div className="lp-screen-wrap">
             <img
-              src="/company-cabinet.png?v=20260901"
-              width="1440"
-              height="900"
+              src="/company-cabinet.jpg?v=20260902"
+              width="1138"
+              height="904"
               loading="lazy"
               alt="Рабочий стол компании в RiseStaff с заявками, приглашёнными участниками и выплатами"
             />
@@ -492,9 +492,9 @@ export default async function Home() {
           </div>
           <div className="lp-screen-wrap">
             <img
-              src="/agent-cabinet.png?v=20260901"
-              width="1440"
-              height="900"
+              src="/agent-cabinet.jpg?v=20260902"
+              width="1138"
+              height="904"
               loading="lazy"
               alt="Кабинет приглашённого участника RiseStaff с задачами и суммами вознаграждения"
             />

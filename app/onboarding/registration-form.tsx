@@ -74,7 +74,7 @@ export function CompanyRegistrationForm({ email }: { email: string }) {
       </div>
       <input type="hidden" name="contactEmail" value={email} />
       {error && <p className="form-error" role="alert">{error}</p>}
-      <button className="submit-button" type="submit" disabled={pending}>{pending ? "Создаём пространство…" : "Создать компанию и открыть чек-лист →"}</button>
+      <button className="submit-button" type="submit" disabled={pending}>{pending ? "Создаём пространство…" : "Создать компанию и открыть кабинет →"}</button>
     </form>
   );
 }
