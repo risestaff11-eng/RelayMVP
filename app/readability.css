@@ -171,6 +171,9 @@ body { font-size: 16px; }
 .crm-lead-card footer a,
 .crm-lead-card footer em,
 .crm-payout-state { font-size: 12px; }
+.crm-toolbar :where(input, select),
+.crm-search,
+.crm-card-stage-select { height: 46px !important; min-height: 46px !important; }
 
 .crm-fullscreen-context { font-size: 13px; }
 .crm-fullscreen-person small { font-size: 11px !important; }
@@ -241,7 +244,9 @@ body { font-size: 16px; }
   .crm-page-immersive .crm-lead-card { padding: 18px; }
   .crm-page-immersive .crm-lead-card h3 { font-size: 22px; }
   .crm-page-immersive .crm-lead-card > p { max-height: 56px; font-size: 14px; }
-  .crm-card-stage-select { min-height: 48px; font-size: 14px !important; }
+  .crm-toolbar :where(input, select),
+  .crm-search,
+  .crm-card-stage-select { height: 48px !important; min-height: 48px !important; font-size: 14px !important; }
   .crm-fullscreen-header { padding: 20px 56px 20px 18px; }
   .crm-fullscreen-person { gap: 17px; }
   .crm-fullscreen-person h2 { font-size: 32px; }
