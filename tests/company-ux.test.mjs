@@ -47,6 +47,21 @@ test("company CRM keeps the client funnel primary while ranking stays separate",
   assert.match(rating, /AnalyticsFilters/);
 });
 
+test("company can set a reward that is then visible to the ambassador", async () => {
+  const [workspace, submissionApi, agentList, agentDetail] = await Promise.all([
+    readFile(new URL("../app/dashboard/crm/crm-workspace.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/submissions/[id]/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/partner/[token]/submissions/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/partner/[token]/submissions/[id]/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(workspace, /Сумма вознаграждения/);
+  assert.match(workspace, /amount: calculatedReward/);
+  assert.match(workspace, /После сохранения сумма появится в кабинете амбассадора/);
+  assert.match(submissionApi, /requestedAmount/);
+  assert.match(agentList, /К ВЫПЛАТЕ/);
+  assert.match(agentDetail, /formatMoney\(submission\.reward\.amount/);
+});
+
 test("company cabinet refinement covers responsive and accessible states", async () => {
   const rootLayout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   const styles = await readFile(new URL("../app/company-premium.css", import.meta.url), "utf8");
