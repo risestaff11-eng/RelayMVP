@@ -41,3 +41,4 @@ dev-server.err.log
 /outputs/
 /work/
 *.tsbuildinfo
+.sites-package-*.tar.gz

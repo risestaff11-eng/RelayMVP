@@ -3,24 +3,11 @@ import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { companies, companyMembers, users } from "../../../../db/schema";
 import { INITIAL_COMPANY_AI_CREDITS } from "../../../../lib/company-credits";
+import { normalizeWebsite, sameOrigin } from "../_utils";
 
 const INDUSTRIES = new Set(["IT_AND_AUTOMATION", "MARKETING", "CONSULTING", "RECRUITING", "EDUCATION", "OTHER"]);
 const TEAM_SIZES = new Set(["1_10", "11_50", "51_200", "201_PLUS"]);
 const GOALS = new Set(["LEADS", "DEALS", "AMBASSADORS", "MIXED"]);
-
-function normalizeWebsite(value: string) {
-  const prepared = /^https?:\/\//i.test(value) ? value : `https://${value}`;
-  const parsed = new URL(prepared);
-  if (!parsed.hostname.includes(".") || !["http:", "https:"].includes(parsed.protocol)) throw new Error("Введите корректный адрес сайта");
-  parsed.hash = "";
-  return parsed.toString().replace(/\/$/, "");
-}
-
-function sameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin) return true;
-  try { return new URL(origin).host === new URL(request.url).host; } catch { return false; }
-}
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
