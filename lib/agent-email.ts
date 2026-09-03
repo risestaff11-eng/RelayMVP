@@ -6,16 +6,36 @@ function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[character] ?? character));
 }
 
-async function sendEmail(payload: { to: string; subject: string; html: string; timeoutMs?: number }) {
+class EmailDeliveryError extends Error {
+  constructor(readonly status: number, readonly retryAfterMs: number) { super("Не удалось отправить письмо"); }
+}
+
+async function sendEmail(payload: { to: string; subject: string; html: string; text?: string; timeoutMs?: number; idempotencyKey?: string; retryOnce?: boolean }) {
   const runtime = env as unknown as EmailRuntime;
   if (!runtime.RESEND_API_KEY || !runtime.MAGIC_FROM_EMAIL) throw new Error("Отправка писем временно недоступна");
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    ...(payload.timeoutMs ? { signal: AbortSignal.timeout(payload.timeoutMs) } : {}),
-    headers: { authorization: `Bearer ${runtime.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({ from: runtime.MAGIC_FROM_EMAIL, to: [payload.to], subject: payload.subject, html: payload.html }),
-  });
-  if (!response.ok) throw new Error("Не удалось отправить письмо");
+  const body = JSON.stringify({ from: runtime.MAGIC_FROM_EMAIL, to: [payload.to], subject: payload.subject, html: payload.html, ...(payload.text ? { text: payload.text } : {}) });
+  const attempts = payload.retryOnce && payload.idempotencyKey ? 2 : 1;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        ...(payload.timeoutMs ? { signal: AbortSignal.timeout(payload.timeoutMs) } : {}),
+        headers: { authorization: `Bearer ${runtime.RESEND_API_KEY}`, "content-type": "application/json", ...(payload.idempotencyKey ? { "Idempotency-Key": payload.idempotencyKey } : {}) },
+        body,
+      });
+      if (response.ok) return;
+      const retryAfter = response.headers.get("retry-after");
+      const retryAfterMs = retryAfter === null ? 500 : /^\d+(\.\d+)?$/.test(retryAfter) ? Number(retryAfter) * 1000 : Date.parse(retryAfter) - Date.now();
+      throw new EmailDeliveryError(response.status, Number.isFinite(retryAfterMs) ? Math.max(500, retryAfterMs) : 500);
+    } catch (error) {
+      const transient = !(error instanceof EmailDeliveryError) || error.status === 429 || error.status >= 500;
+      const delay = error instanceof EmailDeliveryError ? error.retryAfterMs : 500;
+      // Never retry without the same provider idempotency key/body. Long outages
+      // need an outbox; don't hold the agent's successful submission indefinitely.
+      if (!transient || attempt + 1 >= attempts || delay > 2000) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
 }
 
 export async function sendAgentLoginCode(email: string, code: string) {
@@ -64,12 +84,22 @@ export async function sendCompanyApplicationNotification(application: { name: st
   });
 }
 
-export async function sendCompanyNewSubmissionNotification(input: { destination: string; companyName: string; agentName: string; missionTitle: string; programName: string; contactName: string; contactCompany: string; submissionId: string }) {
-  const reviewUrl = `https://company.risestaff.kz/auth?returnTo=${encodeURIComponent(`/dashboard/crm?submission=${input.submissionId}`)}`;
+export async function sendCompanyNewSubmissionNotification(input: { destination: string; companyName: string; agentName: string; missionTitle: string; programName: string; contactName: string; contactCompany: string; submissionId: string; type: string }) {
+  const reviewUrl = `https://company.risestaff.kz/auth?returnTo=${encodeURIComponent(`/dashboard/crm?submission=${encodeURIComponent(input.submissionId)}`)}`;
+  const isLead = ["LEAD", "DEAL"].includes(input.type);
+  const title = isLead ? "Новый лид от агента" : "Новый результат от агента";
   const contact = input.contactCompany ? `${input.contactName || "Новый контакт"} · ${input.contactCompany}` : input.contactName || "Новый результат";
+  const rows = [["Компания", input.companyName], ["Агент", input.agentName], ["Программа", input.programName], ["Задание", input.missionTitle], [isLead ? "Клиент" : "Контакт", contact]];
+  const accessNote = "Для просмотра войдите в кабинет компании по email и паролю. Ссылка откроет именно эту заявку.";
   await sendEmail({
     to: input.destination,
-    subject: `Новый результат от агента · ${input.programName}`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:28px;color:#11120f"><b style="font-size:18px">RiseStaff</b><h1 style="font-size:24px;margin:26px 0 10px">Получен новый результат</h1><p style="color:#555">${escapeHtml(input.companyName)}, заявка уже ждёт проверки в кабинете.</p><table style="width:100%;border-collapse:collapse;margin:20px 0"><tr><td style="padding:9px 0;color:#777">Агент</td><td style="padding:9px 0;font-weight:700">${escapeHtml(input.agentName)}</td></tr><tr><td style="padding:9px 0;color:#777">Программа</td><td style="padding:9px 0;font-weight:700">${escapeHtml(input.programName)}</td></tr><tr><td style="padding:9px 0;color:#777">Задание</td><td style="padding:9px 0;font-weight:700">${escapeHtml(input.missionTitle)}</td></tr><tr><td style="padding:9px 0;color:#777">Контакт</td><td style="padding:9px 0;font-weight:700">${escapeHtml(contact)}</td></tr></table><a href="${reviewUrl}" style="display:inline-block;background:#11120f;color:#fff;padding:14px 20px;border-radius:11px;text-decoration:none;font-weight:700">Проверить результат →</a><p style="margin-top:18px;font-size:12px;color:#777">Для доступа введите почту и пароль компании. Ссылка ведёт прямо к этой заявке.</p></div>`,
+    timeoutMs: 4000,
+    retryOnce: true,
+    // Resend deduplicates this event for 24 hours, including uncertain timeouts.
+    // https://resend.com/docs/dashboard/emails/idempotency-keys
+    idempotencyKey: `company-new-submission/${input.submissionId}`,
+    subject: `${title} · ${input.programName.replace(/[\r\n]+/g, " ").slice(0, 120)}`,
+    text: `${title}\n\nЗаявка сохранена и ждёт проверки.\n${rows.map(([label, value]) => `${label}: ${value || "—"}`).join("\n")}\n\nОткрыть заявку в CRM: ${reviewUrl}\n\n${accessNote}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:24px;color:#11120f;line-height:1.5"><b style="font-size:18px">RiseStaff</b><h1 style="font-size:24px;margin:26px 0 10px">${title}</h1><p>Заявка сохранена и ждёт проверки.</p><table style="width:100%;border-collapse:collapse;margin:20px 0">${rows.map(([label, value]) => `<tr><th align="left" style="padding:9px 12px 9px 0;color:#666;vertical-align:top;font-weight:400">${label}</th><td style="padding:9px 0;font-weight:600;word-break:break-word">${escapeHtml(value || "—")}</td></tr>`).join("")}</table><a href="${escapeHtml(reviewUrl)}" style="display:inline-block;background:#11120f;color:#fff;padding:14px 20px;border-radius:11px;text-decoration:none;font-weight:700">Открыть заявку в CRM →</a><p style="margin-top:18px;font-size:13px;color:#666">${accessNote}</p></div>`,
   });
 }

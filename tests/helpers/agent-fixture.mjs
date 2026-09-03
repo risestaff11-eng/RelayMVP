@@ -10,7 +10,7 @@ const quote = (value) => `"${value.replaceAll('"', '""')}"`;
  * Requires Node >=22.16, which supports array results for joined SQL projections:
  * https://nodejs.org/en/blog/release/v22.16.0
  */
-export function agentFixture({ rateTable = true } = {}) {
+export function agentFixture({ rateTable = true, captureSubmissionEmail = true } = {}) {
   const sqlite = new DatabaseSync(":memory:");
   let transactionQueue = Promise.resolve();
   const binding = {
@@ -64,7 +64,7 @@ export function agentFixture({ rateTable = true } = {}) {
   const db = load(new URL("../../db/index.ts", import.meta.url)).getDb();
   const mail = load(new URL("../../lib/agent-email.ts", import.meta.url));
   mail.sendAgentLoginCode = async (email, code) => deliveries.push({ type: "code", email, code });
-  mail.sendCompanyNewSubmissionNotification = async (data) => deliveries.push({ type: "submission", ...data });
+  if (captureSubmissionEmail) mail.sendCompanyNewSubmissionNotification = async (data) => deliveries.push({ notification: "submission", ...data });
   mail.sendAgentApplicationNotification = async (data) => deliveries.push({ type: "application", ...data });
   mail.sendAgentWorkUpdate = async (data) => deliveries.push({ type: "work-update", ...data });
   const auth = load(new URL("../../app/chatgpt-auth.ts", import.meta.url));

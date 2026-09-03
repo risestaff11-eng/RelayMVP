@@ -1,12 +1,12 @@
 import { and, eq, gte, notInArray, or } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { getMissionForPublicSubmission, getPartnerPortal } from "../../../../db/partner";
-import { submissionAttachments, submissionStatusEvents, submissions, users } from "../../../../db/schema";
+import { submissionAttachments, submissionStatusEvents, submissions } from "../../../../db/schema";
 import { getFilesBucket } from "../../../../lib/storage";
 import { visibleSubmissionFormFields, type SubmissionFormField } from "../../../../lib/submission-form";
 import { cleanString, sameOrigin } from "../../company/_utils";
 import { agentUrl } from "../../../../lib/public-origins";
-import { sendCompanyNewSubmissionNotification } from "../../../../lib/agent-email";
+import { notifyCompanyNewSubmission } from "../../../../lib/company-submission-notifications";
 import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfReferral, SELF_REFERRAL_MESSAGE, hasHoneypotValue } from "../../../../lib/submission-antifraud";
 import { reviewDueAt } from "../../../../lib/workflow";
 import { limitPublicSubmission, requestLimitResponse } from "../../../../lib/request-rate-limit";
@@ -99,10 +99,7 @@ export async function POST(request: Request) {
     const eventStatement = db.insert(submissionStatusEvents).values({ id: crypto.randomUUID(), submissionId, fromStatus: null, toStatus: "SUBMITTED", actorType: "PARTNER", comment: "Результат отправлен компании", createdAt: now });
     if (attachmentRows.length) await db.batch([submissionStatement, eventStatement, db.insert(submissionAttachments).values(attachmentRows)]);
     else await db.batch([submissionStatement, eventStatement]);
-    const owner = (await db.select({ email: users.email }).from(users).where(eq(users.id, target.company.ownerUserId)).limit(1))[0];
-    if (owner?.email) {
-      await sendCompanyNewSubmissionNotification({ destination: owner.email, companyName: target.company.name, agentName: missionPartner.name, missionTitle: target.mission.title, programName: target.program.name, contactName, contactCompany, submissionId }).catch((error) => console.error("submission notification email failed", error));
-    }
+    await notifyCompanyNewSubmission(target.company.id, submissionId);
     return Response.json({ partnerUrl: agentUrl(`/partner/${token}`), submissionId }, { status: 201 });
   } catch (error) {
     const limited = requestLimitResponse(error);
