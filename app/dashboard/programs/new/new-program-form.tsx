@@ -54,7 +54,7 @@ export function NewProgramForm({ profileVersion, profileStatus }: { profileVersi
 
         <section className="panel mission-selector-card">
           <div className="panel-header"><div><h2>Выберите типы заданий</h2><p>От одного до четырёх. Для каждого типа будет создана отдельная карточка.</p></div><span>{selected.length} выбрано</span></div>
-          <div className="mission-selector-grid">{missionTypes.map((mission) => { const active = selected.includes(mission.type); return <button type="button" className={`mission-select type-${mission.type.toLowerCase()} ${active ? "selected" : ""}`} onClick={() => toggle(mission.type)} key={mission.type} aria-pressed={active}><span className="mission-select-check">{active ? "✓" : "+"}</span><i>{mission.icon}</i><strong>{mission.title}</strong><small>{mission.text}</small></button>; })}</div>
+          <div className="mission-selector-grid">{missionTypes.map((mission) => { const active = selected.includes(mission.type); return <button type="button" className={`mission-select type-${mission.type.toLowerCase()} ${active ? "selected" : ""}`} onClick={() => toggle(mission.type)} key={mission.type} aria-pressed={active}><span className="mission-select-check">{active ? "✓" : "+"}</span><i>{mission.icon}</i><strong>{<bdi data-no-translate>{mission.title}</bdi>}</strong><small>{mission.text}</small></button>; })}</div>
         </section>
 
         {error && <div className="inline-notice error builder-error" role="alert">{error}</div>}

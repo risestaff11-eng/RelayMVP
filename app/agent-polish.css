@@ -535,6 +535,7 @@
 .result-audio-transcript small { color: #666a60; font-size: 9px; font-weight: 950; }
 .result-audio-transcript p,.read-only-transcript p { margin: 7px 0 0; color: #242620; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
 .result-audio-transcript::after,.read-only-transcript::after { content: "✓ Расшифровка проверена агентом"; display: inline-flex; margin-top: 10px; color: #27480d; font-size: 12px; font-weight: 800; letter-spacing: .04em; }
+html[lang="kk"] .result-audio-transcript::after,html[lang="kk"] .read-only-transcript::after { content: "✓ Агент мәтінге түсірілген жазбаны тексерді"; }
 .result-audio-player { width: min(100%,520px); padding: 12px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 12px; border-radius: 12px; background: #edf1e6; }
 .result-audio-player audio { width: 100%; grid-column: 1 / -1; }
 .result-audio-player span small { display: block; margin-top: 3px; color: #6a6e64; }
@@ -555,6 +556,7 @@
 .agent-submit-details summary::-webkit-details-marker { display: none; }
 .agent-submit-details summary b { color: #617b25; font-size: 10px; }
 .agent-submit-details[open] summary b { font-size: 0; }.agent-submit-details[open] summary b::after { content: "Свернуть ↑"; font-size: 10px; }
+html[lang="kk"] .agent-submit-details[open] summary b::after { content: "Жию ↑"; }
 .agent-submit-details > div { padding: 0 15px 15px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
 .agent-submit-details section { padding: 13px; border-radius: 12px; background: #f4f5ef; }
 .agent-submit-details section small { color: #75796e; font-size: 8px; font-weight: 950; }

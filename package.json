@@ -12,6 +12,7 @@
     "start": "vinext start",
     "test": "pnpm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "i18n:check": "node scripts/check-i18n.mjs",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

@@ -38,8 +38,8 @@ export default async function PartnerPayoutsPage({ params }: { params: Promise<{
             const sla = slaState(payoutDueAt(reward.approvedAt, reward.plannedAt), reward.status === "PAID");
             return (
               <article key={reward.id}>
-                <div><strong>{submission?.mission?.title || "Вознаграждение"}</strong><small>{submission?.contactCompany}</small></div>
-                <span>{portal.company.name}</span>
+                <div><strong>{submission?.mission?.title || "Вознаграждение"}</strong><small>{<bdi data-no-translate>{submission?.contactCompany}</bdi>}</small></div>
+                <span>{<bdi data-no-translate>{portal.company.name}</bdi>}</span>
                 <b>{money(reward.amount, reward.currency)}</b>
                 <span className={sla.overdue ? "sla-label overdue" : "sla-label"}>{reward.plannedAt ? shortDate(reward.plannedAt) : sla.label}</span>
                 <div><em className={`reward-status-${complete ? "received" : reward.status.toLowerCase()}`}>{status}</em>{reward.status === "PAID" && <RewardReceiptConfirmation token={token} rewardId={reward.id} confirmed={Boolean(reward.partnerConfirmedAt)} supportHref={supportHref} />}</div>

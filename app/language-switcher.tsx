@@ -2,34 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { translateToKazakh } from "@/lib/kazakh-translations";
+import { TRANSLATED_ATTRIBUTES, translateInterfaceTree } from "@/lib/i18n-dom";
 
 type Locale = "ru" | "kk";
-
-const ATTRIBUTES = ["placeholder", "title", "aria-label"] as const;
-
-function translateTree(root: ParentNode) {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  const nodes: Text[] = [];
-  while (walker.nextNode()) nodes.push(walker.currentNode as Text);
-
-  for (const node of nodes) {
-    const parent = node.parentElement;
-    if (!parent || parent.closest("script, style, code, pre, [data-no-translate]")) continue;
-    const translated = translateToKazakh(node.data);
-    if (translated !== node.data) node.data = translated;
-  }
-
-  const elements = root instanceof Element ? [root, ...root.querySelectorAll<HTMLElement>("*")] : [...root.querySelectorAll<HTMLElement>("*")];
-  for (const element of elements) {
-    if (element.closest("[data-no-translate]")) continue;
-    for (const attribute of ATTRIBUTES) {
-      const value = element.getAttribute(attribute);
-      if (!value) continue;
-      const translated = translateToKazakh(value);
-      if (translated !== value) element.setAttribute(attribute, translated);
-    }
-  }
-}
 
 function persistLocale(locale: Locale) {
   const sharedDomain = location.hostname === "risestaff.kz" || location.hostname.endsWith(".risestaff.kz") ? "; Domain=.risestaff.kz" : "";
@@ -46,12 +21,12 @@ export function LanguageSwitcher({ locale, className = "", manageTranslation = t
       if (applying.current) return;
       applying.current = true;
       observer.disconnect();
-      translateTree(document.body as unknown as ParentNode);
+      translateInterfaceTree(document.body);
       document.title = translateToKazakh(document.title);
       document.querySelectorAll<HTMLMetaElement>('meta[name="description"], meta[property="og:title"], meta[property="og:description"], meta[name="twitter:title"], meta[name="twitter:description"]').forEach((meta) => {
         if (meta.content) meta.content = translateToKazakh(meta.content);
       });
-      observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: [...ATTRIBUTES] });
+      observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: [...TRANSLATED_ATTRIBUTES] });
       applying.current = false;
     };
     const observer = new MutationObserver(() => {

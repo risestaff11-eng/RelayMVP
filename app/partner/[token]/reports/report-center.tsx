@@ -330,8 +330,7 @@ export function ReportCenter({
               </time>
             </header>
             <h3>
-              {programs.find((item) => item.id === report.programId)?.name ||
-                companyName}
+              {(programs.find((item) => item.id === report.programId)?.name) ? (programs.find((item) => item.id === report.programId)?.name) : (<bdi data-no-translate>{companyName}</bdi>)}
             </h3>
             <p>
               {String(
@@ -354,7 +353,7 @@ export function ReportCenter({
             {report.companyComment && (
               <aside>
                 <b>Комментарий компании</b>
-                {report.companyComment}
+                {<bdi data-no-translate>{report.companyComment}</bdi>}
               </aside>
             )}
           </article>
@@ -495,7 +494,7 @@ export function ReportCenter({
                 .map((file) => (
                   <div key={file.id}>
                     <span>
-                      {file.fileName} · {Math.ceil(file.size / 1024)} КБ
+                      {<bdi data-no-translate>{file.fileName}</bdi>} · {Math.ceil(file.size / 1024)} КБ
                     </span>
                     <button onClick={() => void removeExisting(file.id)}>
                       Удалить

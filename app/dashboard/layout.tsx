@@ -33,9 +33,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </aside>
 
       <section className="dashboard-main">
-        {user.supportMode && <div className="support-session-banner" role="status"><span><b>Режим техподдержки</b> Вы работаете в кабинете «{company.name}». Вход и время сессии фиксируются.</span><a href="/api/system/support/logout">Завершить и вернуться в админку →</a></div>}
+        {user.supportMode && <div className="support-session-banner" role="status"><span><b>Режим техподдержки</b> Вы работаете в кабинете «{<bdi data-no-translate>{company.name}</bdi>}». Вход и время сессии фиксируются.</span><a href="/api/system/support/logout">Завершить и вернуться в админку →</a></div>}
         <header className="dashboard-topbar">
-          <div className="mobile-company-identity"><CompanyLogo company={company} className="mobile-relay-mark" /><div><small>РАБОЧЕЕ ПРОСТРАНСТВО</small><strong>{company.name}</strong></div></div>
+          <div className="mobile-company-identity"><CompanyLogo company={company} className="mobile-relay-mark" /><div><small>РАБОЧЕЕ ПРОСТРАНСТВО</small><strong>{<bdi data-no-translate>{company.name}</bdi>}</strong></div></div>
           <DashboardContext nextStep={company.onboardingStatus === "PROGRAM_PUBLISHED" ? "Программа опубликована · отслеживайте агентов и результаты" : company.onboardingStatus === "PROFILE_CONFIRMED" || company.onboardingStatus === "PROGRAM_DRAFT" ? "Профиль подтверждён · создайте и опубликуйте программу" : "Следующий шаг — подтвердить профиль бизнеса"} />
           <div className="top-actions"><LanguageSwitcher locale={locale} className="embedded-language-switcher company-language-switcher" manageTranslation={false} /><DashboardTour /><AccountMenu name={user.displayName} email={user.email} initials={initials(user.displayName)} signOutHref={chatGPTSignOutPath("/")} /></div>
         </header>
