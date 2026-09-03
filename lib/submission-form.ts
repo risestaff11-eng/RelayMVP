@@ -37,8 +37,8 @@ function text(value: unknown, limit: number) {
   return typeof value === "string" ? value.trim().slice(0, limit) : "";
 }
 
-export function normalizeSubmissionFormFields(value: unknown): SubmissionFormField[] {
-  if (!Array.isArray(value)) return DEFAULT_SUBMISSION_FORM_FIELDS.map((field) => ({ ...field, options: [...field.options] }));
+export function normalizeSubmissionFormFields(value: unknown, options: { preserveSystemOmissions?: boolean } = {}): SubmissionFormField[] {
+  if (!Array.isArray(value) || (value.length === 0 && !options.preserveSystemOmissions)) return DEFAULT_SUBMISSION_FORM_FIELDS.map((field) => ({ ...field, options: [...field.options] }));
   const normalized = value.slice(0, 24).map((raw, index) => {
     const item = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
     const semantic = semantics.has(item.semantic as SubmissionFieldSemantic) ? item.semantic as SubmissionFieldSemantic : "CUSTOM";
@@ -59,17 +59,46 @@ export function normalizeSubmissionFormFields(value: unknown): SubmissionFormFie
     } satisfies SubmissionFormField;
   });
 
-  const bySemantic = new Map(normalized.filter((field) => field.semantic !== "CUSTOM").map((field) => [field.semantic, field]));
-  const requiredSystem = DEFAULT_SUBMISSION_FORM_FIELDS.map((fallback) => bySemantic.get(fallback.semantic) ?? { ...fallback, options: [...fallback.options] });
-  const custom = normalized.filter((field) => field.semantic === "CUSTOM");
-  return [...requiredSystem, ...custom]
+  const seenIds = new Set<string>();
+  const seenSystemSemantics = new Set<SubmissionFieldSemantic>();
+  const unique = normalized
+    .filter((field) => {
+      if (seenIds.has(field.id)) return false;
+      if (field.semantic !== "CUSTOM" && seenSystemSemantics.has(field.semantic)) return false;
+      seenIds.add(field.id);
+      if (field.semantic !== "CUSTOM") seenSystemSemantics.add(field.semantic);
+      return true;
+    });
+  const complete = options.preserveSystemOmissions
+    ? unique
+    : [...DEFAULT_SUBMISSION_FORM_FIELDS.map((fallback) => unique.find((field) => field.semantic === fallback.semantic) ?? { ...fallback, options: [...fallback.options] }), ...unique.filter((field) => field.semantic === "CUSTOM")];
+  return complete
     .sort((left, right) => left.sortOrder - right.sortOrder)
     .map((field, index) => ({ ...field, sortOrder: index }));
 }
 
+export function submissionFormError(fields: SubmissionFormField[], missionTypes: string[]) {
+  const requiredName = fields.some((field) => field.semantic === "CONTACT_NAME" && field.required);
+  if (!requiredName) return "Поле имени или названия результата должно остаться обязательным.";
+  const hasCommercialMission = missionTypes.some((type) => type === "LEAD" || type === "DEAL");
+  const requiredContact = fields.some((field) => (field.semantic === "CONTACT_PHONE" || field.semantic === "CONTACT_EMAIL") && field.required);
+  if (hasCommercialMission && !requiredContact) return "Для лидов и сделок оставьте обязательным телефон или email клиента.";
+  return "";
+}
+
 export function parseSubmissionFormFields(value: string | null | undefined) {
-  try { return normalizeSubmissionFormFields(JSON.parse(value || "[]")); }
+  try {
+    const parsed = JSON.parse(value || "[]") as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && (parsed as { version?: unknown }).version === 2) {
+      return normalizeSubmissionFormFields((parsed as { fields?: unknown }).fields, { preserveSystemOmissions: true });
+    }
+    return normalizeSubmissionFormFields(parsed);
+  }
   catch { return normalizeSubmissionFormFields([]); }
+}
+
+export function serializeSubmissionFormFields(fields: SubmissionFormField[]) {
+  return JSON.stringify({ version: 2, fields: normalizeSubmissionFormFields(fields, { preserveSystemOmissions: true }) });
 }
 
 export function visibleSubmissionFormFields(fields: SubmissionFormField[], missionType: string) {

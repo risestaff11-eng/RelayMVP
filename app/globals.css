@@ -2651,7 +2651,7 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .form-field-editor > header strong { margin-top: 4px; font-size: 16px; }
 .form-field-order { display: flex; gap: 6px; }
 .form-field-order button { width: 34px; height: 34px; border: 1px solid #d3d4cc; border-radius: 9px; color: #171914; background: #f7f6f1; cursor: pointer; }
-.form-field-order button:disabled { opacity: .35; cursor: default; }
+.form-field-order button:disabled { opacity: .35; cursor: not-allowed; }
 .form-field-order button.danger { color: #9c211b; border-color: #ecc3bf; background: #fff1ef; }
 .form-field-editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 15px; }
 .form-field-editor-grid .full { grid-column: 1 / -1; }
