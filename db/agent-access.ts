@@ -1,6 +1,6 @@
-import { and, asc, eq, inArray, ne, or, isNull, gt, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import { getDb } from ".";
-import { companies, partnerAccessLinks, partners, programs } from "./schema";
+import { companies, partnerAccessLinks, partners, programs, rewards } from "./schema";
 import { normalizeAgentEmail, normalizeAgentPhone } from "../lib/agent-auth";
 import { createPartnerToken, hashPartnerToken } from "../lib/partner-token";
 
@@ -25,19 +25,21 @@ export async function getAgentWorkspace(email: string, phone: string) {
     programId: programs.id,
     programName: programs.name,
     programStatus: programs.status,
+    programExpiresAt: programs.expiresAt,
     currency: programs.currency,
     missionCount: sql<number>`coalesce((select count(*) from missions m where m.program_id = ${programs.id} and m.status = 'ACTIVE'), 0)`,
     submissionCount: sql<number>`coalesce((select count(*) from submissions s where s.partner_id = ${partners.id}), 0)`,
-    pendingRewards: sql<number>`coalesce((select sum(r.amount) from rewards r where r.partner_id = ${partners.id} and r.status in ('PENDING', 'APPROVED')), 0)`,
   }).from(partners)
     .innerJoin(companies, eq(partners.companyId, companies.id))
     .innerJoin(programs, eq(partners.programId, programs.id))
-    .where(and(inArray(partners.id, ids), eq(programs.status, "ACTIVE"), or(isNull(programs.expiresAt), gt(programs.expiresAt, new Date().toISOString()))))
+    .where(inArray(partners.id, ids))
     .orderBy(asc(companies.name), asc(programs.name));
-  const companiesMap = new Map<string, { id: string; name: string; agentName: string; programs: Array<{ id: string; name: string; status: string; currency: string; missionCount: number; submissionCount: number; pendingRewards: number }> }>();
+  const pendingRows = await getDb().select().from(rewards).where(and(inArray(rewards.partnerId, ids), inArray(rewards.status, ["PENDING", "APPROVED"])));
+  const companiesMap = new Map<string, { id: string; name: string; agentName: string; programs: Array<{ id: string; name: string; status: string; currency: string; missionCount: number; submissionCount: number; historyOnly: boolean; pendingRewards: Array<{ amount: number; currency: string }> }> }>();
   for (const row of rows) {
     const company = companiesMap.get(row.companyId) ?? { id: row.companyId, name: row.companyName, agentName: row.partnerName, programs: [] };
-    company.programs.push({ id: row.programId, name: row.programName, status: row.programStatus, currency: row.currency, missionCount: Number(row.missionCount), submissionCount: Number(row.submissionCount), pendingRewards: Number(row.pendingRewards) });
+    const historyOnly = row.programStatus !== "ACTIVE" || !!row.programExpiresAt && Date.parse(row.programExpiresAt) <= Date.now();
+    company.programs.push({ id: row.programId, name: row.programName, status: row.programStatus, currency: row.currency, missionCount: historyOnly ? 0 : Number(row.missionCount), submissionCount: Number(row.submissionCount), historyOnly, pendingRewards: pendingRows.filter((reward) => reward.partnerId === row.partnerId).map(({ amount, currency }) => ({ amount, currency })) });
     companiesMap.set(row.companyId, company);
   }
   return { email: normalizeAgentEmail(email), phone: normalizeAgentPhone(phone), name: matched[0].name, companies: [...companiesMap.values()] };
@@ -46,7 +48,7 @@ export async function getAgentWorkspace(email: string, phone: string) {
 export async function createCompanyAccessForAgent(email: string, phone: string, companyId: string) {
   const matched = await findAgentPartners(email, phone);
   const availablePrograms = await getDb().select({ id: programs.id }).from(programs)
-    .where(and(eq(programs.companyId, companyId), eq(programs.status, "ACTIVE"), or(isNull(programs.expiresAt), gt(programs.expiresAt, new Date().toISOString()))));
+    .where(eq(programs.companyId, companyId));
   const availableProgramIds = new Set(availablePrograms.map((item) => item.id));
   const partner = matched.find((row) => row.companyId === companyId && availableProgramIds.has(row.programId));
   if (!partner) return null;

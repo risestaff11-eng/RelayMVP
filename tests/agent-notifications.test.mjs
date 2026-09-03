@@ -55,7 +55,7 @@ test("bulk payouts combine programs into one email per agent; notification failu
     const second = await f.seed({ programId: "program-second", partnerId: "partner-second" });
     const ids = [await createSubmission(f, a), await createSubmission(f, second, "+77015556677")];
     f.setCompany("company-a");
-    for (const id of ids) assert.equal((await review(f, id, { reviewStatus: "ACCEPTED", salesStatus: "WON" })).status, 200);
+    for (const id of ids) assert.equal((await review(f, id, { reviewStatus: "ACCEPTED", salesStatus: "WON", dealAmount: 100000 })).status, 200);
     f.deliveries.length = 0;
     const bulk = (paid) => f.request(`/api/agents/${a.partnerId}/paid`, { paid }, { method: "PATCH", route: "/api/agents/[id]/paid", params: { id: a.partnerId } });
     assert.equal((await bulk(true)).status, 200);

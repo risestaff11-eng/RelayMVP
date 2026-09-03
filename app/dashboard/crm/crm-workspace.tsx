@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { calculateCrmGoal, conversionFromLeadsPerPayment, CRM_STAGES, crmStage, crmStageMutation, leadsPerPaymentFromConversion, potentialForLead, type CrmStageId } from "@/lib/crm";
 import { countRu, formatDateTime, formatMoney } from "@/lib/format-display";
 import { reviewStatusNames, salesStatusNames, slaState } from "@/lib/workflow";
+import { localMonth, saleCompletedAt, withinMonth } from "@/lib/financial-periods";
 
 type Reward = { amount: number; currency: string; status: string; paidAt: string | null; partnerConfirmedAt: string | null; plannedAt: string | null } | null;
 type Attachment = { id: string; objectKey: string | null; externalUrl: string | null; fileName: string; mimeType: string; size: number };
@@ -84,6 +85,7 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
   const [dragged, setDragged] = useState("");
   const [dragOver, setDragOver] = useState<CrmStageId | "">("");
   const [closing, setClosing] = useState<CrmLead | null>(null);
+  const [month, setMonth] = useState(() => localMonth());
 
   const programs = [...new Set(items.map((item) => item.programName))];
   const ambassadors = [...new Map(items.map((item) => [item.partnerEmail, item.partnerName || item.partnerEmail])).entries()];
@@ -95,7 +97,7 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
   }), [items, query, quick, program, ambassador]);
 
   const goal = calculateCrmGoal(settings.monthlyGoal, settings.averageCheck, settings.conversionRate);
-  const paid = items.filter((item) => crmStage(item) === "PAID" && item.currency === settings.currency);
+  const paid = items.filter((item) => crmStage(item) === "PAID" && item.currency === settings.currency && withinMonth(saleCompletedAt(item.events), month));
   const fact = paid.reduce((sum, item) => sum + Math.max(0, item.dealAmount || 0), 0);
   const openItems = items.filter((item) => !["PAID", "CLOSED"].includes(crmStage(item)) && item.currency === settings.currency);
   const potential = openItems.reduce((sum, item) => sum + potentialForLead(item, settings.averageCheck).amount, 0);
@@ -107,7 +109,7 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
 
   async function patchLead(item: CrmLead, payload: Record<string, unknown>, success = "Карточка обновлена", optimistic = false) {
     setPending(item.id); setNotice("");
-    const body: Record<string, unknown> = { amount: item.rewardValue, estimatedDealAmount: item.estimatedDealAmount, dealAmount: item.dealAmount, comment: item.companyComment, ...payload };
+    const body: Record<string, unknown> = { ...payload };
     const optimisticItem = optimisticLead(item, body);
     if (optimistic) setItems((current) => current.map((row) => row.id === item.id ? optimisticItem : row));
     try {
@@ -115,8 +117,9 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
       const data = await response.json() as Record<string, unknown>;
       if (!response.ok) throw new Error(String(data.error || "Не удалось сохранить"));
       const rewardAmount = Number(data.rewardAmount ?? item.reward?.amount ?? 0);
-      const nextReward = rewardAmount > 0 || item.reward ? { amount: rewardAmount, currency: item.reward?.currency || item.currency, status: String(data.rewardStatus || item.reward?.status || "PENDING"), paidAt: item.reward?.paidAt || null, partnerConfirmedAt: item.reward?.partnerConfirmedAt || null, plannedAt: String(body.plannedAt || item.reward?.plannedAt || "") || null } : null;
+      const nextReward = rewardAmount > 0 || item.reward ? { amount: rewardAmount, currency: item.reward?.currency || item.currency, status: String(data.rewardStatus || item.reward?.status || "PENDING"), paidAt: item.reward?.paidAt || null, partnerConfirmedAt: item.reward?.partnerConfirmedAt || null, plannedAt: (body.plannedAt === undefined ? item.reward?.plannedAt ?? null : String(body.plannedAt || "") || null) } : null;
       const next: CrmLead = { ...optimisticItem, status: String(data.status || item.status), reviewStatus: String(data.reviewStatus || optimisticItem.reviewStatus), salesStatus: String(data.salesStatus || optimisticItem.salesStatus), estimatedDealAmount: Number(data.estimatedDealAmount ?? optimisticItem.estimatedDealAmount), dealAmount: Number(data.dealAmount ?? optimisticItem.dealAmount), reward: nextReward };
+      if (data.event) next.events = [data.event as Event, ...item.events];
       setItems((current) => current.map((row) => row.id === item.id ? next : row));
       setSelected((current) => current?.id === item.id ? next : current);
       setNotice(success);
@@ -139,8 +142,9 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
   return <div className="crm-workspace">
     <header className="crm-compact-header">
       <h1>CRM</h1>
-      <button className="crm-goal-summary" type="button" onClick={() => setGoalOpen(true)} aria-label="Открыть настройку цели"><span>Цель <strong>{goal.goal ? formatMoney(goal.goal, settings.currency) : "не задана"}</strong></span><span>Факт <strong>{formatMoney(fact, settings.currency)}</strong></span><span className="crm-goal-percent">{progress}%</span></button>
-      <div className="crm-money-summary"><span>Потенциал <strong>{formatMoney(potential, settings.currency)}</strong></span><span>До цели <strong>{formatMoney(Math.max(0, goal.goal - fact), settings.currency)}</strong></span></div>
+      <input className="crm-month-control" type="month" aria-label="Месяц плана продаж" value={month} onChange={(event) => { if (event.target.value) setMonth(event.target.value); }} />
+      <button className="crm-goal-summary" type="button" onClick={() => setGoalOpen(true)} aria-label="Открыть настройку цели"><span>Цель <strong>{goal.goal ? formatMoney(goal.goal, settings.currency) : "не задана"}</strong></span><span>Факт за месяц <strong>{formatMoney(fact, settings.currency)}</strong></span><span className="crm-goal-percent">{progress}%</span></button>
+      <div className="crm-money-summary"><span>Потенциал всех открытых <strong>{formatMoney(potential, settings.currency)}</strong></span><span>До цели <strong>{formatMoney(Math.max(0, goal.goal - fact), settings.currency)}</strong></span></div>
     </header>
 
     <section className="crm-toolbar" aria-label="Поиск и фильтры CRM">
@@ -154,11 +158,11 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
     <nav className="crm-mobile-stages" aria-label="Этап воронки">{CRM_STAGES.map((stage) => <button type="button" className={mobileStage === stage.id ? "active" : ""} onClick={() => setMobileStage(stage.id)} key={stage.id}>{stage.label}<b>{filtered.filter((item) => crmStage(item) === stage.id).length}</b></button>)}</nav>
     <section className="crm-board" aria-label="Воронка клиентов">{CRM_STAGES.map((stage) => {
       const leads = filtered.filter((item) => crmStage(item) === stage.id);
-      const money = leads.map((item) => ({ ...potentialForLead(item, settings.averageCheck), currency: item.currency }));
+      const money = leads.map((item) => ({ ...potentialForLead(item, item.currency === settings.currency ? settings.averageCheck : 0), currency: item.currency }));
       return <article className={`crm-column crm-stage-${stage.id.toLowerCase()} ${mobileStage === stage.id ? "mobile-active" : ""} ${dragOver === stage.id ? "drag-over" : ""}`} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDragOver(stage.id); }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragOver(""); }} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/plain") || dragged; const item = items.find((value) => value.id === id); setDragOver(""); setDragged(""); if (item) move(item, stage.id); }} key={stage.id}>
         <header><div><span>{stage.label}</span><b>{leads.length}</b></div><strong>{compactMoneyByCurrency(money)}</strong><small>{stage.hint}</small></header>
         <div className="crm-column-body">{leads.map((item) => {
-          const amount = potentialForLead(item, settings.averageCheck);
+          const amount = potentialForLead(item, item.currency === settings.currency ? settings.averageCheck : 0);
           const clientWa = whatsapp(item.contactPhone, `Здравствуйте, ${item.contactName || "добрый день"}! Это ${companyName}. Связываемся по вашей заявке «${item.missionTitle}».`);
           const agentWa = whatsapp(item.partnerPhone, `Здравствуйте, ${item.partnerName}! Это ${companyName}. Уточняем детали по клиенту ${leadTitle(item)}.`);
           const payout = payoutState(item.reward);
@@ -208,7 +212,7 @@ function LeadFullscreen({ companyName, item, pending, notice, onClose, onSave }:
   const [salesStatus, setSalesStatus] = useState(item.salesStatus);
   const [estimatedDealAmount, setEstimatedDealAmount] = useState(item.estimatedDealAmount || 0);
   const [dealAmount, setDealAmount] = useState(item.dealAmount || 0);
-  const [rewardAmount, setRewardAmount] = useState(item.reward?.amount || item.rewardValue || 0);
+  const [rewardAmount, setRewardAmount] = useState(item.reward?.amount ?? item.rewardValue ?? 0);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const clientWa = whatsapp(item.contactPhone, `Здравствуйте, ${item.contactName || "добрый день"}! Это ${companyName}. Связываемся по вашей заявке «${item.missionTitle}».`);
   const agentWa = whatsapp(item.partnerPhone, `Здравствуйте, ${item.partnerName}! Это ${companyName}. Уточняем детали по клиенту ${leadTitle(item)}.`);
@@ -216,7 +220,8 @@ function LeadFullscreen({ companyName, item, pending, notice, onClose, onSave }:
   const payout = payoutState(item.reward);
   const currentStage = CRM_STAGES.find((stage) => stage.id === crmStage(item));
   const isPercentReward = item.rewardMode === "PERCENT";
-  const calculatedReward = isPercentReward ? Math.max(0, Math.round(dealAmount * item.rewardValue / 100)) : rewardAmount;
+  const rewardLocked = !!item.reward && (item.reward.status === "PAID" || !!item.reward.paidAt || !!item.reward.partnerConfirmedAt);
+  const calculatedReward = rewardLocked ? item.reward!.amount : isPercentReward ? (dealAmount === item.dealAmount && item.reward ? item.reward.amount : Math.max(0, Math.round(dealAmount * item.rewardValue / 100))) : rewardAmount;
   return <div className="relay-modal-backdrop crm-fullscreen-backdrop"><section className="crm-lead-fullscreen" role="dialog" aria-modal="true" aria-labelledby="crm-lead-title"><button className="relay-modal-close" type="button" onClick={onClose} aria-label="Закрыть">×</button>
     <header className={`crm-fullscreen-header ${mobileSummaryOpen ? "mobile-summary-open" : ""}`}><div className="crm-fullscreen-context"><span>{<bdi data-no-translate>{item.programName}</bdi>}</span><strong>{<bdi data-no-translate>{item.missionTitle}</bdi>}</strong><time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time></div><div className="crm-fullscreen-person"><div><small>КЛИЕНТ</small><h2 id="crm-lead-title">{item.contactName || item.contactCompany ? <bdi data-no-translate>{leadTitle(item)}</bdi> : "Клиент без имени"}</h2>{clientWa ? <a href={clientWa} title="Открыть переписку" target="_blank" rel="noreferrer">{formatPhone(item.contactPhone)} ↗</a> : <span>{(item.contactEmail) ? (<bdi data-no-translate>{item.contactEmail}</bdi>) : ("Контакт не указан")}</span>}</div><div><small>ТЕКУЩИЙ ЭТАП</small><strong className="crm-current-stage">{currentStage?.label || "Новый"}</strong><span>{amount.amount ? `${amount.kind === "EXACT" ? "" : "≈ "}${formatMoney(amount.amount, item.currency)}` : "Сумма не задана"}</span></div><div><small>ПРИВЁЛ</small><strong>{(item.partnerName) ? (<bdi data-no-translate>{item.partnerName}</bdi>) : (<bdi data-no-translate>{item.partnerEmail}</bdi>)}</strong>{agentWa ? <a href={agentWa} title="Открыть переписку" target="_blank" rel="noreferrer">{formatPhone(item.partnerPhone)} ↗</a> : <span>{(item.partnerPhone) ? (<bdi data-no-translate>{item.partnerPhone}</bdi>) : (<bdi data-no-translate>{item.partnerEmail}</bdi>)}</span>}</div></div><button className="crm-mobile-summary-toggle" type="button" aria-expanded={mobileSummaryOpen} onClick={() => setMobileSummaryOpen((value) => !value)}>{mobileSummaryOpen ? "Скрыть сводку" : "Этап и амбассадор"}<span aria-hidden="true">{mobileSummaryOpen ? "⌃" : "⌄"}</span></button></header>
     {notice && <div className="crm-notice">{notice}</div>}
@@ -228,9 +233,9 @@ function LeadFullscreen({ companyName, item, pending, notice, onClose, onSave }:
     </main><aside>
       <form className="crm-lead-form crm-inline-editor crm-company-editor" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); onSave({ reviewStatus, salesStatus, estimatedDealAmount, dealAmount, amount: calculatedReward, plannedAt: data.get("plannedAt"), comment: data.get("comment") }); }}>
         <div className="crm-section-heading"><small>УПРАВЛЕНИЕ</small><h3>Ведите заявку по шагам</h3><p>Сначала подтвердите заявку, затем отметьте продажу и вознаграждение.</p></div>
-        <section className="crm-editor-section"><header><small>1. РЕШЕНИЕ ПО ЗАЯВКЕ</small><strong>Проверка и продажа</strong></header><div className="crm-status-pair"><label><span>Проверка заявки</span><select value={reviewStatus} onChange={(event) => { const value = event.target.value; setReviewStatus(value); if (value !== "ACCEPTED") setSalesStatus(value === "REJECTED" ? "LOST" : "NONE"); }}>{Object.entries(reviewStatusNames).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label><label><span>Статус продажи</span><select value={salesStatus} disabled={reviewStatus !== "ACCEPTED"} onChange={(event) => setSalesStatus(event.target.value)}>{Object.entries(salesStatusNames).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><small className="crm-control-hint">{reviewStatus !== "ACCEPTED" ? "Доступен после принятия заявки" : "Покажет, где сейчас клиент"}</small></label></div></section>
-        <section className="crm-editor-section"><header><small>2. ДЕНЬГИ</small><strong>Сумма сделки</strong></header><div className="crm-status-pair"><label><span>Прогноз по сделке</span><input name="estimatedDealAmount" type="number" inputMode="numeric" min="0" value={estimatedDealAmount || ""} onChange={(event) => setEstimatedDealAmount(Number(event.target.value) || 0)} placeholder="0" /></label><label><span>Оплачено клиентом</span><input name="dealAmount" type="number" inputMode="numeric" min="0" value={dealAmount || ""} onChange={(event) => setDealAmount(Number(event.target.value) || 0)} placeholder="0" /></label></div></section>
-        <section className="crm-reward-editor"><header><div><small>3. ВОЗНАГРАЖДЕНИЕ АМБАССАДОРУ</small><strong>{calculatedReward ? formatMoney(calculatedReward, item.currency) : "Укажите сумму"}</strong></div><span className={`crm-reward-status ${payout.tone}`}>{payout.label}</span></header><p>После сохранения сумма появится в кабинете амбассадора.</p>{isPercentReward ? <label><span>Сумма рассчитывается автоматически</span><output>{item.rewardValue}% от оплаты клиента · {formatMoney(calculatedReward, item.currency)}</output><small className="crm-control-hint">Введите сумму оплаты клиента выше, чтобы увидеть точный расчёт.</small></label> : <label><span>Сумма вознаграждения</span><input name="rewardAmount" type="number" inputMode="numeric" min="0" value={rewardAmount || ""} onChange={(event) => setRewardAmount(Number(event.target.value) || 0)} placeholder="0" /><small className="crm-control-hint">Укажите сумму, которую амбассадор увидит к выплате.</small></label>}<label><span>Плановая дата выплаты</span><input name="plannedAt" type="date" defaultValue={item.reward?.plannedAt?.slice(0, 10) || ""} /></label></section>
+        <section className="crm-editor-section"><header><small>1. РЕШЕНИЕ ПО ЗАЯВКЕ</small><strong>Проверка и продажа</strong></header><div className="crm-status-pair"><label><span>Проверка заявки</span><select value={reviewStatus} disabled={rewardLocked} onChange={(event) => { const value = event.target.value; setReviewStatus(value); if (value !== "ACCEPTED") setSalesStatus(value === "REJECTED" ? "LOST" : "NONE"); }}>{Object.entries(reviewStatusNames).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label><label><span>Статус продажи</span><select value={salesStatus} disabled={rewardLocked || reviewStatus !== "ACCEPTED"} onChange={(event) => setSalesStatus(event.target.value)}>{Object.entries(salesStatusNames).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><small className="crm-control-hint">{reviewStatus !== "ACCEPTED" ? "Доступен после принятия заявки" : "Покажет, где сейчас клиент"}</small></label></div></section>
+        <section className="crm-editor-section"><header><small>2. ДЕНЬГИ</small><strong>Сумма сделки</strong></header><div className="crm-status-pair"><label><span>Прогноз по сделке</span><input name="estimatedDealAmount" type="number" inputMode="numeric" min="0" value={estimatedDealAmount || ""} onChange={(event) => setEstimatedDealAmount(Number(event.target.value) || 0)} placeholder="0" /></label><label><span>Оплачено клиентом</span><input name="dealAmount" disabled={rewardLocked} type="number" inputMode="numeric" min="0" value={dealAmount || ""} onChange={(event) => setDealAmount(Number(event.target.value) || 0)} placeholder="0" /></label></div></section>
+        <section className="crm-reward-editor"><header><div><small>3. ВОЗНАГРАЖДЕНИЕ АМБАССАДОРУ</small><strong>{calculatedReward ? formatMoney(calculatedReward, item.reward?.currency || item.currency) : "Укажите сумму"}</strong></div><span className={`crm-reward-status ${payout.tone}`}>{payout.label}</span></header><p>После сохранения сумма появится в кабинете амбассадора.</p>{isPercentReward ? <label><span>Сумма рассчитывается автоматически</span><output>{item.rewardValue}% от оплаты клиента · {formatMoney(calculatedReward, item.reward?.currency || item.currency)}</output><small className="crm-control-hint">Введите сумму оплаты клиента выше, чтобы увидеть точный расчёт.</small></label> : <label><span>Сумма вознаграждения</span><input name="rewardAmount" disabled={rewardLocked} type="number" inputMode="numeric" min="0" value={rewardAmount || ""} onChange={(event) => setRewardAmount(Number(event.target.value) || 0)} placeholder="0" /><small className="crm-control-hint">Укажите сумму, которую амбассадор увидит к выплате.</small></label>}<label><span>Плановая дата выплаты</span><input name="plannedAt" type="date" defaultValue={item.reward?.plannedAt?.slice(0, 10) || ""} /></label></section>
         <label className="crm-company-comment"><span>Следующий шаг для команды</span><textarea name="comment" defaultValue={item.companyComment} rows={3} placeholder="Например: договориться о встрече до пятницы" /></label><button className="button button-primary" disabled={pending} type="submit">{pending ? "Сохраняем…" : "Сохранить и обновить"}</button>
       </form>
       <section className="crm-service-state"><span><small>Проверка</small><strong>{reviewStatusNames[reviewStatus as keyof typeof reviewStatusNames] || reviewStatus}</strong></span><span><small>Продажа</small><strong>{salesStatusNames[salesStatus as keyof typeof salesStatusNames] || salesStatus}</strong></span><span><small>SLA проверки</small><strong>{slaState(item.reviewDueAt, !["PENDING", "REVIEWING"].includes(reviewStatus)).label}</strong></span></section>

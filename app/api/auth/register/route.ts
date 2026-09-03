@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { companyEmailVerificationCodes, userRoles, users } from "../../../../db/schema";
 import { hashPassword } from "../../../../lib/account-auth";
 import { companyEmailCodeExpiresAt, createCompanyEmailCode, hashCompanyEmailCode, sendCompanyEmailCode } from "../../../../lib/company-email-verification";
 import { cleanString, sameOrigin } from "../../company/_utils";
+import { limitAuthentication, requestLimitResponse } from "../../../../lib/request-rate-limit";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -19,9 +20,10 @@ export async function POST(request: Request) {
     if (phone.length < 6) throw new Error("Укажите телефон");
     if (!/^(?=.*[A-Za-z])[\x20-\x7E]{8,}$/.test(password)) throw new Error("Пароль должен содержать минимум 8 символов и хотя бы одну латинскую букву");
     if (payload.acceptedTerms !== true || payload.acceptedPrivacy !== true) throw new Error("Необходимо принять условия и согласие на обработку данных");
+    await limitAuthentication(request, "register", email);
 
     const db = getDb();
-    const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const existing = await db.select().from(users).where(sql`lower(trim(${users.email})) = ${email}`).limit(1);
     const user = existing[0];
     if (user) {
       const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
@@ -36,8 +38,8 @@ export async function POST(request: Request) {
     const passwordHash = await hashPassword(password);
     if (user) {
       await db.batch([
+        db.insert(userRoles).values({ userId, role: "COMPANY", createdAt: now }),
         db.update(users).set({ displayName, phone, companyName, passwordHash, status: "pending", emailVerifiedAt: null, updatedAt: now }).where(eq(users.id, userId)),
-        db.insert(userRoles).values({ userId, role: "COMPANY", createdAt: now }).onConflictDoNothing(),
       ]);
     } else {
       await db.batch([
@@ -57,6 +59,8 @@ export async function POST(request: Request) {
     }
     return Response.json({ ok: true, verificationSent }, { status: 201 });
   } catch (error) {
+    const limited = requestLimitResponse(error); if (limited) return limited;
+    if (/unique constraint|idx_users_email_normalized/i.test(String(error) + String((error as { cause?: unknown })?.cause))) return Response.json({ code: "ACCOUNT_EXISTS", nextStep: "LOGIN", error: "Аккаунт с этим email уже существует. Войдите или восстановите пароль." }, { status: 409 });
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось создать аккаунт" }, { status: 400 });
   }
 }

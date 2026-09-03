@@ -75,8 +75,8 @@ export async function getPartnerPortal(token: string) {
   const now = Date.now();
   const availableProgramRows = programRows.filter((item) => item.status === "ACTIVE" && (!item.expiresAt || new Date(item.expiresAt).getTime() > now));
   const availableProgramIds = new Set(availableProgramRows.map((item) => item.id));
-  const activePartner = identityRows.find((item) => item.id === partner.id && availableProgramIds.has(item.programId)) ?? identityRows.find((item) => availableProgramIds.has(item.programId));
-  const currentProgram = availableProgramRows.find((item) => item.id === activePartner?.programId) ?? availableProgramRows[0];
+  const activePartner = identityRows.find((item) => item.id === partner.id && availableProgramIds.has(item.programId)) ?? identityRows.find((item) => availableProgramIds.has(item.programId)) ?? partner;
+  const currentProgram = availableProgramRows.find((item) => item.id === activePartner.programId) ?? programRows.find((item) => item.id === activePartner.programId);
   if (!currentProgram || !activePartner || !company) return null;
   const submissionIds = submissionRows.map((item) => item.id);
   const [eventRows, attachmentRows] = submissionIds.length ? await Promise.all([
@@ -118,6 +118,7 @@ export async function getPartnerPortal(token: string) {
     company,
     program: currentProgram,
     programs: availableProgramRows,
+    historyOnly: availableProgramRows.length === 0,
     missions: serializedMissions,
     submissions: serializedSubmissions,
     rewards: rewardRows,

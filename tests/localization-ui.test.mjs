@@ -96,7 +96,7 @@ test("real CRM translates new DOM after status changes while preserving client i
   const settle = () => act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)); });
   try {
     document.documentElement.lang = "kk";
-    globalThis.fetch = async (url, options) => { const body = JSON.parse(options.body);requests.push({ url, body });return Response.json({ status: "REWARDED", reviewStatus: body.reviewStatus, salesStatus: body.salesStatus, rewardAmount: body.amount, rewardStatus: "APPROVED" }); };
+    globalThis.fetch = async (url, options) => { const body = JSON.parse(options.body);requests.push({ url, body });return Response.json({ status: "REWARDED", reviewStatus: body.reviewStatus, salesStatus: body.salesStatus, rewardAmount: 25000, rewardStatus: "APPROVED" }); };
     await act(async () => root.render(createElement(Fragment, null, createElement(CrmWorkspace, { companyName: "Компания", initialItems: [item], initialSettings: { monthlyGoal: 1000000, averageCheck: 200000, conversionRate: 20, currency: "KZT" } }), createElement(LanguageSwitcher, { locale: "kk" }))));
     await settle();
     const card = container.querySelector(".crm-lead-card");
@@ -110,7 +110,7 @@ test("real CRM translates new DOM after status changes while preserving client i
     await settle();
     assert.equal(requests[0].body.salesStatus, "WON");
     assert.equal(requests[0].body.reviewStatus, "ACCEPTED");
-    assert.equal(requests[0].body.amount, 25000);
+    assert.equal(Object.hasOwn(requests[0].body, "amount"), false, "Stage changes must not overwrite the negotiated reward");
     assert.ok(container.querySelector(".crm-stage-paid .crm-lead-card"));
     assert.ok(container.querySelector(".crm-payout-state").textContent.includes(translations.translateToKazakh("Ожидает выплаты")));
     await act(async () => container.querySelector(".crm-lead-card").click());

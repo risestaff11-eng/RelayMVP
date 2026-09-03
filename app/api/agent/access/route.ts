@@ -7,6 +7,8 @@ import { createAgentSession, normalizeAgentEmail, normalizeAgentPhone } from "..
 import { sendAgentLoginCode } from "../../../../lib/agent-email";
 import { createVerificationCode, hashVerificationCode } from "../../../../lib/verification-code";
 import { cleanString, sameOrigin } from "../../company/_utils";
+import { claimEmailCode } from "../../../../lib/email-code-lifecycle";
+import { limitAuthentication, requestLimitResponse } from "../../../../lib/request-rate-limit";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -18,6 +20,7 @@ export async function POST(request: Request) {
     if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Укажите корректный email");
     if (phone.length < 10) throw new Error("Укажите корректный номер телефона");
     const identity = `${email}:${phone}`;
+    await limitAuthentication(request, `agent-${action}`, email);
     const db = getDb();
 
     if (action === "REQUEST") {
@@ -29,17 +32,22 @@ export async function POST(request: Request) {
       ));
       if (Number(recent[0]?.count ?? 0) >= 5) throw new Error("Слишком много запросов. Попробуйте через 15 минут");
       const code = createVerificationCode();
-      await sendAgentLoginCode(email, code);
       const now = new Date();
-      await db.insert(agentLoginCodes).values({ id: crypto.randomUUID(), email, phone, codeHash: await hashVerificationCode(identity, "AGENT_LOGIN", code), expiresAt: new Date(now.getTime() + 10 * 60 * 1000).toISOString(), createdAt: now.toISOString() });
+      const id = crypto.randomUUID();
+      await db.batch([
+        db.update(agentLoginCodes).set({ consumedAt: now.toISOString() }).where(and(eq(agentLoginCodes.email, email), eq(agentLoginCodes.phone, phone), isNull(agentLoginCodes.consumedAt))),
+        db.insert(agentLoginCodes).values({ id, email, phone, codeHash: await hashVerificationCode(identity, "AGENT_LOGIN", code), expiresAt: new Date(now.getTime() + 10 * 60 * 1000).toISOString(), createdAt: now.toISOString() }),
+      ]);
+      try { await sendAgentLoginCode(email, code); }
+      catch (error) { await db.update(agentLoginCodes).set({ consumedAt: new Date().toISOString() }).where(eq(agentLoginCodes.id, id)); throw error; }
       return Response.json({ codeSent: true, maskedEmail: email.replace(/^(.{2}).*(@.*)$/, "$1***$2") });
     }
 
     if (action === "VERIFY") {
       const code = cleanString(payload.code, 6);
       if (!/^\d{6}$/.test(code)) throw new Error("Введите шестизначный код");
-      const verification = (await db.select().from(agentLoginCodes).where(and(eq(agentLoginCodes.email, email), eq(agentLoginCodes.phone, phone), isNull(agentLoginCodes.consumedAt))).orderBy(desc(agentLoginCodes.createdAt)).limit(1))[0];
-      if (!verification || new Date(verification.expiresAt).getTime() < Date.now()) throw new Error("Код истёк. Запросите новый");
+      const verification = (await db.select().from(agentLoginCodes).where(and(eq(agentLoginCodes.email, email), eq(agentLoginCodes.phone, phone))).orderBy(desc(agentLoginCodes.createdAt), sql`rowid desc`).limit(1))[0];
+      if (!verification || verification.consumedAt || new Date(verification.expiresAt).getTime() < Date.now()) throw new Error("Код истёк. Запросите новый");
       if (verification.attempts >= 5) throw new Error("Лимит попыток исчерпан. Запросите новый код");
       if (!timingSafeEqual(verification.codeHash, await hashVerificationCode(identity, "AGENT_LOGIN", code))) {
         await db.update(agentLoginCodes).set({ attempts: sql`${agentLoginCodes.attempts} + 1` }).where(eq(agentLoginCodes.id, verification.id));
@@ -48,12 +56,13 @@ export async function POST(request: Request) {
       const matched = await findAgentPartners(email, phone);
       if (!matched.length) return Response.json({ needsApplication: true });
       const now = new Date().toISOString();
-      await db.update(agentLoginCodes).set({ consumedAt: now }).where(eq(agentLoginCodes.id, verification.id));
+      if (!await claimEmailCode("agent_login_codes", verification.id, now)) throw new Error("Код истёк. Запросите новый");
       await createAgentSession(email, phone);
       return Response.json({ ok: true, redirect: "/agent" });
     }
     throw new Error("Неизвестное действие");
   } catch (error) {
+    const limited = requestLimitResponse(error); if (limited) return limited;
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось выполнить вход" }, { status: 400 });
   }
 }

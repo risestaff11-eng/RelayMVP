@@ -6,7 +6,7 @@ export const PUBLIC_SUBMISSION_LIMIT = 30;
 export const CONTACT_CODE_LIMIT = 5;
 const VERIFY_IP_LIMIT = 60;
 
-type Scope = "public-submission-ip" | "contact-verify-ip" | "contact-code-request" | "contact-code-confirm";
+type Scope = "public-submission-ip" | "contact-verify-ip" | "contact-code-request" | "contact-code-confirm" | "auth-ip" | "auth-identity";
 type Counter = { hits: number; reset_at: number };
 export type RateLimitState = { allowed: boolean; remaining: number; retryAfterSeconds: number };
 
@@ -83,4 +83,9 @@ export async function limitPublicSubmission(request: Request) {
 
 export async function limitContactVerificationIp(request: Request) {
   requireRequestLimit(await takeRequestLimit("contact-verify-ip", requestIpKey(request), VERIFY_IP_LIMIT), "Слишком много запросов подтверждения с вашей сети. Попробуйте через 15 минут.");
+}
+
+export async function limitAuthentication(request: Request, action: string, identity: string) {
+  requireRequestLimit(await takeRequestLimit("auth-ip", `${action}:${requestIpKey(request)}`, 60), "Слишком много попыток. Попробуйте через 15 минут.");
+  requireRequestLimit(await takeRequestLimit("auth-identity", `${action}:${identity}`, action.endsWith("REQUEST") || action === "register" ? 5 : 15), "Слишком много попыток. Попробуйте через 15 минут.");
 }

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPartnerPortal } from "../../../../db/partner";
+import { formatMoneyGroups } from "@/lib/format-display";
 import { money, shortDate } from "../../_lib";
 import { RewardReceiptConfirmation } from "../../_components/partner-actions";
 import { EarningsGoalCalculator } from "../../_components/earnings-goal-calculator";
@@ -10,9 +11,9 @@ export default async function PartnerPayoutsPage({ params }: { params: Promise<{
   const portal = await getPartnerPortal(token);
   if (!portal) notFound();
 
-  const approved = portal.rewards.filter((item) => item.status === "APPROVED").reduce((sum, item) => sum + item.amount, 0);
-  const received = portal.rewards.filter((item) => item.status === "PAID" && item.partnerConfirmedAt).reduce((sum, item) => sum + item.amount, 0);
-  const markedByCompany = portal.rewards.filter((item) => item.status === "PAID" && !item.partnerConfirmedAt).reduce((sum, item) => sum + item.amount, 0);
+  const approved = portal.rewards.filter((item) => item.status === "APPROVED");
+  const received = portal.rewards.filter((item) => item.status === "PAID" && item.partnerConfirmedAt);
+  const markedByCompany = portal.rewards.filter((item) => item.status === "PAID" && !item.partnerConfirmedAt);
   const agentName = [portal.profile.firstName, portal.profile.lastName].filter(Boolean).join(" ") || portal.partner.name || portal.partner.email;
   const supportText = `Здравствуйте! Помогите получить вознаграждение от компании «${portal.company.name}». Компания отметила выплату в RiseStaff, но деньги пока не получены. Агент: ${agentName}.`;
   const supportHref = `https://wa.me/77765086000?text=${encodeURIComponent(supportText)}`;
@@ -23,9 +24,9 @@ export default async function PartnerPayoutsPage({ params }: { params: Promise<{
 
       <section className="payout-hero">
         <small>ДОСТУПНО К ВЫПЛАТЕ</small>
-        <strong>{money(approved, portal.program.currency)}</strong>
+        <strong>{formatMoneyGroups(approved)}</strong>
         <span>Компания переводит деньги самостоятельно</span>
-        <div className="payout-hero-summary"><b>Получено: {money(received, portal.program.currency)}</b>{markedByCompany > 0 && <b>Компания отметила оплату: {money(markedByCompany, portal.program.currency)}</b>}</div>
+        <div className="payout-hero-summary"><b>Получено: {formatMoneyGroups(received)}</b>{markedByCompany.length > 0 && <b>Компания отметила оплату: {formatMoneyGroups(markedByCompany)}</b>}</div>
       </section>
 
       {portal.rewards.length ? (

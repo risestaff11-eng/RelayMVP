@@ -21,8 +21,8 @@ export function typescriptLoader(overrides = {}) {
     const nativeRequire = createRequire(filename);
     function dependency(id) {
       if (Object.hasOwn(overrides, id)) return overrides[id];
-      if (!id.startsWith(".")) return nativeRequire(id);
-      const base = resolve(dirname(filename), id);
+      if (!id.startsWith(".") && !id.startsWith("@/")) return nativeRequire(id);
+      const base = id.startsWith("@/") ? resolve(fileURLToPath(new URL("../../", import.meta.url)), id.slice(2)) : resolve(dirname(filename), id);
       const target = [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`].find((path) => existsSync(path) && /\.tsx?$/.test(path));
       return target ? load(target) : nativeRequire(id);
     }

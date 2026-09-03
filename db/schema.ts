@@ -31,7 +31,7 @@ export const users = sqliteTable("users", {
   loginCount: integer("login_count").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [index("idx_users_email").on(table.email)]);
+}, (table) => [index("idx_users_email").on(table.email), uniqueIndex("idx_users_email_normalized").on(sql`lower(trim(${table.email}))`)]);
 
 export const companyEmailVerificationCodes = sqliteTable(
   "company_email_verification_codes",
