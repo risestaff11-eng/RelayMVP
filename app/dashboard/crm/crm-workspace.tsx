@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { calculateCrmGoal, conversionFromLeadsPerPayment, CRM_STAGES, crmStage, crmStageMutation, leadsPerPaymentFromConversion, potentialForLead, type CrmStageId } from "@/lib/crm";
 import { countRu, formatDateTime, formatMoney } from "@/lib/format-display";
 import { reviewStatusNames, salesStatusNames, slaState } from "@/lib/workflow";
@@ -80,12 +80,14 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
   const [program, setProgram] = useState("ALL");
   const [ambassador, setAmbassador] = useState("ALL");
   const [mobileStage, setMobileStage] = useState<CrmStageId>("NEW");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [pending, setPending] = useState("");
   const [notice, setNotice] = useState("");
   const [dragged, setDragged] = useState("");
   const [dragOver, setDragOver] = useState<CrmStageId | "">("");
   const [closing, setClosing] = useState<CrmLead | null>(null);
   const [month, setMonth] = useState(() => localMonth());
+  const stageNavRef = useRef<HTMLElement>(null);
 
   const programs = [...new Set(items.map((item) => item.programName))];
   const ambassadors = [...new Map(items.map((item) => [item.partnerEmail, item.partnerName || item.partnerEmail])).entries()];
@@ -102,6 +104,10 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
   const openItems = items.filter((item) => !["PAID", "CLOSED"].includes(crmStage(item)) && item.currency === settings.currency);
   const potential = openItems.reduce((sum, item) => sum + potentialForLead(item, settings.averageCheck).amount, 0);
   const progress = goal.goal > 0 ? Math.min(100, Math.round(fact / goal.goal * 100)) : 0;
+
+  useEffect(() => {
+    stageNavRef.current?.querySelector<HTMLElement>(".active")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [mobileStage]);
 
   function optimisticLead(item: CrmLead, body: Record<string, unknown>) {
     return { ...item, reviewStatus: String(body.reviewStatus || item.reviewStatus), salesStatus: String(body.salesStatus || item.salesStatus), estimatedDealAmount: Number(body.estimatedDealAmount ?? item.estimatedDealAmount), dealAmount: Number(body.dealAmount ?? item.dealAmount), companyComment: String(body.comment ?? item.companyComment) };
@@ -149,13 +155,16 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
 
     <section className="crm-toolbar" aria-label="Поиск и фильтры CRM">
       <label className="crm-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Имя, телефон, программа или амбассадор" /></label>
-      <select value={quick} onChange={(event) => setQuick(event.target.value as (typeof quickFilters)[number][0])} aria-label="Состояние">{quickFilters.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>
-      <select value={program} onChange={(event) => setProgram(event.target.value)} aria-label="Программа"><option value="ALL">Все программы</option>{programs.map((item) => <option key={item}>{item}</option>)}</select>
-      <select value={ambassador} onChange={(event) => setAmbassador(event.target.value)} aria-label="Амбассадор"><option value="ALL">Все амбассадоры</option>{ambassadors.map(([email, name]) => <option value={email} key={email}>{name}</option>)}</select>
+      <button className={`crm-filter-toggle ${filtersOpen ? "active" : ""}`} type="button" aria-expanded={filtersOpen} aria-controls="crm-filter-controls" onClick={() => setFiltersOpen((value) => !value)}>Фильтры{quick !== "ALL" || program !== "ALL" || ambassador !== "ALL" ? " · выбраны" : ""}<span aria-hidden="true">{filtersOpen ? "⌃" : "⌄"}</span></button>
+      <div className={`crm-filter-controls ${filtersOpen ? "open" : ""}`} id="crm-filter-controls">
+        <select value={quick} onChange={(event) => setQuick(event.target.value as (typeof quickFilters)[number][0])} aria-label="Состояние">{quickFilters.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>
+        <select value={program} onChange={(event) => setProgram(event.target.value)} aria-label="Программа"><option value="ALL">Все программы</option>{programs.map((item) => <option key={item}>{item}</option>)}</select>
+        <select value={ambassador} onChange={(event) => setAmbassador(event.target.value)} aria-label="Амбассадор"><option value="ALL">Все амбассадоры</option>{ambassadors.map(([email, name]) => <option value={email} key={email}>{name}</option>)}</select>
+      </div>
     </section>
 
     {notice && <div className="crm-notice" role="status">{notice}<button type="button" onClick={() => setNotice("")} aria-label="Закрыть сообщение">×</button></div>}
-    <nav className="crm-mobile-stages" aria-label="Этап воронки">{CRM_STAGES.map((stage) => <button type="button" className={mobileStage === stage.id ? "active" : ""} onClick={() => setMobileStage(stage.id)} key={stage.id}>{stage.label}<b>{filtered.filter((item) => crmStage(item) === stage.id).length}</b></button>)}</nav>
+    <div className="crm-mobile-stage-shell"><nav ref={stageNavRef} className="crm-mobile-stages" aria-label="Этап воронки">{CRM_STAGES.map((stage) => <button type="button" className={mobileStage === stage.id ? "active" : ""} onClick={() => setMobileStage(stage.id)} key={stage.id}>{stage.label}<b>{filtered.filter((item) => crmStage(item) === stage.id).length}</b></button>)}</nav></div>
     <section className="crm-board" aria-label="Воронка клиентов">{CRM_STAGES.map((stage) => {
       const leads = filtered.filter((item) => crmStage(item) === stage.id);
       const money = leads.map((item) => ({ ...potentialForLead(item, item.currency === settings.currency ? settings.averageCheck : 0), currency: item.currency }));

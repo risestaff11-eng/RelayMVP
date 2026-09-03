@@ -37,7 +37,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <header className="dashboard-topbar">
           <div className="mobile-company-identity"><CompanyLogo company={company} className="mobile-relay-mark" /><div><small>РАБОЧЕЕ ПРОСТРАНСТВО</small><strong>{<bdi data-no-translate>{company.name}</bdi>}</strong></div></div>
           <DashboardContext nextStep={company.onboardingStatus === "PROGRAM_PUBLISHED" ? "Программа опубликована · отслеживайте агентов и результаты" : company.onboardingStatus === "PROFILE_CONFIRMED" || company.onboardingStatus === "PROGRAM_DRAFT" ? "Профиль подтверждён · создайте и опубликуйте программу" : "Следующий шаг — подтвердить профиль бизнеса"} />
-          <div className="top-actions"><LanguageSwitcher locale={locale} className="embedded-language-switcher company-language-switcher" manageTranslation={false} /><DashboardTour /><AccountMenu name={user.displayName} email={user.email} initials={initials(user.displayName)} signOutHref={chatGPTSignOutPath("/")} /></div>
+          <div className="top-actions"><LanguageSwitcher locale={locale} className="embedded-language-switcher company-language-switcher" manageTranslation={false} compact /><DashboardTour /><AccountMenu name={user.displayName} email={user.email} initials={initials(user.displayName)} signOutHref={chatGPTSignOutPath("/")} /></div>
         </header>
         {children}
       </section>
