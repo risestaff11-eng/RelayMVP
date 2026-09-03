@@ -1,0 +1,327 @@
+/* Final mobile contract.
+   This file is intentionally loaded last: it resolves older, overlapping
+   responsive layers without changing the desktop visual language. */
+
+.crm-filter-toggle { display: none; }
+.crm-filter-controls { display: contents; }
+.crm-mobile-stage-shell { min-width: 0; }
+.partner-mission-details { margin-top: 14px; border-top: 1px solid rgba(17,18,15,.18); }
+.partner-mission-details > summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; }
+.partner-mission-details > summary::-webkit-details-marker { display: none; }
+.partner-mission-details > summary span { font-weight: 900; }
+.partner-mission-details > summary b { font-size: 12px; }
+.partner-mission-details[open] > summary b { font-size: 0; }
+.partner-mission-details[open] > summary b::after { content: "Скрыть ↑"; font-size: 12px; }
+html[lang="kk"] .partner-mission-details[open] > summary b::after { content: "Жасыру ↑"; }
+
+@media (max-width: 760px) {
+  :root { --mobile-appbar: 64px; }
+  html { scroll-padding-top: 72px; }
+  body { overflow-x: clip; }
+
+  /* One predictable mobile shell for the company workspace. */
+  .dashboard-shell { display: block; min-width: 0; }
+  .dashboard-shell > .sidebar {
+    position: fixed;
+    z-index: 1200;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+  .dashboard-shell > .sidebar > .brand,
+  .dashboard-shell > .sidebar > .sidebar-nav,
+  .dashboard-shell > .sidebar > .sidebar-footer { display: none; }
+  .dashboard-shell .dashboard-main { width: 100%; min-width: 0; }
+  .dashboard-shell .dashboard-topbar {
+    position: sticky;
+    z-index: 900;
+    top: 0;
+    width: 100%;
+    min-width: 0;
+    height: var(--mobile-appbar);
+    min-height: var(--mobile-appbar);
+    padding: 0 max(10px,env(safe-area-inset-right)) 0 max(64px,calc(56px + env(safe-area-inset-left)));
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 8px;
+    border-bottom: 1px solid rgba(199,200,191,.86);
+    background: rgba(250,250,246,.96);
+    backdrop-filter: blur(14px);
+  }
+  .dashboard-topbar > .dashboard-context { display: none; }
+  .dashboard-topbar .mobile-company-identity { min-width: 0; display: flex; align-items: center; }
+  .dashboard-topbar .mobile-relay-mark { display: none !important; }
+  .dashboard-topbar .mobile-company-identity > div { min-width: 0; }
+  .dashboard-topbar .mobile-company-identity small { display: block; overflow: hidden; font-size: 12px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+  .dashboard-topbar .mobile-company-identity strong { max-width: none; margin-top: 2px; display: block; overflow: hidden; font-size: 14px !important; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+  .dashboard-topbar .top-actions { min-width: 0; margin: 0; display: flex; align-items: center; gap: 6px; }
+  .dashboard-topbar .tour-launch,
+  .dashboard-topbar .tour-trigger { display: none; }
+  .dashboard-topbar .relay-language-toggle,
+  .dashboard-topbar .account-menu > button { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
+  .dashboard-topbar .relay-language-toggle { padding: 0; border: 1px solid #d8d9d1; border-radius: 12px; background: #fff; font-size: 12px; font-weight: 900; }
+  .dashboard-topbar .account-menu > button { padding: 3px; }
+  .dashboard-topbar .account-menu > button > span { width: 36px; height: 36px; }
+  .dashboard-topbar .account-menu > button > div,
+  .dashboard-topbar .account-menu > button > i { display: none; }
+  .mobile-menu-trigger {
+    position: fixed;
+    z-index: 1220;
+    top: max(10px,env(safe-area-inset-top));
+    left: max(10px,env(safe-area-inset-left));
+    width: 44px;
+    height: 44px;
+  }
+  body:has(.relay-modal-backdrop) .company-menu-trigger,
+  body:has(.program-drawer-backdrop) .company-menu-trigger,
+  body:has(.report-sheet-backdrop) .company-menu-trigger { display: none; }
+  .mobile-side-drawer { height: 100dvh; }
+  .mobile-side-drawer > header > button { width: 44px; height: 44px; }
+  .mobile-side-drawer > nav a { min-height: 64px; }
+  .mobile-side-drawer > nav strong { font-size: 15px; }
+  .mobile-side-drawer > nav small { font-size: 12px; }
+
+  /* Consistent reading and touch sizes for operational interfaces. */
+  .dashboard-content,
+  .partner-portal-content { padding-right: max(14px,env(safe-area-inset-right)); padding-left: max(14px,env(safe-area-inset-left)); }
+  :is(.dashboard-shell,.partner-portal-shell,.partner-program-page) :where(input,select,textarea) { min-height: 48px; font-size: 16px; }
+  :is(.dashboard-shell,.partner-portal-shell,.partner-program-page) :where(.button,button,a)[role="button"] { min-height: 44px; }
+  :is(.dashboard-shell,.partner-portal-shell) :where(.module-kicker,.metric-top,.panel-header small,.program-summary-strip small,.operations-metrics small) { font-size: 12px; line-height: 1.35; }
+
+  /* Important metrics stay visible instead of being clipped or stretched
+     into four separate screens. */
+  .dashboard-shell :is(.metrics,.operations-metrics,.brand-metrics,.program-summary-strip) {
+    width: 100%;
+    margin-right: 0;
+    padding-right: 0;
+    display: grid;
+    grid-auto-flow: initial;
+    grid-auto-columns: initial;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 9px;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .dashboard-shell :is(.metrics,.operations-metrics,.brand-metrics) > * { min-width: 0; min-height: 118px; padding: 15px; }
+  .dashboard-shell :is(.metrics,.operations-metrics,.brand-metrics) article > strong,
+  .dashboard-shell .metric > strong { margin-top: 14px; font-size: clamp(25px,7vw,31px); overflow-wrap: anywhere; }
+  .dashboard-shell .program-summary-strip > div { min-width: 0; min-height: 86px; padding: 13px; }
+  .dashboard-shell .program-summary-strip strong { margin-top: 8px; font-size: 22px; overflow-wrap: anywhere; }
+  .dashboard-shell .program-list-grid { margin-top: 14px; }
+  .dashboard-shell .program-list-card { min-height: 0; padding: 18px; }
+
+  /* CRM: one search row, optional filters and a discoverable stage strip. */
+  .crm-page-immersive .crm-toolbar { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+  .crm-page-immersive .crm-search { min-width: 0; grid-column: auto; }
+  .crm-page-immersive .crm-search input { min-width: 0; font-size: 16px; }
+  .crm-filter-toggle { min-height: 48px; padding: 0 13px; display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #d8dad3; border-radius: 11px; background: #fff; font: inherit; font-size: 13px; font-weight: 850; }
+  .crm-filter-toggle.active { border-color: #171914; background: #efffd6; }
+  .crm-filter-controls { grid-column: 1 / -1; display: none; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .crm-filter-controls.open { display: grid; }
+  .crm-filter-controls select { width: 100%; max-width: none !important; }
+  .crm-filter-controls select:last-child { grid-column: 1 / -1; }
+  .crm-mobile-stage-shell { position: relative; margin-right: -14px; }
+  .crm-mobile-stage-shell::after { position: absolute; top: 0; right: 0; bottom: 0; width: 34px; content: ""; pointer-events: none; background: linear-gradient(90deg,transparent,#f7f7f2); }
+  .crm-page-immersive .crm-mobile-stages { margin: 8px 0 10px; padding: 0 34px 2px 0; display: flex; gap: 7px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .crm-mobile-stages button { min-height: 44px; padding: 0 14px; flex: 0 0 auto; scroll-snap-align: center; font-size: 13px; }
+  .crm-page-immersive .crm-column > header span,
+  .crm-page-immersive .crm-column > header strong { font-size: 13px; }
+  .crm-page-immersive .crm-column > header small { font-size: 12px; }
+  .crm-page-immersive .crm-card-top strong { font-size: 13px; }
+  .crm-page-immersive .crm-card-top small,
+  .crm-page-immersive .crm-card-top time,
+  .crm-card-amount small,
+  .crm-lead-card footer small { font-size: 12px; }
+  .crm-page-immersive .crm-lead-card > p { font-size: 14px; }
+  .crm-client-contact a,
+  .crm-lead-card footer a,
+  .crm-fullscreen-person a { min-height: 44px; display: inline-flex; align-items: center; font-size: 15px; }
+  .crm-card-amount strong,
+  .crm-lead-card footer strong { font-size: 14px; }
+  .crm-card-stage-select { font-size: 14px; }
+
+  /* Full-screen work surface: no global chrome above it. */
+  .relay-modal-backdrop.crm-fullscreen-backdrop { z-index: 2500; padding: 0 !important; }
+  .crm-lead-fullscreen { width: 100%; height: 100dvh; min-height: 100dvh; border-radius: 0; }
+  .crm-lead-fullscreen > .relay-modal-close { z-index: 3; top: max(10px,env(safe-area-inset-top)); right: max(10px,env(safe-area-inset-right)); width: 44px; height: 44px; }
+  .crm-fullscreen-header { padding: max(12px,env(safe-area-inset-top)) 62px 12px 15px; }
+  .crm-fullscreen-context span { font-size: 12px; }
+  .crm-fullscreen-person h2 { font-size: 26px; }
+  .crm-mobile-summary-toggle { min-height: 44px; padding: 0 12px; font-size: 13px; }
+  .crm-fullscreen-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .crm-detail-section { padding: 16px; }
+  .crm-section-heading small,
+  .crm-detail-grid small,
+  .crm-comment-block small,
+  .crm-timeline time,
+  .crm-payout-panel small,
+  .crm-service-state small { font-size: 12px; }
+  .crm-detail-grid strong,
+  .crm-comment-block p,
+  .crm-timeline strong,
+  .crm-service-state strong { font-size: 14px; }
+  .crm-lead-form :where(label > span,label > small,p) { font-size: 13px; }
+
+  /* Program editor keeps actions available without covering the form. */
+  .program-editor-shell { padding-bottom: 92px; }
+  .program-flow-footer {
+    right: max(10px,env(safe-area-inset-right));
+    bottom: max(8px,env(safe-area-inset-bottom));
+    left: max(10px,env(safe-area-inset-left));
+    min-height: 64px;
+    padding: 8px;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    border-radius: 14px;
+  }
+  .program-flow-footer > span { display: none; }
+  .program-flow-footer > div { display: contents; }
+  .program-flow-footer > div > .button-ghost:first-child:nth-last-child(2) { display: none; }
+  .program-flow-footer .button { min-height: 48px; padding: 0 10px; font-size: 13px; }
+  .program-drawer { width: 100%; height: 100dvh; }
+  .program-drawer > header { padding: 16px 14px; }
+  .program-drawer > header h2 { font-size: 26px; }
+  .program-drawer > header p { font-size: 13px; }
+  .program-drawer > header > button { width: 44px; height: 44px; }
+  .drawer-ai-assist { margin: 10px 14px 0; padding: 13px; }
+  .drawer-ai-assist strong { font-size: 14px; }
+  .drawer-ai-assist span { font-size: 12px; }
+  .drawer-ai-assist button,
+  .form-drawer-toolbar button { min-height: 44px; }
+  .form-drawer-toolbar span { font-size: 13px; }
+  .submission-fields-list :where(.field-order button,.delete-field,.form-field-actions button) { width: 44px; min-width: 44px; height: 44px; }
+  .program-drawer > footer { padding-bottom: max(12px,env(safe-area-inset-bottom)); }
+
+  /* Agent app bar: identity first, secondary controls compact. */
+  .partner-portal-main { min-height: 100dvh; padding-top: var(--mobile-appbar); padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+  .partner-portal-topbar {
+    position: fixed;
+    z-index: 900;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: var(--mobile-appbar);
+    padding: 0 10px 0 64px;
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 8px;
+  }
+  .partner-top-identity { min-width: 0; }
+  .partner-mini-avatar { width: 40px; height: 40px; flex: 0 0 auto; }
+  .partner-top-copy { min-width: 0; }
+  .partner-top-copy > small,
+  .partner-top-copy .partner-earning-strip { display: none; }
+  .partner-top-identity strong { max-width: none; overflow: hidden; font-size: 14px !important; text-overflow: ellipsis; white-space: nowrap; }
+  .partner-company-switch-mobile { display: none; }
+  .partner-top-actions { min-width: 0; margin: 0; gap: 6px; }
+  .partner-top-actions .relay-language-toggle { width: 44px; min-width: 44px; height: 44px; padding: 0; font-size: 12px; }
+  .partner-topbar .quick-result-launcher,
+  .partner-portal-topbar .quick-result-launcher {
+    position: fixed;
+    z-index: 880;
+    right: max(12px,env(safe-area-inset-right));
+    bottom: max(12px,env(safe-area-inset-bottom));
+    left: max(12px,env(safe-area-inset-left));
+    min-height: 56px;
+    justify-content: center;
+    border-radius: 15px;
+    box-shadow: 0 12px 30px rgba(17,18,15,.22);
+    font-size: 15px;
+  }
+  body:has(.agent-submit-workspace) .partner-portal-topbar .quick-result-launcher { display: none; }
+  body:has(.agent-submit-workspace) .partner-portal-main { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+  .partner-page-heading h1,
+  .partner-welcome h1 { font-size: clamp(31px,9vw,40px); }
+  .partner-page-heading p,
+  .partner-welcome p { font-size: 15px; }
+  .opportunity-type-tabs { position: relative; margin-right: -14px; padding-right: 32px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .opportunity-type-tabs button { min-height: 48px; flex: 0 0 auto; scroll-snap-align: start; font-size: 14px; }
+  .opportunity-cascade > nav { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; }
+  .opportunity-cascade > nav > button { min-width: min(86vw,330px); scroll-snap-align: center; }
+  .partner-portal-content :where(.partner-status,.submission-card-head p,.submission-detail-grid span,.payout-hero small,.partner-payout-table small,.partner-payout-table span,.materials-grid article > span) { font-size: 12px; }
+
+  /* The actual contact form is now above the optional voice assistant. */
+  .lead-submission-form.agent-dialog-form { display: flex; flex-direction: column; }
+  .lead-submission-form .lead-form-stepper { order: 1; }
+  .lead-submission-form .lead-step-panel { order: 2; }
+  .lead-submission-form .voice-answer-card { order: 3; margin-top: 14px; margin-bottom: 0; padding: 14px; border: 1px solid #dfe0d8; border-radius: 16px; }
+  .voice-answer-card .dialog-system-message p { font-size: 13px; }
+  .voice-controls { margin-left: 0; }
+  .voice-controls button { min-height: 48px; font-size: 14px; }
+  .voice-processing,.voice-result,.voice-transcript,.voice-notice { margin-left: 0; }
+  .agent-submit-compact-bar { position: sticky; z-index: 5; top: var(--mobile-appbar); }
+  .agent-submit-compact-bar > a { width: 44px; height: 44px; }
+  .agent-submit-details summary { min-height: 52px; }
+
+  /* Public program: reward and action before the long rules. */
+  .partner-program-nav { min-height: 64px; padding: 0 14px; }
+  .partner-program-nav-actions > span { display: none; }
+  .partner-missions-section { padding: 38px 14px 28px; }
+  .partner-section-heading h1 { font-size: clamp(34px,10vw,43px); }
+  .partner-section-heading p { font-size: 15px; }
+  .partner-mission-card { min-height: 0; padding: 19px; }
+  .partner-mission-card h2 { font-size: clamp(25px,7.5vw,32px); }
+  .partner-mission-card > p { font-size: 14px; line-height: 1.55; }
+  .partner-reward small,
+  .partner-mission-number { font-size: 12px; }
+  .partner-reward strong { font-size: 18px; }
+  .public-mission-action { margin-top: 16px; }
+  .public-mission-action .partner-mission-cta { min-height: 54px; font-size: 15px; }
+  .partner-mission-details > summary { font-size: 14px; }
+  .partner-mission-details .partner-mission-block,
+  .partner-mission-details .partner-verification { margin-top: 10px; padding-top: 12px; }
+  .partner-mission-details :where(li,p) { font-size: 14px; line-height: 1.55; }
+  .partner-entry-overlay { align-items: stretch; }
+  .partner-entry-overlay .partner-entry-card { width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
+  .partner-entry-card > header { padding: 18px 52px 17px 20px; }
+  .partner-entry-card > header > small { margin-top: 14px; font-size: 12px; }
+  .partner-entry-card > header h2 { max-height: 2.6em; overflow: hidden; font-size: 20px; line-height: 1.25; }
+  .partner-entry-card > header p { font-size: 13px; }
+  .partner-entry-close { top: max(10px,env(safe-area-inset-top)); right: max(10px,env(safe-area-inset-right)); width: 44px; height: 44px; }
+  .partner-entry-body { padding: 22px 20px 84px; }
+  .partner-entry-body h1 { font-size: 30px; }
+  .partner-entry-body > p { font-size: 14px; }
+  .partner-entry-card form label span,
+  .partner-entry-card .partner-legal-note { font-size: 12px; }
+  .partner-entry-card form input { min-height: 50px; font-size: 16px; }
+  body:has(.partner-entry-overlay) > .global-language-switcher { top: max(14px,env(safe-area-inset-top)); right: 64px; bottom: auto; }
+
+  /* Avoid stacked fixed controls on the marketing page. */
+  .lp-shell { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .lp-shell ~ .global-language-switcher { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .lp-mobile-sticky-cta { bottom: max(10px,env(safe-area-inset-bottom)); min-height: 54px; font-size: 14px; }
+  .lp-hero-copy > p,
+  .lp-section-intro > p,
+  .lp-company-application p { font-size: 16px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lp-motion-orbit,
+    .lp-marquee-track,
+    .integrator-logo-grid article { animation: none !important; }
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-topbar .mobile-company-identity small { display: none; }
+  .dashboard-topbar .mobile-company-identity strong { margin-top: 0; font-size: 13px !important; }
+  .dashboard-shell :is(.metrics,.operations-metrics,.brand-metrics) > * { min-height: 108px; padding: 13px; }
+  .dashboard-shell :is(.metrics,.operations-metrics,.brand-metrics) article > strong,
+  .dashboard-shell .metric > strong { font-size: 25px; }
+  .crm-compact-header { grid-template-columns: 1fr auto; }
+  .crm-goal-summary { grid-column: 1 / -1; justify-content: flex-start; }
+  .crm-page-immersive .crm-toolbar { grid-template-columns: 1fr; }
+  .crm-filter-toggle { width: 100%; }
+  .crm-filter-controls { grid-template-columns: 1fr; }
+  .crm-filter-controls select:last-child { grid-column: auto; }
+  .partner-top-identity strong { font-size: 13px !important; }
+  .lp-header { grid-template-columns: auto 1fr; }
+  .lp-header .lp-agent-login { display: none; }
+  .lp-header .lp-nav-cta { min-height: 44px; padding: 0 12px; font-size: 12px; }
+  .lp-brand { font-size: 18px; }
+}

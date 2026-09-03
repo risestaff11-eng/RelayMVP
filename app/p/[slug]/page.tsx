@@ -60,7 +60,15 @@ export default async function PublicProgramPage({ params, searchParams }: { para
                 <strong>{mission.rewardLabel}</strong>
               </div>
               <p>{<bdi data-no-translate>{mission.description}</bdi>}</p>
-              <div className="partner-mission-block">
+              <PublicMissionAction
+                token={access}
+                missionId={mission.id}
+                programSlug={slug}
+                accepted={Boolean(authorized?.acceptances.some((item) => item.missionId === mission.id && item.status === "ACTIVE"))}
+              />
+              <details className="partner-mission-details">
+                <summary><span>Условия и проверка</span><b>Раскрыть ↓</b></summary>
+                <div><div className="partner-mission-block">
                 <strong>Что сделать</strong>
                 <ol>{mission.instructions.map((item) => <li key={item}>{item}</li>)}</ol>
               </div>
@@ -82,12 +90,8 @@ export default async function PublicProgramPage({ params, searchParams }: { para
                 <strong>Как проверяется</strong>
                 <p>{mission.verificationRules}</p>
               </div>
-              <PublicMissionAction
-                token={access}
-                missionId={mission.id}
-                programSlug={slug}
-                accepted={Boolean(authorized?.acceptances.some((item) => item.missionId === mission.id && item.status === "ACTIVE"))}
-              />
+                </div>
+              </details>
             </article>
           ))}
         </div>
