@@ -21,13 +21,13 @@ export default async function PartnerSubmitPage({ params }: { params: Promise<{ 
   return <div className="partner-portal-content agent-submit-workspace">
     <header className="agent-submit-compact-bar">
       <Link href={`/partner/${token}/missions`} aria-label="Вернуться к заданиям">←</Link>
-      <div><small>{portal.company.name}</small><strong>{mission.title}</strong></div>
+      <div><small>{<bdi data-no-translate>{portal.company.name}</bdi>}</small><strong>{<bdi data-no-translate>{mission.title}</bdi>}</strong></div>
       <span><small>ВОЗНАГРАЖДЕНИЕ</small><b>{mission.rewardLabel}</b></span>
     </header>
     <LeadSubmissionForm programSlug={mission.programSlug} missionId={missionId} missionType={mission.type} token={token} formFields={parseSubmissionFormFields(program.submissionFormJson)} />
     <details className="agent-submit-details">
       <summary><span>Описание и правила задания</span><b>Раскрыть ↓</b></summary>
-      <div><section><small>ЧТО НУЖНО СДЕЛАТЬ</small><p>{mission.description}</p></section><section><small>КОГДА ЗАСЧИТАЮТ</small><p>{mission.verificationRules}</p></section><section><small>ВОЗНАГРАЖДЕНИЕ</small><p>{mission.rewardLabel}</p></section></div>
+      <div><section><small>ЧТО НУЖНО СДЕЛАТЬ</small><p>{<bdi data-no-translate>{mission.description}</bdi>}</p></section><section><small>КОГДА ЗАСЧИТАЮТ</small><p>{mission.verificationRules}</p></section><section><small>ВОЗНАГРАЖДЕНИЕ</small><p>{mission.rewardLabel}</p></section></div>
     </details>
   </div>;
 }

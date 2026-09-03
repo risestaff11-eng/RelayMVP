@@ -1,3 +1,5 @@
+import supplemental from "./i18n/kk.json" with { type: "json" };
+
 const exact: Record<string, string> = {
   "Проверка защиты временно недоступна. Попробуйте через минуту.": "Қауіпсіздікті тексеру уақытша қолжетімсіз. Бір минуттан кейін қайталап көріңіз.",
   "Слишком много отправок с вашей сети. Попробуйте через 15 минут.": "Желіңізден тым көп өтінім жіберілді. 15 минуттан кейін қайталап көріңіз.",
@@ -712,12 +714,84 @@ const patterns: Array<[RegExp, (...groups: string[]) => string]> = [
   [/^(\d+) доступно сейчас$/i, (count) => `Қазір ${count} қолжетімді`],
 ];
 
-function translateCore(value: string) {
-  const direct = exact[value];
-  if (direct) return direct;
+export const normalizeTranslationKey = (value: string) => value.replace(/\s+/g, " ").trim();
+const catalog: Record<string, string> = { ...supplemental, ...exact };
+const normalized = new Map(Object.entries(catalog).map(([source, target]) => [normalizeTranslationKey(source).toLocaleLowerCase("ru"), target]));
+const escapePattern = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// Only these parameters are known to contain assembled interface counters.
+// All other parameters can be customer names or authored text: preserve them.
+const counterSlots: Record<string, number[]> = {
+  "за {{0}}": [0], "Рейтинг агентов · {{0}}": [0], "Проверьте {{0}}": [0], "По {{0}}": [0],
+  "{{0}} — посмотреть": [0], "{{0}} {{1}} вашего решения": [0],
+  "Сейчас доступно {{0}}. В работе: {{1}}.": [0], "Входил {{0}} назад": [0], "Не входил {{0}}": [0],
+  "Будут удалены кабинет «{{0}}», {{1}}, {{2}} и {{3}}. Для подтверждения введите УДАЛИТЬ": [1, 2, 3],
+};
+const templates = Object.entries(supplemental).filter(([source]) => /\{\{\d+\}\}/.test(source)).sort(([a], [b]) => b.replace(/\{\{\d+\}\}/g, "").length - a.replace(/\{\{\d+\}\}/g, "").length).map(([source, target]) => {
+  const slots = [...source.matchAll(/\{\{(\d+)\}\}/g)].map((match) => match[1]);
+  const pattern = new RegExp(`^${source.split(/\{\{\d+\}\}/).map(escapePattern).join("([\\s\\S]*?)")}$`, "i");
+  return { pattern, target, slots, counters: counterSlots[source] ?? [], translateStatus: /(?:статус|перевед[её]н|измен[её]н на)/i.test(source) };
+});
+
+// Number phrases are assembled at runtime, so enumerating 1, 2, 3... in the
+// dictionary would not cover them. Kazakh uses the singular noun after numbers.
+const countNouns: Array<[string, string]> = [
+  ["задани(?:е|я|й)", "тапсырма"], ["агент(?:а|ов)?", "агент"],
+  ["амбассадор(?:а|ов)?", "амбассадор"], ["результат(?:а|ов)?", "нәтиже"],
+  ["заяв(?:ка|ки|ок|ку)", "өтінім"], ["сдел(?:ка|ки|ок)", "мәміле"],
+  ["программ(?:а|ы)?", "бағдарлама"], ["выплат(?:а|ы)?", "төлем"],
+  ["оплат(?:а|ы)?", "төлем"], ["лид(?:а|ов)?", "лид"], ["файл(?:а|ов)?", "файл"],
+  ["событи(?:е|я|й)", "оқиға"], ["решени(?:е|я|й|ю|ям)", "шешім"],
+  ["отч[её]т(?:а|ов)?", "есеп"], ["день|дня|дней", "күн"],
+  ["час(?:а|ов)?", "сағат"], ["минут(?:а|ы)?", "минут"], ["секунд(?:а|ы)?", "секунд"],
+  ["клиент(?:а|ов)?", "клиент"], ["участник(?:а|ов)?", "қатысушы"],
+  ["поле|поля|полей", "өріс"], ["балл(?:а|ов)?", "ұпай"],
+];
+const countPatterns = countNouns.map(([source, target]) => [new RegExp(`(^|[^\\p{L}\\d])([\\d][\\d\\s.,]*)\\s+(${source})(?![\\p{L}])`, "giu"), target] as const);
+const monthNames: Record<string, string> = {
+  "янв": "қаң", "января": "қаңтар", "февр": "ақп", "февраля": "ақпан",
+  "мар": "нау", "марта": "наурыз", "апр": "сәу", "апреля": "сәуір", "мая": "мамыр",
+  "июн": "мау", "июня": "маусым", "июл": "шіл", "июля": "шілде", "авг": "там", "августа": "тамыз",
+  "сент": "қыр", "сентября": "қыркүйек", "окт": "қаз", "октября": "қазан", "нояб": "қар", "ноября": "қараша", "дек": "жел", "декабря": "желтоқсан",
+};
+function numericPhrases(value: string) {
+  let result = value;
+  for (const [pattern, target] of countPatterns) result = result.replace(pattern, (_, before: string, number: string) => `${before}${number.trim()} ${target}`);
+  return result.replace(/(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря|янв|февр|мар|апр|июн|июл|авг|сент|окт|нояб|дек)\.?/gi, (_, day: string, month: string) => `${day} ${monthNames[month.toLowerCase()]}`);
+}
+
+function lookup(value: string): string | undefined {
+  const direct = catalog[value] ?? normalized.get(normalizeTranslationKey(value).toLocaleLowerCase("ru"));
+  if (direct !== undefined) return direct;
+  for (const { pattern, target, slots, counters, translateStatus } of templates) {
+    const match = normalizeTranslationKey(value).match(pattern);
+    if (match) return target.replace(/\{\{(\d+)\}\}/g, (_, slot: string) => {
+      const captured = match[slots.indexOf(slot) + 1] ?? "";
+      return (translateStatus ? normalized.get(normalizeTranslationKey(captured).toLocaleLowerCase("ru")) : undefined) ?? (counters.includes(Number(slot)) ? translateCore(captured) : captured);
+    });
+  }
   for (const [pattern, replacer] of patterns) {
     const match = value.match(pattern);
     if (match) return replacer(...match.slice(1));
+  }
+}
+
+export function hasKazakhTranslation(value: string) {
+  // Coverage must not accept a partly translated broad pattern such as
+  // "Открыть <untranslated Russian text>" as a complete catalog entry.
+  return normalized.has(normalizeTranslationKey(value).toLocaleLowerCase("ru"));
+}
+
+function translateCore(value: string): string {
+  const direct = lookup(value);
+  if (direct !== undefined) return direct;
+  const numeric = numericPhrases(value);
+  if (numeric !== value) return lookup(numeric) ?? numeric;
+  if (value.includes(" · ")) return value.split(" · ").map(translateCore).join(" · ");
+  // Decorative arrows/check marks often live beside a label in the same node.
+  const parts = value.match(/^([←→↗↘↑↓＋+✓×●!\s]*)([\s\S]*?)([←→↗↘↑↓＋+✓×*\s]*)$/);
+  if (parts && parts[2] !== value) {
+    const translated = lookup(parts[2]);
+    if (translated !== undefined) return parts[1] + translated + parts[3];
   }
   return value;
 }

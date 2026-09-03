@@ -1,5 +1,6 @@
 "use client";
 
+import { localizeInterface } from "../../../lib/interface-locale";
 import { useMemo, useState } from "react";
 import { countRu, formatDateTimeSeconds, formatInteger } from "@/lib/format-display";
 
@@ -254,7 +255,7 @@ export function SystemUsers({
 
   async function remove(row: Row) {
     const confirmation = window.prompt(
-      `Будут удалены кабинет «${row.company || row.name}», ${countRu(row.programCount, "программа", "программы", "программ")}, ${countRu(row.agentCount, "агент", "агента", "агентов")} и ${countRu(row.submissionCount, "результат", "результата", "результатов")}.\n\nДля подтверждения введите УДАЛИТЬ`,
+      localizeInterface(`Будут удалены кабинет «${row.company || row.name}», ${countRu(row.programCount, "программа", "программы", "программ")}, ${countRu(row.agentCount, "агент", "агента", "агентов")} и ${countRu(row.submissionCount, "результат", "результата", "результатов")}.\n\nДля подтверждения введите УДАЛИТЬ`),
     );
     if (confirmation !== "УДАЛИТЬ") return;
     setBusy(row.id);
@@ -559,9 +560,9 @@ export function SystemUsers({
                     {(row.company || row.name || "R").slice(0, 1).toUpperCase()}
                   </span>
                   <div>
-                    <strong>{row.company || "Компания ещё не создана"}</strong>
+                    <strong>{row.company ? <bdi data-no-translate>{row.company}</bdi> : "Компания ещё не создана"}</strong>
                     <small>
-                      {row.name} · {row.email}
+                      <bdi data-no-translate>{row.name}</bdi> · <bdi data-no-translate>{row.email}</bdi>
                     </small>
                   </div>
                 </div>
@@ -773,7 +774,7 @@ export function SystemUsers({
                 <div>
                   <b>×</b>
                   <span>
-                    <strong>{row.companyName}</strong>
+                    <strong><bdi data-no-translate>{row.companyName}</bdi></strong>
                     <small>
                       {row.emailMasked} · {row.emailDomain}
                     </small>

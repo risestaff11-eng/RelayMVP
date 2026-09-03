@@ -337,8 +337,8 @@ export function ReportsWorkspace({
                   {report.periodStart} — {report.periodEnd}
                 </time>
               </header>
-              <h3>{report.partnerName}</h3>
-              <small>{report.programName || "Все программы"}</small>
+              <h3>{<bdi data-no-translate>{report.partnerName}</bdi>}</h3>
+              <small>{(report.programName) ? (<bdi data-no-translate>{report.programName}</bdi>) : ("Все программы")}</small>
               <p>
                 {String(
                   report.answers.main_results ||
@@ -365,10 +365,10 @@ export function ReportsWorkspace({
             <header>
               <div>
                 <small>{statusNames[selected.status]}</small>
-                <h2>{selected.partnerName}</h2>
+                <h2>{<bdi data-no-translate>{selected.partnerName}</bdi>}</h2>
                 <p>
                   {selected.periodStart} — {selected.periodEnd} ·{" "}
-                  {selected.programName}
+                  {<bdi data-no-translate>{selected.programName}</bdi>}
                 </p>
               </div>
               <button onClick={() => setSelected(null)}>×</button>
@@ -393,7 +393,7 @@ export function ReportsWorkspace({
                   <article key={field.id}>
                     <small>{field.label}</small>
                     <p>
-                      {String(selected.answers[field.id] || "Не заполнено")}
+                      {selected.answers[field.id] !== undefined && selected.answers[field.id] !== "" ? <bdi data-no-translate>{String(selected.answers[field.id])}</bdi> : "Не заполнено"}
                     </p>
                   </article>
                 ))}
@@ -423,7 +423,7 @@ export function ReportsWorkspace({
                     key={file.id}
                     href={`/api/company/reports/${selected.id}/files/${file.id}`}
                   >
-                    {file.fileName} ↓
+                    {<bdi data-no-translate>{file.fileName}</bdi>} ↓
                   </a>
                 ),
               )}
@@ -454,7 +454,7 @@ export function ReportsWorkspace({
       {acceptedReport && (
         <div className="report-accepted-backdrop" role="presentation">
           <section className="report-accepted-dialog" role="dialog" aria-modal="true" aria-labelledby="report-accepted-title">
-            <i>✓</i><small>ГОТОВО</small><h2 id="report-accepted-title">Отчёт принят</h2><p>{acceptedReport.partnerName} увидит новый статус в кабинете. Можно сразу подтвердить это в WhatsApp.</p>
+            <i>✓</i><small>ГОТОВО</small><h2 id="report-accepted-title">Отчёт принят</h2><p>{<bdi data-no-translate>{acceptedReport.partnerName}</bdi>} увидит новый статус в кабинете. Можно сразу подтвердить это в WhatsApp.</p>
             <div>{acceptedReport.partnerPhone ? <a href={`https://wa.me/${acceptedReport.partnerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(`Здравствуйте, ${acceptedReport.partnerName}! Это команда ${companyName}. Ваш отчёт за ${acceptedReport.periodStart} — ${acceptedReport.periodEnd} принят. Спасибо, данные и показатели сохранены в RiseStaff.`)}`} target="_blank" rel="noreferrer">Написать агенту в WhatsApp ↗</a> : <span>Телефон агента не указан</span>}<button type="button" onClick={() => setAcceptedReport(null)}>Закрыть</button></div>
           </section>
         </div>

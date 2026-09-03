@@ -39,7 +39,7 @@ export function ReferralLinkBuilder({ token, missions }: { token: string; missio
 
   return <section className="referral-builder panel">
     <div className="referral-explainer"><span>01</span><div><strong>Выберите задание</strong><p>Клиент увидит только название компании и короткую форму: имя, контакт и комментарий.</p></div></div>
-    <label><span>Задание</span><select value={selectedId} onChange={(event) => { setSelectedId(event.target.value); setUrl(""); setNotice(""); }}>{missions.map((mission) => <option key={mission.id} value={mission.id}>{mission.programName} · {mission.title} · {mission.rewardLabel}</option>)}</select></label>
+    <label><span>Задание</span><select value={selectedId} onChange={(event) => { setSelectedId(event.target.value); setUrl(""); setNotice(""); }}>{missions.map((mission) => <option key={mission.id} value={mission.id} data-no-translate>{mission.programName} · {mission.title} · {mission.rewardLabel}</option>)}</select></label>
     <button className="button button-primary referral-create-button" type="button" disabled={pending} onClick={() => void createLink()}>{pending ? "Создаём…" : "Создать ссылку"}<span>→</span></button>
     {url && <div className="referral-ready"><small>ВАША ССЫЛКА</small><a href={url} target="_blank" rel="noreferrer">{url}</a><div><button type="button" onClick={() => void copyLink()}>Копировать</button><button type="button" onClick={() => void shareLink()}>Отправить клиенту</button></div><p>Ссылка действует 180 дней и ведёт только на форму клиента. Доступ к вашему кабинету закрыт.</p></div>}
     {notice && <p className="referral-notice" role="status">{notice}</p>}

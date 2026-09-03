@@ -1,5 +1,6 @@
 "use client";
 
+import { localizeInterface } from "../../../lib/interface-locale";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -10,7 +11,7 @@ export function ProgramQuickActions({ id, initialStatus }: { id: string; initial
   const [notice, setNotice] = useState("");
 
   async function change(nextStatus: "ACTIVE" | "PAUSED" | "ARCHIVED") {
-    if (nextStatus === "ARCHIVED" && !window.confirm("Переместить программу в архив? Агентская ссылка перестанет открываться.")) return;
+    if (nextStatus === "ARCHIVED" && !window.confirm(localizeInterface("Переместить программу в архив? Агентская ссылка перестанет открываться."))) return;
     setPending(nextStatus); setNotice("");
     const response = await fetch(`/api/programs/${id}/status`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status: nextStatus }) });
     const data = await response.json() as { error?: string; status?: string };

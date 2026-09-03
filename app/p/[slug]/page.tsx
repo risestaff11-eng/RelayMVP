@@ -39,14 +39,14 @@ export default async function PublicProgramPage({ params, searchParams }: { para
           <span>RiseStaff</span>
         </Link>
         <div className="partner-program-nav-actions">
-          <span>{company.name}</span>
+          <span>{<bdi data-no-translate>{company.name}</bdi>}</span>
           {authorized ? <Link href={`/partner/${access}`}>Кабинет агента →</Link> : <span>Выберите задание ниже</span>}
         </div>
       </header>
 
       <section className="partner-missions-section" id="missions">
         <div className="partner-section-heading">
-          <span className="module-kicker">{company.name} · ДОСТУПНЫЕ ЗАДАНИЯ</span>
+          <span className="module-kicker">{<bdi data-no-translate>{company.name}</bdi>} · ДОСТУПНЫЕ ЗАДАНИЯ</span>
           <h1>Выберите способ заработать</h1>
           <p>Сразу видны действия, подтверждение и вознаграждение. Регистрация понадобится только при отправке первой заявки.</p>
         </div>
@@ -54,12 +54,12 @@ export default async function PublicProgramPage({ params, searchParams }: { para
           {program.missions.map((mission, index) => (
             <article className={`partner-mission-card type-${mission.type.toLowerCase()}`} key={mission.id}>
               <div className="partner-mission-number">{String(index + 1).padStart(2, "0")} · {typeNames[mission.type]}</div>
-              <h2>{mission.title}</h2>
+              <h2>{<bdi data-no-translate>{mission.title}</bdi>}</h2>
               <div className="partner-reward">
                 <small>МОЖНО ЗАРАБОТАТЬ</small>
                 <strong>{mission.rewardLabel}</strong>
               </div>
-              <p>{mission.description}</p>
+              <p>{<bdi data-no-translate>{mission.description}</bdi>}</p>
               <div className="partner-mission-block">
                 <strong>Что сделать</strong>
                 <ol>{mission.instructions.map((item) => <li key={item}>{item}</li>)}</ol>
@@ -72,9 +72,9 @@ export default async function PublicProgramPage({ params, searchParams }: { para
                     <strong>Файлы компании</strong>
                     {mission.resources.map((resource) => authorized ? (
                       <a href={`/api/partner/mission-files/${resource.id}?token=${access}`} key={resource.id}>
-                        ↓ {resource.fileName}<small>{Math.max(1, Math.round(resource.size / 1024))} КБ</small>
+                        ↓ {<bdi data-no-translate>{resource.fileName}</bdi>}<small>{Math.max(1, Math.round(resource.size / 1024))} КБ</small>
                       </a>
-                    ) : <span key={resource.id}>{resource.fileName}<small>Доступен после выбора задания</small></span>)}
+                    ) : <span key={resource.id}>{<bdi data-no-translate>{resource.fileName}</bdi>}<small>Доступен после выбора задания</small></span>)}
                   </div>
                 )}
               </div>
@@ -96,13 +96,13 @@ export default async function PublicProgramPage({ params, searchParams }: { para
       <section className="partner-program-details" aria-label="Информация о программе">
         <details>
           <summary>
-            <span><small>О ПРОГРАММЕ</small><strong>{program.name}</strong></span>
+            <span><small>О ПРОГРАММЕ</small><strong>{<bdi data-no-translate>{program.name}</bdi>}</strong></span>
             <span aria-hidden="true">＋</span>
           </summary>
           <div className="partner-program-details-body">
-            <p>{program.description}</p>
+            <p>{<bdi data-no-translate>{program.description}</bdi>}</p>
             <div className="partner-program-facts">
-              <div><small>КОМПАНИЯ</small><strong>{company.name}</strong></div>
+              <div><small>КОМПАНИЯ</small><strong>{<bdi data-no-translate>{company.name}</bdi>}</strong></div>
               <div><small>ЗАДАНИЙ</small><strong>{program.missions.length}</strong></div>
               <div><small>УЧАСТВУЮТ</small><strong>{countRu(program.agentCount, "агент", "агента", "агентов")}</strong></div>
               <div><small>ВАЛЮТА</small><strong>{program.currency === "KZT" ? "₸" : program.currency}</strong></div>
