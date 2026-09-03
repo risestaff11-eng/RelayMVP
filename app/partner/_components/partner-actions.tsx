@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SafeLink as Link } from "@/app/safe-link";
 import { typeNames } from "../_lib";
 
@@ -71,19 +71,36 @@ export function ContactVerification({ token, channel, value, verified }: { token
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState("");
+  const [blockedUntil, setBlockedUntil] = useState(0);
+  const [retrySeconds, setRetrySeconds] = useState(0);
+  useEffect(() => {
+    if (!blockedUntil) return;
+    const timer = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((blockedUntil - Date.now()) / 1000));
+      setRetrySeconds(remaining);
+      if (!remaining) { setBlockedUntil(0); clearInterval(timer); }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [blockedUntil]);
   async function act(action: "REQUEST" | "CONFIRM") {
     setPending(true); setNotice("");
     try {
       const response = await fetch("/api/partner/verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, channel, action, code }) });
-      const data = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(data.error || "Не удалось подтвердить контакт");
-      if (action === "REQUEST") { setRequested(true); setNotice(`Код отправлен: ${value}`); }
+      const data = await response.json() as { error?: string; retryAfterSeconds?: number };
+      if (!response.ok) {
+        if ((response.status === 429 || response.status === 503) && Number.isFinite(data.retryAfterSeconds)) {
+          const seconds = Math.max(1, Math.min(900, Math.ceil(Number(data.retryAfterSeconds))));
+          setRetrySeconds(seconds); setBlockedUntil(Date.now() + seconds * 1000);
+        }
+        throw new Error(data.error || "Не удалось подтвердить контакт");
+      }
+      if (action === "REQUEST") { setRequested(true); setCode(""); setNotice(`Код отправлен: ${value}`); }
       else { setNotice("Контакт подтверждён ✓"); window.location.reload(); }
     } catch (error) { setNotice(error instanceof Error ? error.message : "Ошибка"); }
     finally { setPending(false); }
   }
   const label = channel === "EMAIL" ? "Email" : "WhatsApp";
-  return <div className={`contact-verification ${verified ? "verified" : ""}`}><div><span>{label}</span><strong>{value || "Не указан"}</strong><small>{verified ? "✓ Подтверждён" : "Подтвердите, чтобы защитить контакт"}</small></div>{verified ? <b>ГОТОВО</b> : !requested ? <button type="button" disabled={pending || !value} onClick={() => act("REQUEST")}>{pending ? "Отправляем…" : "Получить код"}</button> : <div className="verification-code"><input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" aria-label={`Код подтверждения ${label}`} placeholder="000000" /><button type="button" disabled={pending || code.length !== 6} onClick={() => act("CONFIRM")}>Подтвердить</button></div>}<p aria-live="polite">{notice}</p></div>;
+  return <div className={`contact-verification ${verified ? "verified" : ""}`}><div><span>{label}</span><strong>{value || "Не указан"}</strong><small>{verified ? "✓ Подтверждён" : "Подтвердите, чтобы защитить контакт"}</small></div>{verified ? <b>ГОТОВО</b> : !requested ? <button type="button" disabled={pending || !value || retrySeconds > 0} onClick={() => act("REQUEST")}>{pending ? "Отправляем…" : "Получить код"}</button> : <div className="verification-code"><input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" aria-label={`Код подтверждения ${label}`} placeholder="000000" /><button type="button" disabled={pending || retrySeconds > 0 || code.length !== 6} onClick={() => act("CONFIRM")}>Подтвердить</button><button type="button" disabled={pending || retrySeconds > 0} onClick={() => act("REQUEST")}>Отправить код снова</button></div>}<p aria-live="polite">{notice}</p>{retrySeconds > 0 && <p>{`Повторная попытка через ${retrySeconds} с.`}</p>}</div>;
 }
 
 export function PartnerProfileForm({ token, partner, profile }: { token: string; partner: { email: string; phone: string }; profile: { firstName: string; lastName: string; middleName: string; instagram: string; avatarObjectKey: string | null; skills: string[]; industries: string[]; geographies: string[]; preferredTypes: string[]; emailVerifiedAt: string | null; whatsappVerifiedAt: string | null } }) {

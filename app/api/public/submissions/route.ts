@@ -9,6 +9,7 @@ import { agentUrl } from "../../../../lib/public-origins";
 import { sendCompanyNewSubmissionNotification } from "../../../../lib/agent-email";
 import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfReferral, SELF_REFERRAL_MESSAGE, hasHoneypotValue } from "../../../../lib/submission-antifraud";
 import { reviewDueAt } from "../../../../lib/workflow";
+import { limitPublicSubmission, requestLimitResponse } from "../../../../lib/request-rate-limit";
 
 const allowedTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
 const allowedAudioTypes = new Set(["audio/webm", "audio/mp4", "audio/mpeg", "audio/mp3", "audio/ogg", "audio/wav", "audio/x-wav", "audio/aac", "audio/x-m4a"]);
@@ -21,6 +22,7 @@ function readValue(form: FormData, field: SubmissionFormField) {
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
   try {
+    await limitPublicSubmission(request);
     const form = await request.formData();
     if (hasHoneypotValue(form.get("website_url"))) return Response.json({ error: "Не удалось отправить форму" }, { status: 400 });
     const token = cleanString(form.get("token"), 80);
@@ -103,6 +105,8 @@ export async function POST(request: Request) {
     }
     return Response.json({ partnerUrl: agentUrl(`/partner/${token}`), submissionId }, { status: 201 });
   } catch (error) {
+    const limited = requestLimitResponse(error);
+    if (limited) return limited;
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось передать результат" }, { status: 400 });
   }
 }

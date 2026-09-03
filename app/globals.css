@@ -908,7 +908,8 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .contact-verification button { min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; color: white; background: var(--ink); font-size: 8px; font-weight: 900; cursor: pointer; }
 .contact-verification button:disabled { opacity: .5; cursor: not-allowed; }
 .contact-verification > p { grid-column: 1 / -1; margin: 0; color: #8b544b; font-size: 7px; }
-.verification-code { display: flex; gap: 6px; }
+.verification-code { display: flex; flex-wrap: wrap; gap: 6px; }
+.verification-code > button:last-child { flex-basis: 100%; color: var(--ink); background: transparent; text-decoration: underline; }
 .verification-code input { width: 82px; min-height: 34px; padding: 0 8px; border: 1px solid #d8d8d0; border-radius: 8px; font-size: 9px; letter-spacing: .14em; }
 .level-gate-note { margin-top: 14px; padding: 10px; border-radius: 9px; color: #775d28 !important; background: #fff2d4; line-height: 1.5; }
 .partner-profile-fields input[readonly] { color: #757970; background: #eceee7; cursor: not-allowed; }

@@ -6,10 +6,12 @@ import { cleanString, sameOrigin } from "../../../company/_utils";
 import { sendCompanyNewSubmissionNotification } from "../../../../../lib/agent-email";
 import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfReferral, SELF_REFERRAL_MESSAGE, hasHoneypotValue } from "../../../../../lib/submission-antifraud";
 import { reviewDueAt } from "../../../../../lib/workflow";
+import { limitPublicSubmission, requestLimitResponse } from "../../../../../lib/request-rate-limit";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
   try {
+    await limitPublicSubmission(request);
     const body = await request.json() as { referralToken?: unknown; name?: unknown; contact?: unknown; comment?: unknown; website_url?: unknown };
     if (hasHoneypotValue(body.website_url)) return Response.json({ error: "Не удалось отправить форму" }, { status: 400 });
     const referralToken = cleanString(body.referralToken, 80);
@@ -41,6 +43,8 @@ export async function POST(request: Request) {
     }
     return Response.json({ ok: true }, { status: 201 });
   } catch (error) {
+    const limited = requestLimitResponse(error);
+    if (limited) return limited;
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось передать контакт" }, { status: 400 });
   }
 }

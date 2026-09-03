@@ -10,8 +10,9 @@ const quote = (value) => `"${value.replaceAll('"', '""')}"`;
  * Requires Node >=22.16, which supports array results for joined SQL projections:
  * https://nodejs.org/en/blog/release/v22.16.0
  */
-export function agentFixture() {
+export function agentFixture({ rateTable = true } = {}) {
   const sqlite = new DatabaseSync(":memory:");
+  let transactionQueue = Promise.resolve();
   const binding = {
     prepare(query) {
       const statement = sqlite.prepare(query);
@@ -23,10 +24,14 @@ export function agentFixture() {
         async run() { const result = statement.run(...params); return { success: true, meta: { changes: result.changes } }; },
       };
     },
-    async batch(statements) {
-      sqlite.exec("BEGIN");
-      try { const rows = []; for (const statement of statements) rows.push(await statement.all()); sqlite.exec("COMMIT"); return rows; }
-      catch (error) { sqlite.exec("ROLLBACK"); throw error; }
+    batch(statements) {
+      const result = transactionQueue.then(async () => {
+        sqlite.exec("BEGIN");
+        try { const rows = []; for (const statement of statements) rows.push(await statement.all()); sqlite.exec("COMMIT"); return rows; }
+        catch (error) { sqlite.exec("ROLLBACK"); throw error; }
+      });
+      transactionQueue = result.catch(() => {});
+      return result;
     },
   };
   const jar = new Map();
@@ -46,6 +51,7 @@ export function agentFixture() {
   const dialect = new SQLiteSyncDialect();
   for (const table of Object.values(schema).filter((value) => is(value, SQLiteTable))) {
     const config = getTableConfig(table);
+    if (!rateTable && config.name === "request_rate_limits") continue;
     const definitions = config.columns.map((column) => {
       const value = column.default;
       const defaultSql = value === undefined ? "" : is(value, SQL) ? dialect.sqlToQuery(value).sql : typeof value === "string" ? `'${value.replaceAll("'", "''")}'` : String(Number(value));
