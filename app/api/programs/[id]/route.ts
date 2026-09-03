@@ -7,7 +7,7 @@ import { companies, missionResources, missions, programs, submissions } from "..
 import { getFilesBucket } from "../../../../lib/storage";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
 import { agentUrl } from "../../../../lib/public-origins";
-import { normalizeSubmissionFormFields } from "../../../../lib/submission-form";
+import { normalizeSubmissionFormFields, serializeSubmissionFormFields, submissionFormError } from "../../../../lib/submission-form";
 
 const GOALS = new Set(["LEADS", "DEALS", "BRAND", "ENGAGEMENT", "MIXED"]);
 const CURRENCIES = new Set(["KZT", "RUB", "USD", "EUR"]);
@@ -36,7 +36,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const publish = payload.publish === true;
     const pause = payload.pause === true;
     const missionPayloads = Array.isArray(payload.missions) ? payload.missions as Array<Record<string, unknown>> : [];
-    const formFields = normalizeSubmissionFormFields(payload.formFields);
+    const formFields = normalizeSubmissionFormFields(payload.formFields, { preserveSystemOmissions: true });
     if (name.length < 3 || !description) throw new Error("Заполните название и описание программы");
     const duplicate = await getDb().select({ id: programs.id }).from(programs).where(and(eq(programs.companyId, company.id), eq(programs.name, name))).limit(2);
     if (duplicate.some((program) => program.id !== id)) throw new Error("Программа с таким названием уже существует. Добавьте назначение или аудиторию в название.");
@@ -64,6 +64,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       if (publish && !rewardLabel) throw new Error("Перед публикацией укажите понятное название вознаграждения");
       return { id: missionId, type, title, description: missionDescription, instructions, proofRequirements, rewardMode, rewardValue, rewardLabel, verificationRules, sortOrder: index, isNew };
     });
+    const formError = submissionFormError(formFields, normalizedMissions.map((mission) => mission.type));
+    if (formError) throw new Error(formError);
     if (current.missions.some((mission) => !missionPayloads.some((payload) => cleanString(payload.id, 80) === mission.id))) throw new Error("Удаление действующих заданий пока недоступно: они могут быть связаны с результатами агентов");
     if (publish && (payoutTerms.length < 10 || legalTerms.length < 10)) throw new Error("Перед публикацией заполните сроки выплаты и юридические ограничения");
 
@@ -106,7 +108,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       updatedAt: now,
     }));
     await db.batch([
-      db.update(programs).set({ name, description, goal, currency, payoutTerms, legalTerms, submissionFormJson: JSON.stringify(formFields), expiresAt, status: nextStatus, publishedAt: publish ? current.publishedAt ?? now : current.publishedAt, updatedAt: now }).where(and(eq(programs.id, id), eq(programs.companyId, company.id))),
+      db.update(programs).set({ name, description, goal, currency, payoutTerms, legalTerms, submissionFormJson: serializeSubmissionFormFields(formFields), expiresAt, status: nextStatus, publishedAt: publish ? current.publishedAt ?? now : current.publishedAt, updatedAt: now }).where(and(eq(programs.id, id), eq(programs.companyId, company.id))),
       ...missionUpdates,
       ...missionInserts,
       db.update(companies).set({ onboardingStatus: publish ? "PROGRAM_PUBLISHED" : "PROGRAM_DRAFT", updatedAt: now }).where(eq(companies.id, company.id)),

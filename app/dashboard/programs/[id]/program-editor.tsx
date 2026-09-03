@@ -5,7 +5,7 @@ import { SafeLink as Link } from "@/app/safe-link";
 import { useMemo, useRef, useState } from "react";
 import type { MissionRecord, ProgramRecord } from "../../../../db/programs";
 import { agentUrl } from "../../../../lib/public-origins";
-import { SUBMISSION_FIELD_TYPES, type SubmissionFormField } from "../../../../lib/submission-form";
+import { SUBMISSION_FIELD_TYPES, submissionFormError, type SubmissionFormField } from "../../../../lib/submission-form";
 import { countRu } from "@/lib/format-display";
 
 type BuilderStep = "basics" | "missions" | "settings" | "review";
@@ -153,9 +153,39 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
   }
 
   function openFormEditor() { setFormDraft(program.formFields.map((field) => ({ ...field, options: [...field.options] }))); setShowFieldBuilder(false); setNotice(null); }
-  function updateFormField(id: string, patch: Partial<SubmissionFormField>) { setFormDraft((current) => current?.map((field) => field.id === id ? { ...field, ...patch } : field) ?? null); }
+  function updateFormField(id: string, patch: Partial<SubmissionFormField>) {
+    setFormDraft((current) => {
+      if (!current) return current;
+      const field = current.find((item) => item.id === id);
+      if (!field) return current;
+      if (patch.required === false && field.semantic === "CONTACT_NAME") return current;
+      const commercial = program.missions.some((mission) => mission.type === "LEAD" || mission.type === "DEAL");
+      const contactSemantic = field.semantic === "CONTACT_PHONE" || field.semantic === "CONTACT_EMAIL";
+      const anotherRequiredContact = current.some((item) => item.id !== id && (item.semantic === "CONTACT_PHONE" || item.semantic === "CONTACT_EMAIL") && item.required);
+      if (patch.required === false && commercial && contactSemantic && !anotherRequiredContact) return current;
+      return current.map((item) => item.id === id ? { ...item, ...patch } : item);
+    });
+  }
   function moveFormField(id: string, direction: -1 | 1) { setFormDraft((current) => { if (!current) return current; const index = current.findIndex((field) => field.id === id); const target = index + direction; if (target < 0 || target >= current.length) return current; const fields = [...current]; [fields[index], fields[target]] = [fields[target], fields[index]]; return fields.map((field, sortOrder) => ({ ...field, sortOrder })); }); }
-  function removeFormField(field: SubmissionFormField) { if (field.semantic !== "CUSTOM" || !window.confirm(localizeInterface(`Удалить поле «${field.label}»?`))) return; setFormDraft((current) => current?.filter((item) => item.id !== field.id).map((item, sortOrder) => ({ ...item, sortOrder })) ?? null); }
+  function formFieldCanBeRemoved(field: SubmissionFormField, fields = formDraft ?? []) {
+    if (field.semantic === "CONTACT_NAME") return false;
+    const commercial = program.missions.some((mission) => mission.type === "LEAD" || mission.type === "DEAL");
+    if (!commercial || (field.semantic !== "CONTACT_PHONE" && field.semantic !== "CONTACT_EMAIL")) return true;
+    return fields.filter((item) => item.semantic === "CONTACT_PHONE" || item.semantic === "CONTACT_EMAIL").length > 1;
+  }
+  function removeFormField(field: SubmissionFormField) {
+    if (!formFieldCanBeRemoved(field) || !window.confirm(localizeInterface(`Удалить поле «${field.label}»?`))) return;
+    setFormDraft((current) => {
+      if (!current) return current;
+      const fields = current.filter((item) => item.id !== field.id);
+      const commercial = program.missions.some((mission) => mission.type === "LEAD" || mission.type === "DEAL");
+      const contacts = fields.filter((item) => item.semantic === "CONTACT_PHONE" || item.semantic === "CONTACT_EMAIL");
+      const normalized = commercial && contacts.length === 1
+        ? fields.map((item) => item.id === contacts[0].id ? { ...item, required: true } : item)
+        : fields;
+      return normalized.map((item, sortOrder) => ({ ...item, sortOrder }));
+    });
+  }
 
   async function generateForm() {
     if (!window.confirm(localizeInterface("RiseStaff заменит текущий черновик формы новым вариантом. Продолжить?"))) return;
@@ -179,7 +209,10 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
   }
 
   function applyFormDraft() {
-    if (!formDraft) return; setProgram((current) => ({ ...current, formFields: formDraft })); setFormDraft(null); setShowFieldBuilder(false); setNotice({ type: "success", text: "Настройки формы добавлены в черновик. Сохраните программу, чтобы зафиксировать их." });
+    if (!formDraft) return;
+    const error = submissionFormError(formDraft, program.missions.map((mission) => mission.type));
+    if (error) return setNotice({ type: "error", text: error });
+    setProgram((current) => ({ ...current, formFields: formDraft })); setFormDraft(null); setShowFieldBuilder(false); setNotice({ type: "success", text: "Настройки формы добавлены в черновик. Сохраните программу, чтобы зафиксировать их." });
   }
 
   function validateForPublish() {
@@ -219,7 +252,10 @@ export function ProgramEditor({ initialProgram }: { initialProgram: ProgramRecor
 
   function renderFormField(field: SubmissionFormField, index: number) {
     const system = field.semantic !== "CUSTOM";
-    return <article className="form-field-editor" key={field.id}><header><div><small>{field.stage === "CONTACT" ? "ШАГ 1 · ДАННЫЕ" : "ШАГ 2 · ПОДТВЕРЖДЕНИЯ"}</small><strong>{field.label}</strong></div><div className="form-field-order"><button type="button" onClick={() => moveFormField(field.id, -1)} disabled={index === 0} aria-label="Поднять поле">↑</button><button type="button" onClick={() => moveFormField(field.id, 1)} disabled={index === (formDraft?.length ?? 0) - 1} aria-label="Опустить поле">↓</button>{!system && <button className="danger" type="button" onClick={() => removeFormField(field)} aria-label="Удалить поле">×</button>}</div></header><div className="form-field-editor-grid"><label className="builder-field"><span>Название</span><input value={field.label} onChange={(event) => updateFormField(field.id, { label: event.target.value })} /></label><label className="builder-field"><span>Тип</span><select value={field.type} disabled={system} onChange={(event) => updateFormField(field.id, { type: event.target.value as SubmissionFormField["type"] })}>{SUBMISSION_FIELD_TYPES.map((type) => <option value={type} key={type}>{formTypeNames[type]}</option>)}</select></label><label className="builder-field full"><span>Подсказка агенту</span><input value={field.description} onChange={(event) => updateFormField(field.id, { description: event.target.value })} /></label><label className="builder-field full"><span>Пример ответа</span><input value={field.placeholder} onChange={(event) => updateFormField(field.id, { placeholder: event.target.value })} /></label>{field.type === "SELECT" && <label className="builder-field full"><span>Варианты · каждый с новой строки</span><textarea rows={3} value={field.options.join("\n")} onChange={(event) => updateFormField(field.id, { options: event.target.value.split("\n") })} /></label>}</div><label className="form-required-toggle"><input type="checkbox" checked={field.required} onChange={(event) => updateFormField(field.id, { required: event.target.checked })} /><span>Обязательное поле</span></label></article>;
+    const canRemove = formFieldCanBeRemoved(field);
+    const requiredLocked = (field.semantic === "CONTACT_NAME" && field.required) || ((field.semantic === "CONTACT_PHONE" || field.semantic === "CONTACT_EMAIL") && field.required && program.missions.some((mission) => mission.type === "LEAD" || mission.type === "DEAL") && !(formDraft ?? []).some((item) => item.id !== field.id && (item.semantic === "CONTACT_PHONE" || item.semantic === "CONTACT_EMAIL") && item.required));
+    const protectedLabel = field.semantic === "CONTACT_NAME" ? "Поле нужно для создания заявки" : "Для лидов и сделок нужен телефон или email";
+    return <article className="form-field-editor" key={field.id}><header><div><small>{field.stage === "CONTACT" ? "ШАГ 1 · ДАННЫЕ" : "ШАГ 2 · ПОДТВЕРЖДЕНИЯ"}</small><strong>{field.label}</strong></div><div className="form-field-order"><button type="button" onClick={() => moveFormField(field.id, -1)} disabled={index === 0} aria-label="Поднять поле">↑</button><button type="button" onClick={() => moveFormField(field.id, 1)} disabled={index === (formDraft?.length ?? 0) - 1} aria-label="Опустить поле">↓</button><button className="danger" type="button" onClick={() => removeFormField(field)} disabled={!canRemove} aria-label={canRemove ? "Удалить поле" : protectedLabel} title={canRemove ? "Удалить поле" : protectedLabel}>×</button></div></header><div className="form-field-editor-grid"><label className="builder-field"><span>Название</span><input value={field.label} onChange={(event) => updateFormField(field.id, { label: event.target.value })} /></label><label className="builder-field"><span>Тип</span><select value={field.type} disabled={system} onChange={(event) => updateFormField(field.id, { type: event.target.value as SubmissionFormField["type"] })}>{SUBMISSION_FIELD_TYPES.map((type) => <option value={type} key={type}>{formTypeNames[type]}</option>)}</select></label><label className="builder-field full"><span>Подсказка агенту</span><input value={field.description} onChange={(event) => updateFormField(field.id, { description: event.target.value })} /></label><label className="builder-field full"><span>Пример ответа</span><input value={field.placeholder} onChange={(event) => updateFormField(field.id, { placeholder: event.target.value })} /></label>{field.type === "SELECT" && <label className="builder-field full"><span>Варианты · каждый с новой строки</span><textarea rows={3} value={field.options.join("\n")} onChange={(event) => updateFormField(field.id, { options: event.target.value.split("\n") })} /></label>}</div><label className="form-required-toggle"><input type="checkbox" checked={field.required} disabled={requiredLocked} onChange={(event) => updateFormField(field.id, { required: event.target.checked })} /><span>Обязательное поле</span></label></article>;
   }
 
   return <div className="dashboard-content module-content program-builder-page program-flow-page">
