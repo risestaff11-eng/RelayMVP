@@ -4,6 +4,7 @@ import { getDb } from "../../../../../db";
 import { getCompanyForUser } from "../../../../../db/company";
 import { partners, rewards } from "../../../../../db/schema";
 import { sameOrigin } from "../../../company/_utils";
+import { notifyAgentWorkChanges } from "../../../../../lib/agent-work-notifications";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -19,6 +20,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const paid = payload.paid === true;
   const statuses = paid ? ["APPROVED"] : ["PAID"];
   const now = new Date().toISOString();
-  await getDb().update(rewards).set({ status: paid ? "PAID" : "APPROVED", paidAt: paid ? now : null, updatedAt: now }).where(and(inArray(rewards.partnerId, related.map((item) => item.id)), inArray(rewards.status, statuses)));
+  const changed = await getDb().update(rewards).set({ status: paid ? "PAID" : "APPROVED", paidAt: paid ? now : null, updatedAt: now }).where(and(eq(rewards.companyId, company.id), inArray(rewards.partnerId, related.map((item) => item.id)), inArray(rewards.status, statuses))).returning({ submissionId: rewards.submissionId });
+  await notifyAgentWorkChanges(company.id, changed.map((row) => row.submissionId));
   return Response.json({ ok: true });
 }

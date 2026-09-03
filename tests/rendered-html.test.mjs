@@ -1,5 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { registerHooks } from "node:module";
+
+// Node has no Workers runtime. Invalid-token scenarios never access D1; keep
+// only this runtime import stubbed while executing the complete built router.
+registerHooks({ resolve(specifier, context, nextResolve) {
+  if (specifier === "cloudflare:workers") return { url: "data:text/javascript,export const env = {};", shortCircuit: true };
+  return nextResolve(specifier, context);
+} });
 
 async function render(pathname = "/", headers = {}) {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -98,6 +106,19 @@ test("built company auth screen serves login immediately and never caches authen
   assert.match(html, /Забыли пароль/);
   assert.match(html, /Нет аккаунта\? Создать аккаунт/);
   assert.doesNotMatch(html, /name="intent"|Введите email, затем выберите/);
+});
+
+test("invalid agent and referral links render recovery guidance instead of a generic 404", async () => {
+  for (const path of ["/partner/invalid-link", "/partner/invalid-link/profile", "/ref/invalid-link"]) {
+    const response = await route(`https://agents.risestaff.kz${path}`);
+    assert.equal(response.status, 404, path);
+    assert.match(response.headers.get("cache-control"), /no-store/);
+    const html = await response.text();
+    assert.match(html, /Ссылка недоступна/, path);
+    assert.match(html, /Ваши ранее отправленные заявки не удалены/, path);
+    assert.match(html, /href="\/agent-login"/, path);
+    assert.doesNotMatch(html, /This page could not be found/, path);
+  }
 });
 
 test("renders pricing without publishing prices", async () => {

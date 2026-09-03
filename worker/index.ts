@@ -52,9 +52,14 @@ const worker = {
     }
 
     const response = await handler.fetch(request, env, ctx);
-    if (url.pathname === "/auth" || url.pathname.startsWith("/api/auth/")) {
+    const privateAgentPath = ["/partner", "/ref", "/agent", "/agent-login", "/api/partner", "/api/agent"].some((prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`));
+    if (url.pathname === "/auth" || url.pathname.startsWith("/api/auth/") || privateAgentPath) {
       const privateResponse = new Response(response.body, response);
       privateResponse.headers.set("Cache-Control", "no-store, private, max-age=0");
+      if (privateAgentPath) {
+        privateResponse.headers.set("Referrer-Policy", "no-referrer");
+        privateResponse.headers.set("X-Robots-Tag", "noindex, nofollow");
+      }
       return privateResponse;
     }
     return response;

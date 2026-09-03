@@ -1,4 +1,5 @@
 import { and, count, desc, eq, gte, isNull } from "drizzle-orm";
+import { timingSafeEqual } from "../../../../lib/secure-compare";
 import { getDb } from "../../../../db";
 import { companyEmailVerificationCodes, userRoles, users } from "../../../../db/schema";
 import { createAuthSession } from "../../../../lib/account-auth";
@@ -10,13 +11,6 @@ class VerificationError extends Error {
   constructor(message: string, readonly status = 400) {
     super(message);
   }
-}
-
-function sameHash(left: string, right: string) {
-  if (left.length !== right.length) return false;
-  let difference = 0;
-  for (let index = 0; index < left.length; index += 1) difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  return difference === 0;
 }
 
 async function findCompanyUser(email: string) {
@@ -79,7 +73,7 @@ export async function POST(request: Request) {
       if (!verification || new Date(verification.expiresAt).getTime() < Date.now()) throw new VerificationError("Код истёк. Запросите новый");
       if (verification.attempts >= 5) throw new VerificationError("Превышено число попыток. Запросите новый код", 429);
       const expectedHash = await hashCompanyEmailCode(user.id, code);
-      if (!sameHash(verification.codeHash, expectedHash)) {
+      if (!timingSafeEqual(verification.codeHash, expectedHash)) {
         await db.update(companyEmailVerificationCodes).set({ attempts: verification.attempts + 1 }).where(eq(companyEmailVerificationCodes.id, verification.id));
         throw new VerificationError(verification.attempts >= 4 ? "Превышено число попыток. Запросите новый код" : "Неверный код");
       }

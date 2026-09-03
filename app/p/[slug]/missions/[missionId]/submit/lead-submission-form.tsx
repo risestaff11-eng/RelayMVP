@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AntiSpamField } from "../../../../../anti-spam-field";
 import { visibleSubmissionFormFields, type SubmissionFormField } from "../../../../../../lib/submission-form";
 
 type FieldValue = string | boolean;
@@ -264,6 +265,7 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
 
   const reviewFields = visible.filter((field) => field.type !== "FILE");
   return <form ref={formRef} className="lead-submission-form agent-dialog-form" onSubmit={submit}>
+    <AntiSpamField />
     <div className="lead-form-stepper"><span className={step === 1 ? "active" : "done"}><b>{step > 1 ? "✓" : "1"}</b> Контакт</span><i /><span className={step === 2 ? "active" : step > 2 ? "done" : ""}><b>{step > 2 ? "✓" : "2"}</b> Контекст</span><i /><span className={step === 3 ? "active" : ""}><b>3</b> Проверка</span></div>
 
     {step < 3 && <section className="voice-answer-card"><div className="dialog-system-message"><span>R</span><div><strong>Можно рассказать всё голосом</strong><p>Запишите сообщение до 60 секунд. RiseStaff расшифрует его, разложит данные по полям и попросит вас всё проверить.</p></div></div><div className="voice-controls">{recording ? <button className="voice-record-button recording" type="button" onClick={stopRecording}><i>■</i><span>Остановить · 0:{String(recordingSeconds).padStart(2, "0")}</span></button> : <button className="voice-record-button" type="button" disabled={voicePending} onClick={() => void startRecording()}><i>●</i><span>{voiceFile ? "Записать заново" : "Записать ответ"}</span></button>}<button type="button" className="voice-upload-button" disabled={recording || voicePending} onClick={() => voiceInput.current?.click()}>Загрузить аудио</button><input ref={voiceInput} type="file" accept="audio/*" capture hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void acceptVoiceFile(file); }} /></div>{voicePending && <div className="voice-processing"><i /><span>Расшифровываем и готовим черновик ответов…</span></div>}{voiceFile && !voicePending && <div className="voice-result"><audio controls src={voiceUrl}><track kind="captions" srcLang="ru" label="Расшифровка" src={`data:text/vtt;charset=utf-8,${encodeURIComponent(`WEBVTT\\n\\n00:00.000 --> 00:59.999\\n${voiceTranscript || "Голосовой ответ агента"}`)}`} /></audio><small>{voiceDurationSeconds ? `${voiceDurationSeconds} сек.` : "до 60 сек."}</small><button type="button" onClick={clearVoice}>Удалить запись</button><label><input type="checkbox" checked={includeVoice} onChange={(event) => setIncludeVoice(event.target.checked)} /><span>Передать оригинал записи компании</span></label></div>}{voiceTranscript && <details className="voice-transcript"><summary>Расшифровка записи</summary><textarea value={voiceTranscript} onChange={(event) => setVoiceTranscript(event.target.value)} rows={5} /></details>}{voiceNotice && <p className="voice-notice">✓ {voiceNotice}</p>}</section>}

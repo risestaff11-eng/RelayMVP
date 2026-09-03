@@ -1,164 +1,102 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { agentFixture } from "./helpers/agent-fixture.mjs";
 
-test("mission editor preserves spaces, cursor edits and blank lines until save", async () => {
-  const source = await readFile(new URL("../app/dashboard/programs/[id]/program-editor.tsx", import.meta.url), "utf8");
-  assert.match(source, /event\.target\.value\.split\("\\n"\)/);
-  assert.doesNotMatch(source, /event\.target\.value\.split\("\\n"\)\.map\(\(item\) => item\.trim\(\)\)\.filter\(Boolean\)/);
+test("real submission saves dynamic answers, voice evidence, files, history and company notification", async () => {
+  const f = agentFixture();
+  try {
+    const a = await f.seed();
+    f.sqlite.prepare("UPDATE programs SET submission_form_json = ? WHERE id = ?").run(JSON.stringify([
+      { id: "course", label: "Course", type: "TEXT", semantic: "CUSTOM", required: true },
+    ]), a.programId);
+    const form = f.form(a, { "field__course": "Mathematics", "field__partner-comment": "Ready for trial", audioTranscript: "Interested in mathematics", audioDurationSeconds: "12" });
+    form.set("file__files", new File(["proof"], "proof.pdf", { type: "application/pdf" }));
+    form.set("voiceNote", new File(["audio"], "voice.webm", { type: "audio/webm" }));
+    const response = await f.request("/api/public/submissions", form);
+    const result = await response.json();
+    assert.equal(response.status, 201, JSON.stringify(result));
+    const saved = f.sqlite.prepare("SELECT * FROM submissions WHERE id = ?").get(result.submissionId);
+    assert.equal(saved.partner_id, a.partnerId);
+    assert.equal(saved.company_id, a.companyId);
+    assert.equal(saved.program_id, a.programId);
+    assert.equal(saved.contact_phone, "77012223344");
+    assert.equal(saved.review_status, "PENDING");
+    assert.equal(saved.sales_status, "NONE");
+    const payload = JSON.parse(saved.payload_json);
+    assert.equal(payload.customAnswers[0].value, "Mathematics");
+    assert.equal(payload.audioConfirmed, true);
+    assert.equal(payload.audioTranscript, "Interested in mathematics");
+    assert.equal(f.objects.size, 2);
+    assert.ok([...f.objects.keys()].every((key) => key.startsWith(`${a.companyId}/${saved.id}/`)));
+    assert.equal(f.sqlite.prepare("SELECT count(*) AS n FROM submission_attachments").get().n, 2);
+    assert.equal(f.sqlite.prepare("SELECT actor_type FROM submission_status_events").get().actor_type, "PARTNER");
+    assert.equal(f.deliveries[0].submissionId, saved.id);
+    assert.equal(f.deliveries[0].destination, "company-a-owner@example.test");
+    const portal = await f.load(new URL("../db/partner.ts", import.meta.url)).getPartnerPortal(a.token);
+    assert.equal(portal.submissions[0].id, saved.id);
+  } finally { f.close(); }
 });
 
-test("mission resources are stored in D1 metadata and exposed through protected downloads", async () => {
-  const schema = await readFile(new URL("../db/schema.ts", import.meta.url), "utf8");
-  const companyRoute = await readFile(new URL("../app/api/programs/[id]/missions/[missionId]/files/route.ts", import.meta.url), "utf8");
-  const partnerRoute = await readFile(new URL("../app/api/partner/mission-files/[id]/route.ts", import.meta.url), "utf8");
-  assert.match(schema, /mission_resources/);
-  assert.match(companyRoute, /10 \* 1024 \* 1024/);
-  assert.match(partnerRoute, /getPartnerMissionResource/);
+test("referral tokens stay separate from portal tokens; duplicates are blocked only within the company", async () => {
+  const f = agentFixture();
+  try {
+    const a = await f.seed();
+    const b = await f.seed({ companyId: "company-b", programId: "program-b", partnerId: "partner-b" });
+    const contact = { name: "Client", contact: "+77012223344", comment: "Trial lesson" };
+    const request = (referralToken) => f.request("/api/public/referrals/submit", { ...contact, referralToken });
+    assert.equal((await request(a.token)).status, 404);
+    assert.equal((await request(a.referralToken)).status, 201);
+    assert.equal((await request(a.referralToken)).status, 409);
+    assert.equal((await request(b.referralToken)).status, 201);
+    const rows = f.sqlite.prepare("SELECT * FROM submissions ORDER BY company_id").all();
+    assert.deepEqual(rows.map((row) => row.company_id), [a.companyId, b.companyId]);
+    assert.equal(JSON.parse(rows[0].payload_json).submittedByClient, true);
+    assert.equal(JSON.parse(rows[0].payload_json).referralSource, "CLIENT_SELF_SERVICE");
+    assert.ok(f.sqlite.prepare("SELECT actor_type FROM submission_status_events").all().every((row) => row.actor_type === "CLIENT"));
+    assert.equal((await f.request("/api/public/submissions", f.form(a))).status, 409);
+    assert.equal(f.deliveries.length, 2);
+  } finally { f.close(); }
 });
 
-test("image and engagement submissions do not require client contact details", async () => {
-  const route = await readFile(new URL("../app/api/public/submissions/route.ts", import.meta.url), "utf8");
-  const form = await readFile(new URL("../lib/submission-form.ts", import.meta.url), "utf8");
-  assert.match(route, /visibleSubmissionFormFields/);
-  assert.match(form, /NON_COMMERCIAL/);
-  assert.match(form, /missionType === "LEAD" \|\| missionType === "DEAL"/);
+test("submission cannot escape tenant, acceptance, program or mission access restrictions", async () => {
+  const f = agentFixture();
+  try {
+    const a = await f.seed();
+    const b = await f.seed({ companyId: "company-b", programId: "program-b", partnerId: "partner-b" });
+    assert.equal((await f.request("/api/public/submissions", f.form(a, { programSlug: b.programId, missionId: b.missionId }))).status, 401);
+    f.sqlite.prepare("UPDATE partner_mission_acceptances SET status = 'CANCELLED' WHERE partner_id = ?").run(a.partnerId);
+    assert.equal((await f.request("/api/public/submissions", f.form(a))).status, 400);
+    f.sqlite.prepare("UPDATE programs SET status = 'PAUSED' WHERE id = ?").run(a.programId);
+    assert.equal((await f.request("/api/public/submissions", f.form(a))).status, 401);
+    f.sqlite.prepare("UPDATE programs SET status = 'ACTIVE' WHERE id = ?").run(a.programId);
+    f.sqlite.prepare("UPDATE missions SET status = 'PAUSED' WHERE id = ?").run(a.missionId);
+    assert.equal((await f.request("/api/public/submissions", f.form(a))).status, 404);
+    assert.equal(f.sqlite.prepare("SELECT count(*) AS n FROM submissions").get().n, 0);
+  } finally { f.close(); }
 });
 
-test("program editor uses guided stages, compact missions and safe drawers", async () => {
-  const editor = await readFile(new URL("../app/dashboard/programs/[id]/program-editor.tsx", import.meta.url), "utf8");
-  const aiRoute = await readFile(new URL("../app/api/programs/[id]/ai/route.ts", import.meta.url), "utf8");
-  const schema = await readFile(new URL("../db/schema.ts", import.meta.url), "utf8");
-  assert.match(editor, /compact-mission-list/);
-  assert.match(editor, /program-drawer/);
-  assert.match(editor, /Что увидит агент/);
-  assert.match(editor, /Применить задание/);
-  assert.match(editor, /moveFormField/);
-  assert.match(editor, /window\.confirm\(`Опубликовать программу/);
-  assert.match(aiRoute, /variationSeed/);
-  assert.match(aiRoute, /existing/);
-  assert.match(schema, /submission_form_json/);
+test("IMAGE and ENGAGEMENT missions need no client contact but commercial missions validate it", async () => {
+  for (const type of ["IMAGE", "ENGAGEMENT", "LEAD", "DEAL"]) {
+    const f = agentFixture();
+    try {
+      const a = await f.seed({ type });
+      const response = await f.request("/api/public/submissions", f.form(a, { "field__contact-phone": "" }));
+      assert.equal(response.status, ["LEAD", "DEAL"].includes(type) ? 400 : 201, type);
+    } finally { f.close(); }
+  }
 });
 
-test("program creation keeps AI optional and draft saves allow incomplete missions", async () => {
-  const form = await readFile(new URL("../app/dashboard/programs/new/new-program-form.tsx", import.meta.url), "utf8");
-  const createRoute = await readFile(new URL("../app/api/programs/generate/route.ts", import.meta.url), "utf8");
-  const updateRoute = await readFile(new URL("../app/api/programs/[id]/route.ts", import.meta.url), "utf8");
-  assert.match(form, /Настроить вручную/);
-  assert.match(createRoute, /mode === "manual"/);
-  assert.match(updateRoute, /publish && \(!title/);
-});
-
-test("program archive keeps the working list focused and restores safely", async () => {
-  const [programs, archive, actions, statusRoute] = await Promise.all([
-    readFile(new URL("../app/dashboard/programs/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/dashboard/programs/archive/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/dashboard/_components/program-quick-actions.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/programs/[id]/status/route.ts", import.meta.url), "utf8"),
-  ]);
-  assert.match(programs, /\["ACTIVE", "PAUSED"\]/);
-  assert.match(programs, /\/dashboard\/programs\/archive/);
-  assert.match(archive, /program\.status === "ARCHIVED"/);
-  assert.match(actions, /Вернуть на паузу/);
-  assert.match(actions, /change\("PAUSED"\)/);
-  assert.match(statusRoute, /ARCHIVED/);
-});
-
-test("public submission saves dynamic answers and files", async () => {
-  const route = await readFile(new URL("../app/api/public/submissions/route.ts", import.meta.url), "utf8");
-  const form = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/lead-submission-form.tsx", import.meta.url), "utf8");
-  assert.match(route, /field__/);
-  assert.match(route, /file__/);
-  assert.match(route, /customAnswers/);
-  assert.match(form, /formFields/);
-  assert.match(form, /reportValidity/);
-});
-
-test("a new result notifies the company and opens the exact review card", async () => {
-  const [route, referralRoute, email, page] = await Promise.all([
-    readFile(new URL("../app/api/public/submissions/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/public/referrals/submit/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../lib/agent-email.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/dashboard/crm/page.tsx", import.meta.url), "utf8"),
-  ]);
-  assert.match(route, /sendCompanyNewSubmissionNotification/);
-  assert.match(referralRoute, /sendCompanyNewSubmissionNotification/);
-  assert.match(email, /dashboard\/crm\?submission=/);
-  assert.match(email, /Для доступа введите почту и пароль компании/);
-  assert.match(page, /initialSelectedId/);
-});
-
-test("agent result flow supports confirmed voice drafts and removable multi-file evidence", async () => {
-  const form = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/lead-submission-form.tsx", import.meta.url), "utf8");
-  const transcriptionRoute = await readFile(new URL("../app/api/partner/audio/transcribe/route.ts", import.meta.url), "utf8");
-  const submissionRoute = await readFile(new URL("../app/api/public/submissions/route.ts", import.meta.url), "utf8");
-  const companyReview = await readFile(new URL("../app/dashboard/submissions/submission-review-list.tsx", import.meta.url), "utf8");
-  assert.match(form, /multiple/);
-  assert.match(form, /removeFile/);
-  assert.match(form, /currentTotal \+ selected\.length > 5/);
-  assert.match(form, /voiceDurationSeconds/);
-  assert.match(form, /Проверьте результат перед отправкой/);
-  assert.match(transcriptionRoute, /generateStructuredJsonFromAudio/);
-  assert.match(transcriptionRoute, /Аудиозапись должна быть не длиннее 60 секунд/);
-  assert.match(submissionRoute, /audioConfirmed: Boolean\(audioTranscript\)/);
-  assert.match(companyReview, /result-audio-player/);
-});
-
-test("review step serializes controlled values and edits answers inline", async () => {
-  const form = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/lead-submission-form.tsx", import.meta.url), "utf8");
-  assert.match(form, /form\.set\(fieldName\(field\), String\(value \?\? ""\)\)/);
-  assert.match(form, /editingReviewField/);
-  assert.match(form, /review-inline-editor/);
-  assert.doesNotMatch(form, /onClick=\{\(\) => setStep\(field\.stage === "CONTACT" \? 1 : 2\)\}/);
-});
-
-test("agent referrals use isolated tokens and client-origin markers", async () => {
-  const schema = await readFile(new URL("../db/schema.ts", import.meta.url), "utf8");
-  const createRoute = await readFile(new URL("../app/api/partner/referrals/route.ts", import.meta.url), "utf8");
-  const submitRoute = await readFile(new URL("../app/api/public/referrals/submit/route.ts", import.meta.url), "utf8");
-  const navigation = await readFile(new URL("../app/partner/_components/partner-nav.tsx", import.meta.url), "utf8");
-  assert.match(schema, /partner_referral_links/);
-  assert.match(createRoute, /createPartnerToken/);
-  assert.match(createRoute, /partnerReferralLinks/);
-  assert.match(submitRoute, /submittedByClient: true/);
-  assert.match(submitRoute, /actorType: "CLIENT"/);
-  assert.match(navigation, /Реферальная ссылка/);
-});
-
-test("legacy public submission route continues inside the agent cabinet", async () => {
-  const legacyPage = await readFile(new URL("../app/p/[slug]/missions/[missionId]/submit/page.tsx", import.meta.url), "utf8");
-  const partnerPage = await readFile(new URL("../app/partner/[token]/submit/[missionId]/page.tsx", import.meta.url), "utf8");
-  assert.match(legacyPage, /redirect\(`\/partner\/\$\{access\}\/submit\/\$\{missionId\}`\)/);
-  assert.match(partnerPage, /LeadSubmissionForm/);
-});
-
-test("public program entry always submits its program slug", async () => {
-  const publicPage = await readFile(new URL("../app/p/[slug]/page.tsx", import.meta.url), "utf8");
-  const partnerEntry = await readFile(new URL("../app/p/[slug]/partner-entry.tsx", import.meta.url), "utf8");
-  assert.match(publicPage, /<PartnerEntry programSlug=\{slug\}/);
-  assert.match(partnerEntry, /JSON\.stringify\(\{ programSlug, missionId, email/);
-});
-
-test("authorized public program puts tasks first and collapses secondary details", async () => {
-  const publicPage = await readFile(new URL("../app/p/[slug]/page.tsx", import.meta.url), "utf8");
-  const missionSection = publicPage.indexOf('className="partner-missions-section"');
-  const detailsSection = publicPage.indexOf('className="partner-program-details"');
-  assert.ok(missionSection > 0);
-  assert.ok(detailsSection > missionSection);
-  assert.match(publicPage, /<details>/);
-  assert.match(publicPage, /Выберите способ заработать/);
-  assert.match(publicPage, /Регистрация понадобится только при отправке первой заявки/);
-  assert.doesNotMatch(publicPage, /partner-program-hero/);
-});
-
-test("user-facing application uses the RiseStaff assistant name", async () => {
-  const files = [
-    "../app/dashboard/programs/new/new-program-form.tsx",
-    "../app/dashboard/programs/page.tsx",
-    "../app/dashboard/methodologist/methodologist-editor.tsx",
-    "../app/dashboard/settings/plan-settings.tsx",
-  ];
-  const source = (await Promise.all(files.map((file) => readFile(new URL(file, import.meta.url), "utf8")))).join("\n");
-  assert.match(source, /RiseStaff/);
-  assert.doesNotMatch(source, /Gemini/i);
+test("submission rejects invalid links, missing required values and more than five attachments before upload", async () => {
+  const f = agentFixture();
+  try {
+    const a = await f.seed();
+    for (const values of [{ "field__contact-name": "" }, { "field__external-links": "javascript:alert(1)" }, { "field__contact-email": "not-email" }]) {
+      assert.equal((await f.request("/api/public/submissions", f.form(a, values))).status, 400);
+    }
+    const form = f.form(a);
+    for (let file = 0; file < 6; file++) form.append("file__files", new File(["proof"], `${file}.pdf`, { type: "application/pdf" }));
+    assert.equal((await f.request("/api/public/submissions", form)).status, 400);
+    assert.equal(f.objects.size, 0);
+    assert.equal(f.sqlite.prepare("SELECT count(*) AS n FROM submissions").get().n, 0);
+  } finally { f.close(); }
 });

@@ -2,6 +2,12 @@ import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { INITIAL_COMPANY_AI_CREDITS } from "../lib/company-credits";
 
+export const requestRateLimits = sqliteTable("request_rate_limits", {
+  keyHash: text("key_hash").primaryKey().notNull(),
+  hits: integer("hits").notNull(),
+  resetAt: integer("reset_at").notNull(),
+}, (table) => [index("idx_request_rate_limits_reset_at").on(table.resetAt)]);
+
 export const marketingEvents = sqliteTable("marketing_events", {
   id: text("id").primaryKey(),
   event: text("event").notNull(),
