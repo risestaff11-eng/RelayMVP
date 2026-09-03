@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { timingSafeEqual } from "./secure-compare";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { authSessions, companies, supportSessions, userRoles, users } from "../db/schema";
 
@@ -39,13 +40,6 @@ async function sha256(value: string) {
   return bytesToBase64Url(new Uint8Array(digest));
 }
 
-function sameValue(left: string, right: string) {
-  if (left.length !== right.length) return false;
-  let difference = 0;
-  for (let index = 0; index < left.length; index += 1) difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  return difference === 0;
-}
-
 export async function hashPassword(password: string) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
@@ -60,7 +54,7 @@ export async function verifyPassword(password: string, stored: string | null) {
   if (algorithm !== "pbkdf2_sha256" || iterations !== 100_000 || !saltValue || !expected) return false;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: base64UrlToBytes(saltValue), iterations }, key, 256);
-  return sameValue(bytesToBase64Url(new Uint8Array(bits)), expected);
+  return timingSafeEqual(bytesToBase64Url(new Uint8Array(bits)), expected);
 }
 
 export async function createAuthSession(userId: string) {
@@ -179,7 +173,7 @@ async function adminCookieValue(secret: string) {
 export async function verifyAdminPassword(password: string) {
   const secret = await runtimeAdminSecret();
   if (!secret) return false;
-  return sameValue(await adminCookieValue(password), await adminCookieValue(secret));
+  return timingSafeEqual(await adminCookieValue(password), await adminCookieValue(secret));
 }
 
 export async function createAdminSession() {
@@ -192,5 +186,5 @@ export async function createAdminSession() {
 export async function hasAdminSession() {
   const secret = await runtimeAdminSecret();
   const current = (await cookies()).get(ADMIN_COOKIE)?.value ?? "";
-  return Boolean(secret && current && sameValue(current, await adminCookieValue(secret)));
+  return Boolean(secret && current && timingSafeEqual(current, await adminCookieValue(secret)));
 }

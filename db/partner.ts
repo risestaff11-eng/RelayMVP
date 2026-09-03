@@ -111,6 +111,8 @@ export async function getPartnerPortal(token: string) {
 
   return {
     token,
+    accessExpiresAt: access.expiresAt,
+    accessCheckedAt: now,
     partner: activePartner,
     partners: identityRows,
     company,

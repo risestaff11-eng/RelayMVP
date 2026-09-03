@@ -1,4 +1,5 @@
 import { and, count, desc, eq, gte, isNull } from "drizzle-orm";
+import { timingSafeEqual } from "../../../../lib/secure-compare";
 import { getDb } from "../../../../db";
 import { authSessions, passwordResetAttempts, passwordResetCodes, userRoles, users } from "../../../../db/schema";
 import { hashPassword } from "../../../../lib/account-auth";
@@ -13,13 +14,6 @@ class ResetError extends Error {
 async function resetKey(value: string) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-function sameHash(left: string, right: string) {
-  if (left.length !== right.length) return false;
-  let difference = 0;
-  for (let index = 0; index < left.length; index += 1) difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  return difference === 0;
 }
 
 async function findCompanyUser(email: string) {
@@ -75,7 +69,7 @@ export async function POST(request: Request) {
       if (!verification || new Date(verification.expiresAt).getTime() < Date.now()) throw new ResetError("Код недействителен или истёк");
       if (verification.attempts >= 5) throw new ResetError("Превышено число попыток. Запросите новый код", 429);
       const expectedHash = await hashVerificationCode(user.id, "PASSWORD_RESET", code);
-      if (!sameHash(verification.codeHash, expectedHash)) {
+      if (!timingSafeEqual(verification.codeHash, expectedHash)) {
         await db.update(passwordResetCodes).set({ attempts: verification.attempts + 1 }).where(eq(passwordResetCodes.id, verification.id));
         throw new ResetError(verification.attempts >= 4 ? "Превышено число попыток. Запросите новый код" : "Неверный код");
       }

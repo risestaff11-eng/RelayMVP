@@ -1,4 +1,5 @@
 import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
+import { timingSafeEqual } from "../../../../lib/secure-compare";
 import { getDb } from "../../../../db";
 import { findAgentPartners } from "../../../../db/agent-access";
 import { agentLoginCodes } from "../../../../db/schema";
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
       const verification = (await db.select().from(agentLoginCodes).where(and(eq(agentLoginCodes.email, email), eq(agentLoginCodes.phone, phone), isNull(agentLoginCodes.consumedAt))).orderBy(desc(agentLoginCodes.createdAt)).limit(1))[0];
       if (!verification || new Date(verification.expiresAt).getTime() < Date.now()) throw new Error("Код истёк. Запросите новый");
       if (verification.attempts >= 5) throw new Error("Лимит попыток исчерпан. Запросите новый код");
-      if (verification.codeHash !== await hashVerificationCode(identity, "AGENT_LOGIN", code)) {
+      if (!timingSafeEqual(verification.codeHash, await hashVerificationCode(identity, "AGENT_LOGIN", code))) {
         await db.update(agentLoginCodes).set({ attempts: sql`${agentLoginCodes.attempts} + 1` }).where(eq(agentLoginCodes.id, verification.id));
         throw new Error("Неверный код");
       }

@@ -6,11 +6,12 @@ function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[character] ?? character));
 }
 
-async function sendEmail(payload: { to: string; subject: string; html: string }) {
+async function sendEmail(payload: { to: string; subject: string; html: string; timeoutMs?: number }) {
   const runtime = env as unknown as EmailRuntime;
   if (!runtime.RESEND_API_KEY || !runtime.MAGIC_FROM_EMAIL) throw new Error("Отправка писем временно недоступна");
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
+    ...(payload.timeoutMs ? { signal: AbortSignal.timeout(payload.timeoutMs) } : {}),
     headers: { authorization: `Bearer ${runtime.RESEND_API_KEY}`, "content-type": "application/json" },
     body: JSON.stringify({ from: runtime.MAGIC_FROM_EMAIL, to: [payload.to], subject: payload.subject, html: payload.html }),
   });
@@ -22,6 +23,15 @@ export async function sendAgentLoginCode(email: string, code: string) {
     to: email,
     subject: "Код входа агента RiseStaff",
     html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:28px;color:#11120f"><b style="font-size:18px">RiseStaff</b><h1 style="font-size:24px;margin:28px 0 10px">Вход в кабинет агента</h1><p>Введите код на странице входа:</p><div style="margin:22px 0;padding:18px;border-radius:14px;background:#c1ff36;font-size:32px;font-weight:900;letter-spacing:8px;text-align:center">${code}</div><p style="font-size:13px;color:#5f6359">Код действует 10 минут. Никому его не сообщайте.</p></div>`,
+  });
+}
+
+export async function sendAgentWorkUpdate(input: { destination: string; companyName: string; updates: string[] }) {
+  await sendEmail({
+    to: input.destination,
+    timeoutMs: 5000,
+    subject: `Обновление заявки или выплаты · ${input.companyName}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:28px;color:#11120f"><b>RiseStaff</b><h1 style="font-size:24px">Есть новости от компании</h1><p>${escapeHtml(input.companyName)}</p><ul>${input.updates.map((update) => `<li style="margin:14px 0">${escapeHtml(update)}</li>`).join("")}</ul><p><a href="https://agents.risestaff.kz/agent-login">Открыть кабинет агента</a></p><p>Войдите через email и выберите эту компанию. Детали заявки и выплаты доступны в кабинете.</p></div>`,
   });
 }
 

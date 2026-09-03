@@ -11,14 +11,20 @@ function isProductionSiteHost(hostname: string) {
   return productionHosts.has(hostname) || hostname.endsWith(".chatgpt.site");
 }
 
+export const COMPANY_ROUTE_ROOTS = ["dashboard", "onboarding", "auth", "admin", "system"] as const;
+// IMPORTANT: adding a public agent page requires updating AGENT_ROUTE_ROOTS
+// manually. The route inventory test fails for unclassified top-level pages.
+export const AGENT_ROUTE_ROOTS = ["agent", "agent-login", "p", "partner", "ref"] as const;
+export const MARKETING_ROUTE_ROOTS = ["integrators", "legal", "pricing"] as const;
+
 function isCompanyPath(pathname: string) {
-  return ["/dashboard", "/onboarding", "/auth", "/admin", "/system"].some(
+  return COMPANY_ROUTE_ROOTS.map((root) => `/${root}`).some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
 function isAgentPath(pathname: string) {
-  return pathname === "/agent" || pathname === "/agent-login" || pathname.startsWith("/agent/") || pathname.startsWith("/p/") || pathname.startsWith("/partner/") || pathname.startsWith("/ref/");
+  return AGENT_ROUTE_ROOTS.some((root) => pathname === `/${root}` || pathname.startsWith(`/${root}/`));
 }
 
 function redirectUrl(url: URL, origin: string, pathname = url.pathname) {

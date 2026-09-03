@@ -4,13 +4,14 @@ import { getPublicReferral } from "../../../../../db/referrals";
 import { submissionStatusEvents, submissions, users } from "../../../../../db/schema";
 import { cleanString, sameOrigin } from "../../../company/_utils";
 import { sendCompanyNewSubmissionNotification } from "../../../../../lib/agent-email";
-import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone } from "../../../../../lib/submission-antifraud";
+import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfReferral, SELF_REFERRAL_MESSAGE, hasHoneypotValue } from "../../../../../lib/submission-antifraud";
 import { reviewDueAt } from "../../../../../lib/workflow";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
   try {
-    const body = await request.json() as { referralToken?: unknown; name?: unknown; contact?: unknown; comment?: unknown };
+    const body = await request.json() as { referralToken?: unknown; name?: unknown; contact?: unknown; comment?: unknown; website_url?: unknown };
+    if (hasHoneypotValue(body.website_url)) return Response.json({ error: "Не удалось отправить форму" }, { status: 400 });
     const referralToken = cleanString(body.referralToken, 80);
     const name = cleanString(body.name, 120);
     const contact = cleanString(body.contact, 160);
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
     if (!referral) return Response.json({ error: "Реферальная ссылка недействительна или устарела" }, { status: 404 });
     const contactEmail = isEmail ? normalizeContactEmail(contact) : "";
     const contactPhone = isEmail ? "" : normalizeContactPhone(contact);
+    if (isSelfReferral({ email: contactEmail, phone: contactPhone }, [referral.partner])) return Response.json({ error: SELF_REFERRAL_MESSAGE, code: "SELF_REFERRAL" }, { status: 422 });
     const duplicateConditions = [contactEmail ? eq(submissions.contactEmail, contactEmail) : null, contactPhone ? eq(submissions.contactPhone, contactPhone) : null].filter(Boolean);
     const duplicate = duplicateConditions.length ? await getDb().select({ id: submissions.id }).from(submissions).where(and(eq(submissions.companyId, referral.company.id), gte(submissions.createdAt, duplicateCutoff()), notInArray(submissions.reviewStatus, ["REJECTED"]), duplicateConditions.length === 2 ? or(duplicateConditions[0]!, duplicateConditions[1]!) : duplicateConditions[0]!)).limit(1) : [];
     if (duplicate.length) return Response.json({ error: "Этот контакт уже закреплён за первой рекомендацией компании. Повторно отправлять его не нужно." }, { status: 409 });

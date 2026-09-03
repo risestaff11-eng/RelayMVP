@@ -1109,6 +1109,9 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .relay-auth-verify-actions button:disabled { cursor: wait; opacity: .5; }
 .relay-auth-verify-actions a { color: #315000; font-size: 11px; font-weight: 800; line-height: 1.4; }
 .relay-auth-back { margin-top: 22px; padding: 0; border: 0; color: #536168; background: none; font-size: 12px; font-weight: 750; cursor: pointer; }
+.partner-access-expiry { margin: 8px clamp(16px, 3vw, 32px); color: #606457; font-size: 14px; line-height: 1.5; }
+.partner-access-expiry summary { cursor: pointer; padding: 8px 0; }
+.partner-access-expiry a { display: inline-block; padding: 8px 0; text-decoration: underline; }
 .relay-auth-card form > .relay-auth-forgot { width: auto; min-height: 0; margin: -7px 0 0; padding: 0; align-self: flex-end; color: #415da8; background: transparent; font-size: 12px; font-weight: 800; }
 .relay-auth-card form > .relay-auth-forgot:hover { transform: none; text-decoration: underline; }
 .relay-auth-recovery-actions { margin-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }

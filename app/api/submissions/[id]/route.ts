@@ -5,6 +5,7 @@ import { getCompanyForUser } from "../../../../db/company";
 import { missions, programs, rewards, submissionStatusEvents, submissions } from "../../../../db/schema";
 import { legacyStatus, type ReviewStatus, type SalesStatus } from "../../../../lib/workflow";
 import { cleanString, sameOrigin } from "../../company/_utils";
+import { notifyAgentWorkChanges } from "../../../../lib/agent-work-notifications";
 
 const reviewStatuses = new Set<ReviewStatus>(["PENDING", "REVIEWING", "ACCEPTED", "REJECTED"]);
 const salesStatuses = new Set<SalesStatus>(["NONE", "IN_PROGRESS", "AGREEMENT", "WON", "LOST"]);
@@ -82,6 +83,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     } else if (existingReward && salesStatus === "LOST") {
       await db.batch([...baseStatements, db.update(rewards).set({ status: "CANCELLED", updatedAt: now }).where(eq(rewards.id, existingReward.id))]);
     } else await db.batch(baseStatements);
+    if (currentReview !== reviewStatus || currentSales !== salesStatus || (nextRewardStatus === "APPROVED" && existingReward?.status !== "APPROVED")) {
+      await notifyAgentWorkChanges(company.id, [id]);
+    }
     return Response.json({ ok: true, status: nextLegacyStatus, reviewStatus, salesStatus, rewardStatus: nextRewardStatus, estimatedDealAmount, dealAmount, rewardAmount: amount });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось обновить результат" }, { status: 400 });

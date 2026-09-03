@@ -10,6 +10,7 @@ import { QuickResultLauncher } from "../_components/partner-actions";
 import { countRu } from "@/lib/format-display";
 import { LanguageSwitcher } from "../../language-switcher";
 import { cookies } from "next/headers";
+import { AccessLinkExpiry } from "../_components/access-link-expiry";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false }, referrer: "no-referrer", title: "Кабинет агента" };
@@ -40,6 +41,7 @@ export default async function PartnerLayout({ children, params }: { children: Re
           <a className="partner-company-switch-mobile" href="/agent">{portal.company.name} · сменить</a>
           <div className="partner-top-actions"><LanguageSwitcher locale={locale} className="agent-language-switcher" manageTranslation={false} compact /><QuickResultLauncher token={token} missions={portal.missions} acceptedMissionIds={portal.acceptances.filter((item) => item.status === "ACTIVE").map((item) => item.missionId)} /></div>
         </header>
+        <AccessLinkExpiry expiresAt={portal.accessExpiresAt} now={portal.accessCheckedAt} />
         {children}
       </section>
     </main>

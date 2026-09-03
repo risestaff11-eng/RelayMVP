@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { timingSafeEqual } from "../../../../lib/secure-compare";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { getPartnerPortal } from "../../../../db/partner";
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
       const rows = await db.select().from(contactVerificationCodes).where(and(eq(contactVerificationCodes.partnerId, portal.partner.id), eq(contactVerificationCodes.channel, channel), eq(contactVerificationCodes.destination, destination), isNull(contactVerificationCodes.consumedAt))).orderBy(desc(contactVerificationCodes.createdAt)).limit(1);
       const verification = rows[0];
       if (!verification || new Date(verification.expiresAt).getTime() < Date.now()) throw new Error("Код истёк. Запросите новый");
-      if (verification.codeHash !== await hashVerificationCode(portal.partner.id, channel, code)) throw new Error("Неверный код");
+      if (!timingSafeEqual(verification.codeHash, await hashVerificationCode(portal.partner.id, channel, code))) throw new Error("Неверный код");
       const now = new Date().toISOString();
       await db.batch([
         db.update(contactVerificationCodes).set({ consumedAt: now }).where(eq(contactVerificationCodes.id, verification.id)),
