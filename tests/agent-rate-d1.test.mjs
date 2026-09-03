@@ -36,3 +36,36 @@ test("D1 executes the migration and concurrent limiter/verification batches atom
     assert.equal(confirmations.filter((result) => result[1].results.length === 1).length, 1);
   } finally { await runtime.dispose(); }
 });
+
+test("D1 enforces normalized email uniqueness, claims email codes once and protects confirmed transfers", { timeout: 45000 }, async () => {
+  const runtime = new Miniflare({ modules: true, script: "export default { fetch() { return new Response('test'); } };", d1Databases: ["DB"], compatibilityDate: "2026-05-15" });
+  try {
+    const DB = await runtime.getD1Database("DB");
+    await DB.batch([
+      DB.prepare("CREATE TABLE users(id TEXT PRIMARY KEY, email TEXT NOT NULL)"),
+      DB.prepare("CREATE TABLE company_email_verification_codes(id TEXT PRIMARY KEY, user_id TEXT, destination TEXT, attempts INTEGER DEFAULT 0, consumed_at TEXT, expires_at TEXT, created_at TEXT)"),
+      DB.prepare("CREATE TABLE submissions(id TEXT PRIMARY KEY, status TEXT)"),
+      DB.prepare("CREATE TABLE rewards(id TEXT PRIMARY KEY, submission_id TEXT, company_id TEXT, partner_id TEXT, status TEXT, paid_at TEXT, partner_confirmed_at TEXT, updated_at TEXT)"),
+      DB.prepare("CREATE TABLE submission_status_events(id TEXT PRIMARY KEY, submission_id TEXT, from_status TEXT, to_status TEXT, actor_type TEXT, comment TEXT, created_at TEXT)"),
+    ]);
+    await DB.prepare(await readFile(new URL("../drizzle/0031_sharp_lady_bullseye.sql", import.meta.url), "utf8")).run();
+    await DB.prepare("INSERT INTO users VALUES('u','Owner@example.test')").run();
+    await assert.rejects(DB.prepare("INSERT INTO users VALUES('other',' owner@EXAMPLE.test ')").run(), /UNIQUE/);
+    const now = new Date().toISOString();
+    await DB.prepare("INSERT INTO company_email_verification_codes(id,user_id,destination,expires_at,created_at) VALUES('code','u','owner@example.test',?,?)")
+      .bind(new Date(Date.now() + 600000).toISOString(), now).run();
+    const load = typescriptLoader({ "cloudflare:workers": { env: { DB } } });
+    const { claimEmailCode } = load(new URL("../lib/email-code-lifecycle.ts", import.meta.url));
+    const claims = await Promise.all(Array.from({ length: 5 }, () => claimEmailCode("company_email_verification_codes", "code", now)));
+    assert.equal(claims.filter(Boolean).length, 1);
+    await DB.prepare("INSERT INTO submissions VALUES('lead','REWARDED')").run();
+    await DB.prepare("INSERT INTO rewards(id,submission_id,company_id,partner_id,status) VALUES('reward','lead','company','agent','APPROVED')").run();
+    const { recordRewardTransfer, recordRewardReceipt } = load(new URL("../lib/reward-transfer.ts", import.meta.url));
+    const transfers = await Promise.all(Array.from({ length: 4 }, () => recordRewardTransfer("company", "reward", true)));
+    assert.equal(transfers.filter(Boolean).length, 1);
+    assert.ok(await recordRewardReceipt("agent", "reward"));
+    assert.equal(await recordRewardTransfer("company", "reward", false), undefined);
+    assert.equal((await DB.prepare("SELECT status FROM rewards").first()).status, "PAID");
+    assert.equal((await DB.prepare("SELECT count(*) n FROM submission_status_events").first()).n, 2);
+  } finally { await runtime.dispose(); }
+});

@@ -57,7 +57,7 @@ export function RewardReceiptConfirmation({ token, rewardId, confirmed, supportH
     } catch (error) { setNotice(error instanceof Error ? error.message : "Не удалось обновить выплату"); }
     finally { setPending(false); }
   }
-  return <div className="reward-receipt-confirmation"><label><input type="checkbox" checked={checked} disabled={pending} onChange={(event) => void change(event.target.checked)} /><span>{checked ? "Деньги получены" : "Подтвердить получение"}</span></label>{!checked && <a href={supportHref} target="_blank" rel="noreferrer">Не получили деньги? Написать в поддержку</a>}<small aria-live="polite">{notice}</small></div>;
+  return <div className="reward-receipt-confirmation"><label><input type="checkbox" checked={checked} disabled={pending || checked} onChange={(event) => void change(event.target.checked)} /><span>{checked ? "Деньги получены" : "Подтвердить получение"}</span></label>{!checked && <a href={supportHref} target="_blank" rel="noreferrer">Не получили деньги? Написать в поддержку</a>}<small aria-live="polite">{notice}</small></div>;
 }
 
 export function CopyTextButton({ text, label = "Скопировать" }: { text: string; label?: string }) {

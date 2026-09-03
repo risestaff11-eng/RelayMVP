@@ -3,6 +3,7 @@ import { typescriptLoader } from "./load-typescript.mjs";
 
 export function authFixture() {
   const sqlite = new DatabaseSync(":memory:");
+  let transactionQueue = Promise.resolve();
   sqlite.exec(`
     CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL, display_name TEXT NOT NULL,
       phone TEXT NOT NULL DEFAULT '', company_name TEXT NOT NULL DEFAULT '', password_hash TEXT,
@@ -11,6 +12,8 @@ export function authFixture() {
     CREATE TABLE user_roles (user_id TEXT NOT NULL, role TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(user_id, role));
     CREATE TABLE auth_sessions (id TEXT PRIMARY KEY, user_id TEXT, expires_at TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE password_reset_attempts (id TEXT PRIMARY KEY, key_hash TEXT, successful INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE request_rate_limits (key_hash TEXT PRIMARY KEY, hits INTEGER NOT NULL, reset_at INTEGER NOT NULL);
+    CREATE UNIQUE INDEX idx_users_email_normalized ON users (lower(trim(email)));
   `);
   for (const table of ["company_email_verification_codes", "password_reset_codes"]) {
     sqlite.exec(`CREATE TABLE ${table} (id TEXT PRIMARY KEY, user_id TEXT, destination TEXT, code_hash TEXT,
@@ -27,7 +30,8 @@ export function authFixture() {
         async run() { statement.run(...params); return { success: true, meta: {} }; },
       };
     },
-    async batch(statements) {
+    batch(statements) {
+      const result = transactionQueue.then(async () => {
       sqlite.exec("BEGIN");
       try {
         const results = [];
@@ -35,6 +39,9 @@ export function authFixture() {
         sqlite.exec("COMMIT");
         return results;
       } catch (error) { sqlite.exec("ROLLBACK"); throw error; }
+      });
+      transactionQueue = result.catch(() => {});
+      return result;
     },
   };
   const jar = new Map();

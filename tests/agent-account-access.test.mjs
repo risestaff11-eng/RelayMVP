@@ -44,12 +44,12 @@ test("five incorrect login codes exhaust the attempt limit; expired codes cannot
     assert.equal((await request("VERIFY", code)).status, 400);
     assert.equal(f.jar.size, 0);
     for (let count = 1; count < 5; count++) assert.equal((await request("REQUEST")).status, 200);
-    assert.equal((await request("REQUEST")).status, 400);
+    assert.equal((await request("REQUEST")).status, 429);
     assert.equal(f.deliveries.length, 5);
   } finally { f.close(); }
 });
 
-test("company selection keeps memberships separate and excludes paused, archived and expired programs", async () => {
+test("company selection keeps historical memberships while only active programs permit new work", async () => {
   const f = agentFixture();
   try {
     const a = await f.seed();
@@ -60,7 +60,7 @@ test("company selection keeps memberships separate and excludes paused, archived
     const access = f.load(new URL("../db/agent-access.ts", import.meta.url));
     const workspace = await access.getAgentWorkspace(a.email, a.phone);
     assert.deepEqual(workspace.companies.map((company) => [company.id, company.programs.map((program) => program.id)]), [
-      ["company-a", ["program-a"]], ["company-b", ["program-b"]],
+      ["company-a", ["archived", "expired", "paused", "program-a"]], ["company-b", ["program-b"]],
     ]);
     assert.equal(await access.createCompanyAccessForAgent(a.email, a.phone, "unrelated-company"), null);
     const token = await access.createCompanyAccessForAgent(a.email, a.phone, "company-a");

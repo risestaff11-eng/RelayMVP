@@ -1,4 +1,6 @@
 /* Company workspace refinement. Scoped to the company cabinet so agent UX stays unchanged. */
+.crm-compact-header .crm-month-control { flex: 0 1 180px; width: 180px; min-width: 145px; min-height: 44px; font-size: 16px; padding: 8px 10px; }
+@media (max-width: 600px) { .crm-compact-header .crm-month-control { flex-basis: 155px; width: 155px; } }
 .dashboard-shell {
   --company-surface: #fff;
   --company-canvas: #f5f5f0;

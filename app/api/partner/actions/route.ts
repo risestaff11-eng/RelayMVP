@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { getPartnerPortal } from "../../../../db/partner";
-import { partnerMissionAcceptances, partnerProfiles, rewards, submissionDisputes } from "../../../../db/schema";
+import { partnerMissionAcceptances, partnerProfiles, submissionDisputes } from "../../../../db/schema";
+import { recordRewardReceipt } from "../../../../lib/reward-transfer";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
 
 export async function POST(request: Request) {
@@ -45,8 +46,11 @@ export async function POST(request: Request) {
       const reward = portal.rewards.find((item) => item.id === rewardId);
       if (!reward) throw new Error("Начисление не найдено");
       if (reward.status !== "PAID") throw new Error("Компания ещё не отметила выплату");
-      await db.update(rewards).set({ partnerConfirmedAt: confirmed ? now : null, updatedAt: now }).where(eq(rewards.id, rewardId));
-      return Response.json({ ok: true, partnerConfirmedAt: confirmed ? now : null });
+      if (!confirmed && reward.partnerConfirmedAt) throw new Error("Получение уже подтверждено. Для корректировки обратитесь в поддержку.");
+      if (!confirmed || reward.partnerConfirmedAt) return Response.json({ ok: true, partnerConfirmedAt: reward.partnerConfirmedAt });
+      const confirmedAt = await recordRewardReceipt(reward.partnerId, rewardId);
+      if (!confirmedAt) throw new Error("Выплата уже изменена. Обновите страницу.");
+      return Response.json({ ok: true, partnerConfirmedAt: confirmedAt });
     }
 
     if (action === "UPDATE_PROFILE") {

@@ -189,7 +189,7 @@ export async function getSubmissionsForCompany(companyId: string) {
     rewardMode: row.mission.rewardMode,
     rewardValue: row.mission.rewardValue,
     rewardLabel: row.mission.rewardLabel,
-    currency: row.program.currency,
+    currency: rewardRows.find((reward) => reward.submissionId === row.submission.id)?.currency || row.program.currency,
     programName: row.program.name,
     ...parseSubmissionPayload(row.submission.payloadJson),
     reward: rewardRows.find((reward) => reward.submissionId === row.submission.id) ?? null,

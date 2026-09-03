@@ -58,8 +58,11 @@ export function agentFixture({ rateTable = true, captureSubmissionEmail = true }
       return `${quote(column.name)} ${column.getSQLType()}${column.primary ? " PRIMARY KEY" : ""}${column.notNull ? " NOT NULL" : ""}${column.isUnique ? " UNIQUE" : ""}${defaultSql ? ` DEFAULT (${defaultSql})` : ""}`;
     });
     for (const pk of config.primaryKeys) definitions.push(`PRIMARY KEY (${pk.columns.map((column) => quote(column.name)).join(",")})`);
-    for (const index of config.indexes.filter((index) => index.config.unique)) definitions.push(`UNIQUE (${index.config.columns.map((column) => quote(column.name)).join(",")})`);
     sqlite.exec(`CREATE TABLE ${quote(config.name)} (${definitions.join(",")})`);
+    for (const index of config.indexes.filter((index) => index.config.unique)) {
+      const columns = index.config.columns.map((column) => is(column, SQL) ? dialect.sqlToQuery(column).sql.replaceAll(`${quote(config.name)}.`, "") : quote(column.name)).join(",");
+      sqlite.exec(`CREATE UNIQUE INDEX ${quote(index.config.name)} ON ${quote(config.name)} (${columns})`);
+    }
   }
   const db = load(new URL("../../db/index.ts", import.meta.url)).getDb();
   const mail = load(new URL("../../lib/agent-email.ts", import.meta.url));

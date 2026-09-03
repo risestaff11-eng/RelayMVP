@@ -1,4 +1,5 @@
 "use client";
+import { reportMetricEntries, reportMetricValue } from "../../../../lib/reporting";
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/media-has-caption */
 import { useMemo, useRef, useState } from "react";
 import type { ReportField } from "../../../../lib/reporting";
@@ -39,7 +40,11 @@ const metricNames: Record<string, string> = {
   leads: "Лиды",
   deals: "Сделки",
   accrued: "Начислено",
-  paid: "Выплачено",
+  paid: "Компания отметила перевод",
+  confirmed: "Получение подтверждено",
+  confirmedRewardsCount: "Получений подтверждено",
+  paidRewardsCount: "Переводов за период",
+  pendingRewardsCount: "Выплат ожидается",
   pending: "Ожидает выплаты",
 };
 const today = () => new Date().toISOString().slice(0, 10);
@@ -87,7 +92,7 @@ export function ReportCenter({
     (field) => field.enabled,
   );
   const metricEntries = useMemo(
-    () => Object.entries(editing?.metrics || {}).filter(([, value]) => value),
+    () => reportMetricEntries(editing?.metrics || {}),
     [editing],
   );
   function open(report?: Report) {
@@ -441,11 +446,9 @@ export function ReportCenter({
                 <div>
                   {metricEntries.map(([key, value]) => (
                     <span key={key}>
-                      <small>{metricNames[key] || key}</small>
+                      <small>{metricNames[key.split(":")[0]] || key}</small>
                       <strong>
-                        {["accrued", "paid", "pending"].includes(key)
-                          ? `${value.toLocaleString("ru-RU")} ₸`
-                          : value}
+                        {reportMetricValue(key, value)}
                       </strong>
                     </span>
                   ))}

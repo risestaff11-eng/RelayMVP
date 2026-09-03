@@ -5,6 +5,7 @@ import { getCompanyForUser } from "../../../../../db/company";
 import { partners, rewards } from "../../../../../db/schema";
 import { sameOrigin } from "../../../company/_utils";
 import { notifyAgentWorkChanges } from "../../../../../lib/agent-work-notifications";
+import { recordRewardTransfer } from "../../../../../lib/reward-transfer";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -17,10 +18,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!agent) return Response.json({ error: "Агент не найден" }, { status: 404 });
   const related = await getDb().select({ id: partners.id }).from(partners).where(and(eq(partners.companyId, company.id), agent.userId ? or(eq(partners.userId, agent.userId), eq(partners.email, agent.email)) : eq(partners.email, agent.email)));
   const payload = await request.json() as { paid?: boolean };
+  if (typeof payload.paid !== "boolean") return Response.json({ error: "Укажите действие с выплатой" }, { status: 400 });
   const paid = payload.paid === true;
   const statuses = paid ? ["APPROVED"] : ["PAID"];
-  const now = new Date().toISOString();
-  const changed = await getDb().update(rewards).set({ status: paid ? "PAID" : "APPROVED", paidAt: paid ? now : null, updatedAt: now }).where(and(eq(rewards.companyId, company.id), inArray(rewards.partnerId, related.map((item) => item.id)), inArray(rewards.status, statuses))).returning({ submissionId: rewards.submissionId });
-  await notifyAgentWorkChanges(company.id, changed.map((row) => row.submissionId));
-  return Response.json({ ok: true });
+  const rows = await getDb().select({ id: rewards.id }).from(rewards).where(and(eq(rewards.companyId, company.id), inArray(rewards.partnerId, related.map((item) => item.id)), inArray(rewards.status, statuses)));
+  const changed: string[] = [];
+  for (const row of rows) { const result = await recordRewardTransfer(company.id, row.id, paid); if (result) changed.push(result.submission_id); }
+  await notifyAgentWorkChanges(company.id, changed);
+  return Response.json({ ok: true, changed: changed.length, skipped: rows.length - changed.length });
 }

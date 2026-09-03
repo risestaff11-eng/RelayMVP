@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/media-has-caption */
 import { useMemo, useState } from "react";
 import type { ReportField } from "../../../lib/reporting";
+import { reportMetricEntries, reportMetricValue, reportMoney } from "../../../lib/reporting";
 import { countRu } from "@/lib/format-display";
 type Report = {
   id: string;
@@ -44,7 +45,9 @@ const metricNames: Record<string, string> = {
   leads: "Лиды",
   deals: "Сделки",
   accrued: "Начислено",
-  paid: "Выплачено",
+  paid: "Компания отметила перевод",
+  confirmed: "Получение подтверждено",
+  confirmedRewardsCount: "Получений подтверждено",
   pending: "К выплате",
   paidRewardsCount: "Выплат проведено",
   pendingRewardsCount: "Выплат ожидается",
@@ -217,15 +220,13 @@ export function ReportsWorkspace({
         </article>
       </section>
       <section className="report-kpi-strip">
-        {Object.entries(overview.aggregate)
-          .filter(([, value]) => value)
+        <small>Текущий месяц · без повторного счёта заявок в пересекающихся отчётах</small>
+        {reportMetricEntries(overview.aggregate)
           .map(([key, value]) => (
             <span key={key}>
-              <small>{metricNames[key] || key}</small>
+              <small>{metricNames[key.split(":")[0]] || key}</small>
               <b>
-                {["accrued", "paid", "pending"].includes(key)
-                  ? `${value.toLocaleString("ru-RU")} ₸`
-                  : value}
+                {reportMetricValue(key, value)}
               </b>
             </span>
           ))}
@@ -378,8 +379,9 @@ export function ReportsWorkspace({
               <div className="report-detail-metrics">
                 <span><small>РЕЗУЛЬТАТОВ</small><strong>{selected.metrics.submissions || 0}</strong></span>
                 <span><small>ВЫПЛАТ ПРОВЕДЕНО</small><strong>{selected.metrics.paidRewardsCount || 0}</strong></span>
-                <span><small>ОЖИДАЕТ ОПЛАТЫ</small><strong>{(selected.metrics.pending || 0).toLocaleString("ru-RU")} ₸</strong></span>
-                <span><small>ВЫПЛАЧЕНО</small><strong>{(selected.metrics.paid || 0).toLocaleString("ru-RU")} ₸</strong></span>
+                <span><small>К ВЫПЛАТЕ НА КОНЕЦ ПЕРИОДА</small><strong>{reportMoney(selected.metrics, "pending")}</strong></span>
+                <span><small>КОМПАНИЯ ОТМЕТИЛА ПЕРЕВОД</small><strong>{reportMoney(selected.metrics, "paid")}</strong></span>
+                <span><small>ПОЛУЧЕНИЕ ПОДТВЕРЖДЕНО</small><strong>{reportMoney(selected.metrics, "confirmed")}</strong></span>
               </div>
             </section>
             <div className="report-detail-answers">

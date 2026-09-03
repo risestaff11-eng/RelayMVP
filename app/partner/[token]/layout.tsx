@@ -42,6 +42,7 @@ export default async function PartnerLayout({ children, params }: { children: Re
           <div className="partner-top-actions"><LanguageSwitcher locale={locale} className="agent-language-switcher" manageTranslation={false} compact /><QuickResultLauncher token={token} missions={portal.missions} acceptedMissionIds={portal.acceptances.filter((item) => item.status === "ACTIVE").map((item) => item.missionId)} /></div>
         </header>
         <AccessLinkExpiry expiresAt={portal.accessExpiresAt} now={portal.accessCheckedAt} />
+        {portal.historyOnly && <div className="form-notice">Программы завершены или приостановлены. История заявок и выплаты доступны; новые задания пока недоступны.</div>}
         {children}
       </section>
     </main>

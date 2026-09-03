@@ -1,3 +1,18 @@
+import { formatMoney } from "./format-display";
+
+export function reportMetricEntries(metrics: Record<string, number>) {
+  return Object.entries(metrics).filter(([key, value]) => value && !["accrued", "paid", "pending", "confirmed"].includes(key));
+}
+
+export function reportMoney(metrics: Record<string, number>, key: string) {
+  const rows = Object.entries(metrics).filter(([name]) => name.startsWith(`${key}:`));
+  return rows.length ? rows.map(([name, amount]) => formatMoney(amount, name.split(":")[1])).join(" · ") : "0";
+}
+
+export function reportMetricValue(key: string, value: number) {
+  return key.includes(":") ? formatMoney(value, key.split(":")[1]) : value;
+}
+
 export const REPORT_FIELD_TYPES = ["TEXT", "TEXTAREA", "NUMBER", "DATE", "SELECT", "MULTISELECT", "URL", "FILE", "BOOLEAN"] as const;
 export type ReportFieldType = typeof REPORT_FIELD_TYPES[number];
 export type ReportField = { id: string; label: string; description: string; type: ReportFieldType; required: boolean; enabled: boolean; options: string[]; unit?: string; frequency?: string; sortOrder: number };
