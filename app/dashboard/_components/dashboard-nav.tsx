@@ -14,10 +14,8 @@ const items = [
   { group: "СЕТЬ", href: "/dashboard/methodologist", label: "Материалы для агентов", hint: "Скрипты, ответы и обучение", icon: "methodologist" },
   { group: "КОНТРОЛЬ", href: "/dashboard/analytics", label: "Аналитика", hint: "Сравнение эффективности", icon: "analytics" },
   { group: "КОНТРОЛЬ", href: "/dashboard/agent-rating", label: "Рейтинг агентов", hint: "Сделки, деньги и конверсия", icon: "agents" },
-  { group: "КОНТРОЛЬ", href: "/dashboard/notifications", label: "Уведомления", hint: "Срочные действия и история", icon: "reports" },
   { group: "НАСТРОЙКИ", href: "/dashboard/assistant", label: "RiseStaff AI", hint: "Помощник по программам", icon: "assistant" },
   { group: "НАСТРОЙКИ", href: "/dashboard/company-profile", label: "Данные компании", hint: "Основа для заданий", icon: "company" },
-  { group: "НАСТРОЙКИ", href: "/dashboard/integrations", label: "Интеграции", hint: "Webhooks и API-ключи", icon: "integrations" },
   { group: "НАСТРОЙКИ", href: "/dashboard/settings", label: "Настройки", hint: "Доступ, тариф и экспорт", icon: "settings" },
 ] as const;
 const groups = ["РАБОТА", "СЕТЬ", "КОНТРОЛЬ", "НАСТРОЙКИ"] as const;

@@ -74,6 +74,8 @@
 .dashboard-shell .dashboard-content { max-width: 1480px; padding: 36px clamp(24px,3vw,48px) 80px; }
 .dashboard-shell .module-content { padding-top: 38px; }
 .dashboard-shell .dashboard-heading,.dashboard-shell .module-heading { min-height: 0; margin-bottom: 26px; align-items: flex-end; }
+.dashboard-shell .settings-heading-actions { flex-wrap: wrap; justify-content: flex-end; }
+.dashboard-shell .settings-heading-actions .button { white-space: nowrap; }
 .dashboard-shell .dashboard-heading h1,.dashboard-shell .module-heading h1 { max-width: 900px; font-size: clamp(38px,3.6vw,54px); line-height: .98; letter-spacing: -.055em; }
 .dashboard-shell .dashboard-heading p,.dashboard-shell .module-heading p { max-width: 720px; margin-top: 12px; color: var(--company-muted); font-size: 15px; line-height: 1.55; }
 .dashboard-shell .module-kicker { display: block; margin-bottom: 9px; color: #696c64; font-size: 10px; font-weight: 900; letter-spacing: .1em; }
@@ -218,6 +220,7 @@
   .dashboard-shell .dashboard-content { padding: 24px max(14px,env(safe-area-inset-right)) 48px max(14px,env(safe-area-inset-left)); }
   .dashboard-shell .module-content { padding-top: 24px; }
   .dashboard-shell .dashboard-heading,.dashboard-shell .module-heading { margin-bottom: 20px; align-items: stretch; }
+  .dashboard-shell .settings-heading-actions { justify-content: flex-start; }
   .dashboard-shell .dashboard-heading h1,.dashboard-shell .module-heading h1 { font-size: clamp(32px,9.5vw,43px); }
   .dashboard-shell .dashboard-heading p,.dashboard-shell .module-heading p { font-size: 14px; }
   .dashboard-shell .first-run-guide { padding: 18px; border-radius: 19px; }

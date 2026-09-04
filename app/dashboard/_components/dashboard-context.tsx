@@ -11,6 +11,8 @@ const sections = [
   ["/dashboard/assistant", "RiseStaff · программы"],
   ["/dashboard/methodologist", "Материалы для агентов"],
   ["/dashboard/company-profile", "Данные компании"],
+  ["/dashboard/notifications", "Настройки · уведомления"],
+  ["/dashboard/integrations", "Настройки · интеграции"],
   ["/dashboard/settings", "Настройки"],
 ] as const;
 

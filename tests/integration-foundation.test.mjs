@@ -33,16 +33,19 @@ test("migration creates the queue, attempt journal, API keys and external mappin
   assert.match(migration, /idx_integration_deliveries_event_connection/);
 });
 
-test("company UI exposes integrations and business routes emit stable event types", async () => {
-  const [nav, page, service, leadRoute, updateRoute, rewardRoute] = await Promise.all([
+test("company settings expose integrations outside the sidebar and business routes emit stable event types", async () => {
+  const [nav, settings, page, service, leadRoute, updateRoute, rewardRoute] = await Promise.all([
     source("../app/dashboard/_components/dashboard-nav.tsx"),
+    source("../app/dashboard/settings/plan-settings.tsx"),
     source("../app/dashboard/integrations/integration-manager.tsx"),
     source("../lib/integrations/service.ts"),
     source("../app/api/public/submissions/route.ts"),
     source("../app/api/submissions/[id]/route.ts"),
     source("../app/api/rewards/[id]/route.ts"),
   ]);
-  assert.match(nav, /\/dashboard\/integrations/);
+  assert.doesNotMatch(nav, /\/dashboard\/(integrations|notifications)/);
+  assert.match(settings, /\/dashboard\/integrations/);
+  assert.match(settings, /\/dashboard\/notifications/);
   assert.match(page, /Исходящие webhooks/);
   assert.match(page, /Журнал доставки/);
   assert.match(service, /"submission\.created"/);
