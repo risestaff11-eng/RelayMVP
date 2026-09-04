@@ -36,6 +36,7 @@ Production-значения задаются в Sites, а не в `.env` и не
 | `GEMINI_MODEL` | опционально | по умолчанию используется модель из `lib/ai.ts` |
 | `RESEND_API_KEY` | для автоматической активации компании | отправка кодов подтверждения компаниям и magic-link писем агентам |
 | `MAGIC_FROM_EMAIL` | для автоматической активации компании | подтверждённый адрес отправителя Resend |
+| `INTEGRATION_ENCRYPTION_KEY` | для webhooks и API | длинная случайная секретная строка для шифрования ключей подписи |
 | `WHATSAPP_VERIFY_WEBHOOK_URL` | опционально | webhook отправки WhatsApp-кодов |
 | `WHATSAPP_VERIFY_WEBHOOK_TOKEN` | опционально | bearer token для webhook |
 

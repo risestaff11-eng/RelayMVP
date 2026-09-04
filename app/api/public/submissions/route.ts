@@ -10,6 +10,7 @@ import { notifyCompanyNewSubmission } from "../../../../lib/company-submission-n
 import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfReferral, SELF_REFERRAL_MESSAGE, hasHoneypotValue } from "../../../../lib/submission-antifraud";
 import { reviewDueAt } from "../../../../lib/workflow";
 import { limitPublicSubmission, requestLimitResponse } from "../../../../lib/request-rate-limit";
+import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../lib/integrations/service";
 
 const allowedTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
 const allowedAudioTypes = new Set(["audio/webm", "audio/mp4", "audio/mpeg", "audio/mp3", "audio/ogg", "audio/wav", "audio/x-wav", "audio/aac", "audio/x-m4a"]);
@@ -100,6 +101,14 @@ export async function POST(request: Request) {
     if (attachmentRows.length) await db.batch([submissionStatement, eventStatement, db.insert(submissionAttachments).values(attachmentRows)]);
     else await db.batch([submissionStatement, eventStatement]);
     await notifyCompanyNewSubmission(target.company.id, submissionId);
+    deferIntegrationEvent(recordIntegrationEvent({
+      companyId: target.company.id,
+      eventType: "submission.created",
+      aggregateType: "submission",
+      aggregateId: submissionId,
+      idempotencyKey: `submission.created:${submissionId}`,
+      payload: { submissionId, programId: target.program.id, missionId, partnerId: missionPartner.id, contactName, contactCompany, contactEmail, contactPhone, source: "AGENT_PORTAL", createdAt: now },
+    }));
     return Response.json({ partnerUrl: agentUrl(`/partner/${token}`), submissionId }, { status: 201 });
   } catch (error) {
     const limited = requestLimitResponse(error);

@@ -11,6 +11,7 @@ interface Env {
   GEMINI_MODEL?: string;
   GEMINI_AUDIO_MODEL?: string;
   ADMIN_SECRET?: string;
+  INTEGRATION_ENCRYPTION_KEY?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {

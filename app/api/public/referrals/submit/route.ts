@@ -7,6 +7,7 @@ import { notifyCompanyNewSubmission } from "../../../../../lib/company-submissio
 import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfReferral, SELF_REFERRAL_MESSAGE, hasHoneypotValue } from "../../../../../lib/submission-antifraud";
 import { reviewDueAt } from "../../../../../lib/workflow";
 import { limitPublicSubmission, requestLimitResponse } from "../../../../../lib/request-rate-limit";
+import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../../lib/integrations/service";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -38,6 +39,14 @@ export async function POST(request: Request) {
       getDb().insert(submissionStatusEvents).values({ id: crypto.randomUUID(), submissionId: id, fromStatus: null, toStatus: "SUBMITTED", actorType: "CLIENT", comment: "Клиент самостоятельно заполнил реферальную форму агента", createdAt: now }),
     ]);
     await notifyCompanyNewSubmission(referral.company.id, id);
+    deferIntegrationEvent(recordIntegrationEvent({
+      companyId: referral.company.id,
+      eventType: "submission.created",
+      aggregateType: "submission",
+      aggregateId: id,
+      idempotencyKey: `submission.created:${id}`,
+      payload: { submissionId: id, programId: referral.program.id, missionId: referral.mission.id, partnerId: referral.partner.id, contactName: name, contactEmail, contactPhone, source: "REFERRAL_LINK", createdAt: now },
+    }));
     return Response.json({ ok: true }, { status: 201 });
   } catch (error) {
     const limited = requestLimitResponse(error);

@@ -6,6 +6,7 @@ import { rewards } from "../../../../db/schema";
 import { sameOrigin } from "../../company/_utils";
 import { notifyAgentWorkChanges } from "../../../../lib/agent-work-notifications";
 import { recordRewardTransfer } from "../../../../lib/reward-transfer";
+import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../lib/integrations/service";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -24,5 +25,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!changed) return Response.json({ error: "Выплата уже изменена или получение подтверждено. Обновите страницу." }, { status: 409 });
   await notifyAgentWorkChanges(company.id, [row.submissionId]);
   const current = (await getDb().select().from(rewards).where(eq(rewards.id, id)).limit(1))[0];
+  deferIntegrationEvent(recordIntegrationEvent({
+    companyId: company.id,
+    eventType: "reward.updated",
+    aggregateType: "reward",
+    aggregateId: id,
+    idempotencyKey: `reward.updated:${id}:${current.updatedAt}`,
+    payload: { rewardId: id, submissionId: current.submissionId, partnerId: current.partnerId, amount: current.amount, currency: current.currency, status: current.status, paidAt: current.paidAt, partnerConfirmedAt: current.partnerConfirmedAt, updatedAt: current.updatedAt },
+  }));
   return Response.json({ ok: true, status: current.status, paidAt: current.paidAt, partnerConfirmedAt: current.partnerConfirmedAt });
 }
