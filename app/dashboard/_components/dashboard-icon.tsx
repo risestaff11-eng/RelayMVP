@@ -1,4 +1,4 @@
-type IconName = "home" | "programs" | "results" | "reports" | "agents" | "rewards" | "analytics" | "assistant" | "methodologist" | "company" | "settings";
+type IconName = "home" | "programs" | "results" | "reports" | "agents" | "rewards" | "analytics" | "assistant" | "methodologist" | "company" | "integrations" | "settings";
 
 const paths: Record<IconName, React.ReactNode> = {
   home: <><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9.5V21h13V9.5" /><path d="M9.5 21v-6h5v6" /></>,
@@ -11,6 +11,7 @@ const paths: Record<IconName, React.ReactNode> = {
   assistant: <><path d="m12 2 1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5z" /><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></>,
   methodologist: <><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H11v18H6.5A2.5 2.5 0 0 0 4 22z" /><path d="M20 4.5A2.5 2.5 0 0 0 17.5 2H13v18h4.5a2.5 2.5 0 0 1 2.5 2z" /></>,
   company: <><path d="M4 21V7l8-4 8 4v14" /><path d="M2 21h20M8 9h2M14 9h2M8 13h2M14 13h2M10 21v-4h4v4" /></>,
+  integrations: <><path d="M8 12h8" /><path d="M9 8H6a4 4 0 0 0 0 8h3" /><path d="M15 8h3a4 4 0 0 1 0 8h-3" /></>,
   settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" /></>,
 };
 

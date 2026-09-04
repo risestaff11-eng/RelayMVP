@@ -6,6 +6,7 @@ import { missions, programs, rewards, submissions } from "../../../../db/schema"
 import { legacyStatus, type ReviewStatus, type SalesStatus } from "../../../../lib/workflow";
 import { cleanString, sameOrigin } from "../../company/_utils";
 import { notifyAgentWorkChanges } from "../../../../lib/agent-work-notifications";
+import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../lib/integrations/service";
 
 const reviewStatuses = new Set<ReviewStatus>(["PENDING", "REVIEWING", "ACCEPTED", "REJECTED"]);
 const salesStatuses = new Set<SalesStatus>(["NONE", "IN_PROGRESS", "AGREEMENT", "WON", "LOST"]);
@@ -111,6 +112,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (currentReview !== reviewStatus || currentSales !== salesStatus || (nextRewardStatus === "APPROVED" && existingReward?.status !== "APPROVED")) {
       await notifyAgentWorkChanges(company.id, [id]);
     }
+    deferIntegrationEvent(recordIntegrationEvent({
+      companyId: company.id,
+      eventType: "submission.updated",
+      aggregateType: "submission",
+      aggregateId: id,
+      idempotencyKey: `submission.updated:${eventId}`,
+      payload: { submissionId: id, programId: submission.programId, missionId: submission.missionId, partnerId: submission.partnerId, reviewStatus, salesStatus, rewardStatus: nextRewardStatus, estimatedDealAmount, dealAmount, rewardAmount: amount, updatedAt: now },
+    }));
     return Response.json({ ok: true, status: nextLegacyStatus, reviewStatus, salesStatus, rewardStatus: nextRewardStatus, estimatedDealAmount, dealAmount, rewardAmount: amount,
       event: { id: eventId, fromStatus: submission.status, toStatus: nextLegacyStatus, actorType: "COMPANY", comment: transitionComment || "Карточка заявки обновлена", createdAt: now } });
   } catch (error) {

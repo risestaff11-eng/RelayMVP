@@ -179,6 +179,124 @@ export const companies = sqliteTable("companies", {
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const integrationConnections = sqliteTable(
+  "integration_connections",
+  {
+    id: text("id").primaryKey(),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    provider: text("provider").notNull(),
+    name: text("name").notNull(),
+    status: text("status").notNull().default("ACTIVE"),
+    direction: text("direction").notNull().default("OUTBOUND"),
+    configJson: text("config_json").notNull().default("{}"),
+    encryptedCredentials: text("encrypted_credentials"),
+    lastSuccessAt: text("last_success_at"),
+    lastErrorAt: text("last_error_at"),
+    lastError: text("last_error").notNull().default(""),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_integration_connections_company_status").on(table.companyId, table.status),
+    index("idx_integration_connections_company_provider").on(table.companyId, table.provider),
+  ],
+);
+
+export const integrationEvents = sqliteTable(
+  "integration_events",
+  {
+    id: text("id").primaryKey(),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    eventType: text("event_type").notNull(),
+    aggregateType: text("aggregate_type").notNull(),
+    aggregateId: text("aggregate_id").notNull(),
+    payloadJson: text("payload_json").notNull().default("{}"),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_integration_events_company_created").on(table.companyId, table.createdAt),
+    index("idx_integration_events_aggregate").on(table.aggregateType, table.aggregateId, table.createdAt),
+  ],
+);
+
+export const integrationDeliveries = sqliteTable(
+  "integration_deliveries",
+  {
+    id: text("id").primaryKey(),
+    eventId: text("event_id").notNull().references(() => integrationEvents.id),
+    connectionId: text("connection_id").notNull().references(() => integrationConnections.id),
+    status: text("status").notNull().default("PENDING"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    nextAttemptAt: text("next_attempt_at"),
+    responseStatus: integer("response_status"),
+    lastError: text("last_error").notNull().default(""),
+    deliveredAt: text("delivered_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("idx_integration_deliveries_event_connection").on(table.eventId, table.connectionId),
+    index("idx_integration_deliveries_connection_status_next").on(table.connectionId, table.status, table.nextAttemptAt),
+  ],
+);
+
+export const integrationDeliveryAttempts = sqliteTable(
+  "integration_delivery_attempts",
+  {
+    id: text("id").primaryKey(),
+    deliveryId: text("delivery_id").notNull().references(() => integrationDeliveries.id),
+    attemptNumber: integer("attempt_number").notNull(),
+    responseStatus: integer("response_status"),
+    error: text("error").notNull().default(""),
+    latencyMs: integer("latency_ms").notNull().default(0),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("idx_integration_attempts_delivery_number").on(table.deliveryId, table.attemptNumber),
+    index("idx_integration_attempts_delivery_created").on(table.deliveryId, table.createdAt),
+  ],
+);
+
+export const integrationApiKeys = sqliteTable(
+  "integration_api_keys",
+  {
+    id: text("id").primaryKey(),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    name: text("name").notNull(),
+    tokenPrefix: text("token_prefix").notNull(),
+    tokenHash: text("token_hash").notNull().unique(),
+    scopesJson: text("scopes_json").notNull().default("[]"),
+    lastUsedAt: text("last_used_at"),
+    expiresAt: text("expires_at"),
+    revokedAt: text("revoked_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_integration_api_keys_company_created").on(table.companyId, table.createdAt)],
+);
+
+export const externalEntityLinks = sqliteTable(
+  "external_entity_links",
+  {
+    id: text("id").primaryKey(),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    connectionId: text("connection_id").notNull().references(() => integrationConnections.id),
+    entityType: text("entity_type").notNull(),
+    localId: text("local_id").notNull(),
+    externalId: text("external_id").notNull(),
+    externalUrl: text("external_url"),
+    syncVersion: integer("sync_version").notNull().default(1),
+    lastSyncedAt: text("last_synced_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("idx_external_entity_links_connection_entity_local").on(table.connectionId, table.entityType, table.localId),
+    uniqueIndex("idx_external_entity_links_connection_entity_external").on(table.connectionId, table.entityType, table.externalId),
+    index("idx_external_entity_links_company_entity").on(table.companyId, table.entityType),
+  ],
+);
+
 export const companyKnowledgeItems = sqliteTable(
   "company_knowledge_items",
   {
