@@ -2390,5 +2390,7 @@
   "Короткая памятка для подключения внешней CRM.": "Сыртқы CRM жүйесін қосуға арналған қысқа нұсқаулық.",
   "Проверка ключа": "Кілтті тексеру",
   "Обязателен заголовок Idempotency-Key.": "Idempotency-Key тақырыбы міндетті.",
-  "Передавайте ключ в заголовке Authorization: Bearer. Webhook подписан HMAC SHA-256 в заголовке x-risestaff-signature.": "Кілтті Authorization: Bearer тақырыбында жіберіңіз. Webhook x-risestaff-signature тақырыбында HMAC SHA-256 арқылы қол қойылған."
+  "Передавайте ключ в заголовке Authorization: Bearer. Webhook подписан HMAC SHA-256 в заголовке x-risestaff-signature.": "Кілтті Authorization: Bearer тақырыбында жіберіңіз. Webhook x-risestaff-signature тақырыбында HMAC SHA-256 арқылы қол қойылған.",
+  "Настройки · уведомления": "Баптаулар · хабарландырулар",
+  "Настройки · интеграции": "Баптаулар · интеграциялар"
 }
