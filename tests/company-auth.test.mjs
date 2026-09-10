@@ -58,6 +58,30 @@ test("duplicate registration points to login and does not overwrite password, pr
   } finally { f.close(); }
 });
 
+test("an agent-only account becomes a company only after the new email is verified", async () => {
+  const f = authFixture();
+  try {
+    const userId = await f.seed("agent@example.test", "active", "AGENT");
+    const before = f.sqlite.prepare("SELECT * FROM users WHERE id = ?").get(userId);
+    const response = await f.request("/api/auth/register", {
+      email: "agent@example.test", name: "New Company Owner", phone: "+77770000000", company: "New Company",
+      password: "Different123", acceptedTerms: true, acceptedPrivacy: true,
+      marketingAttribution: { visitId: "visit-1", firstUtmSource: "google", lastUtmSource: "direct" },
+    });
+    assert.equal(response.status, 201);
+    assert.deepEqual(f.sqlite.prepare("SELECT * FROM users WHERE id = ?").get(userId), before);
+    assert.equal(f.sqlite.prepare("SELECT count(*) AS n FROM user_roles WHERE user_id = ? AND role = 'COMPANY'").get(userId).n, 0);
+    const pending = f.sqlite.prepare("SELECT * FROM pending_company_registrations WHERE user_id = ?").get(userId);
+    assert.equal(pending.company_name, "New Company");
+    assert.equal(JSON.parse(pending.marketing_attribution_json).firstUtmSource, "google");
+    const verified = await f.request("/api/auth/email-verification", { email: "agent@example.test", action: "CONFIRM", code: f.deliveries[0].code });
+    assert.equal(verified.status, 200);
+    assert.equal(f.sqlite.prepare("SELECT count(*) AS n FROM user_roles WHERE user_id = ? AND role = 'COMPANY'").get(userId).n, 1);
+    assert.equal(f.sqlite.prepare("SELECT company_name FROM users WHERE id = ?").get(userId).company_name, "New Company");
+    assert.equal(f.sqlite.prepare("SELECT event FROM marketing_events").get().event, "company_registration_verified");
+  } finally { f.close(); }
+});
+
 test("pending registration resumes verification; blocked users stay blocked", async () => {
   const f = authFixture();
   try {

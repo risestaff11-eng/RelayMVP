@@ -9,6 +9,7 @@ import { companies } from "../../../../../db/schema";
 import { generateStructuredJson } from "../../../../../lib/ai";
 import { calculateAiCredits, minimumAiCredits } from "../../../../../lib/ai-credits";
 import { cleanString, sameOrigin } from "../../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../../lib/company-permissions";
 
 type IntakeQuestion = { id: string; label: string; question: string; placeholder: string };
 type SuggestedBrief = {
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   if (company.aiTokenBalance < minimumAiCredits("ASSISTANT_REPLY")) return Response.json({ error: "Недостаточно AI-кредитов" }, { status: 400 });
 
   try {

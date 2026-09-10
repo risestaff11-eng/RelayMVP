@@ -9,6 +9,7 @@ import { generateStructuredJson } from "../../../../../lib/ai";
 import { aiCreditLimit, calculateAiCredits, minimumAiCredits } from "../../../../../lib/ai-credits";
 import { DEFAULT_SUBMISSION_FORM_FIELDS, normalizeSubmissionFormFields, SUBMISSION_FIELD_TYPES } from "../../../../../lib/submission-form";
 import { cleanString, sameOrigin } from "../../../company/_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../../lib/company-permissions";
 
 const MISSION_TYPES = new Set(["LEAD", "DEAL", "IMAGE", "ENGAGEMENT"]);
 const typeRoles: Record<string, string> = {
@@ -68,6 +69,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!user) return Response.json({ error: "Сначала войдите в аккаунт" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   const { id } = await params;
   const program = await getProgramForCompany(company.id, id);
   if (!program) return Response.json({ error: "Программа не найдена" }, { status: 404 });
@@ -97,7 +99,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         prompt: JSON.stringify({ task: "Создай один новый вариант задания. Он должен заметно отличаться от списка existing: другая цель действия, формулировки, последовательность шагов и способ подтверждения. Не копируй названия и предложения. Вознаграждение должно соответствовать типу задания и валюте программы.", variationSeed, creativeAngle: angle, ...context, missionType, existing }),
         schema: missionSchema, maxOutputTokens: 1000, thinkingLevel: "low", temperature: 0.85,
       });
-      result = ai; responseData = { mission: safeMission(ai.data) };
+      result = ai;
+      const mission = safeMission(ai.data);
+      responseData = { mission: { ...mission, rewardTrigger: mission.rewardMode === "PERCENT" || missionType === "DEAL" ? "SALE_PAID" : "REVIEW_ACCEPTED" } };
     } else if (action === "FORM") {
       const schema = { type: "object", additionalProperties: false, properties: { fields: { type: "array", minItems: 7, maxItems: 14, items: fieldSchema } }, required: ["fields"] };
       const ai = await generateStructuredJson<{ fields: Array<Record<string, unknown>> }>({

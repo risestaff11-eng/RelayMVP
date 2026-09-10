@@ -1,7 +1,7 @@
 import { and, count, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import { timingSafeEqual } from "../../../../lib/secure-compare";
 import { getDb } from "../../../../db";
-import { companyEmailVerificationCodes, userRoles, users } from "../../../../db/schema";
+import { companyEmailVerificationCodes, marketingEvents, pendingCompanyRegistrations, userRoles, users } from "../../../../db/schema";
 import { createAuthSession } from "../../../../lib/account-auth";
 import { companyReturnTo } from "../../../../lib/auth-navigation";
 import { companyEmailCodeExpiresAt, createCompanyEmailCode, hashCompanyEmailCode, sendCompanyEmailCode } from "../../../../lib/company-email-verification";
@@ -16,16 +16,31 @@ class VerificationError extends Error {
 }
 
 async function findCompanyUser(email: string) {
-  const rows = await getDb().select({
+  const db = getDb();
+  const rows = await db.select({
     id: users.id,
     email: users.email,
     status: users.status,
     emailVerifiedAt: users.emailVerifiedAt,
+    marketingAttributionJson: users.marketingAttributionJson,
   }).from(users)
-    .innerJoin(userRoles, and(eq(userRoles.userId, users.id), eq(userRoles.role, "COMPANY")))
     .where(sql`lower(trim(${users.email})) = ${email}`)
     .limit(1);
-  return rows[0];
+  const user = rows[0];
+  if (!user) return null;
+  const [companyRole, pending] = await Promise.all([
+    db.select({ userId: userRoles.userId }).from(userRoles).where(and(eq(userRoles.userId, user.id), eq(userRoles.role, "COMPANY"))).limit(1),
+    db.select().from(pendingCompanyRegistrations).where(eq(pendingCompanyRegistrations.userId, user.id)).limit(1),
+  ]);
+  if (!companyRole[0] && !pending[0]) return null;
+  return { ...user, hasCompanyRole: Boolean(companyRole[0]), pendingRegistration: pending[0] ?? null };
+}
+
+function parseAttribution(value: string) {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : {};
+  } catch { return {}; }
 }
 
 export async function POST(request: Request) {
@@ -42,7 +57,9 @@ export async function POST(request: Request) {
     const db = getDb();
 
     if (action === "REQUEST") {
-      if (user.emailVerifiedAt && user.status === "active") return Response.json({ ok: true, alreadyVerified: true });
+      if (user.emailVerifiedAt && user.status === "active" && user.hasCompanyRole && !user.pendingRegistration) {
+        return Response.json({ ok: true, alreadyVerified: true });
+      }
       const now = new Date();
       const latest = (await db.select({ createdAt: companyEmailVerificationCodes.createdAt })
         .from(companyEmailVerificationCodes)
@@ -85,8 +102,37 @@ export async function POST(request: Request) {
       }
       const now = new Date().toISOString();
       if (!await claimEmailCode("company_email_verification_codes", verification.id, now)) throw new VerificationError("Код истёк. Запросите новый");
-      const activated = await db.update(users).set({ emailVerifiedAt: now, status: "active", updatedAt: now }).where(and(eq(users.id, user.id), sql`${users.status} <> 'blocked'`)).returning({ id: users.id });
+      const pending = user.pendingRegistration;
+      const activated = await db.update(users).set(pending ? {
+        displayName: pending.displayName,
+        phone: pending.phone,
+        companyName: pending.companyName,
+        passwordHash: pending.passwordHash,
+        marketingAttributionJson: pending.marketingAttributionJson,
+        emailVerifiedAt: now,
+        status: "active",
+        updatedAt: now,
+      } : { emailVerifiedAt: now, status: "active", updatedAt: now })
+        .where(and(eq(users.id, user.id), sql`${users.status} <> 'blocked'`))
+        .returning({ id: users.id });
       if (!activated.length) throw new VerificationError("Доступ к аккаунту ограничен", 403);
+      if (pending) {
+        await db.batch([
+          db.insert(userRoles).values({ userId: user.id, role: "COMPANY", createdAt: now }).onConflictDoNothing(),
+          db.delete(pendingCompanyRegistrations).where(eq(pendingCompanyRegistrations.userId, user.id)),
+        ]);
+      }
+      const attribution = parseAttribution(pending?.marketingAttributionJson || user.marketingAttributionJson || "{}");
+      await db.insert(marketingEvents).values({
+        id: crypto.randomUUID(), event: "company_registration_verified", path: "/auth",
+        visitId: cleanString(attribution.visitId, 120),
+        utmSource: cleanString(attribution.firstUtmSource, 120),
+        utmMedium: cleanString(attribution.firstUtmMedium, 120),
+        utmCampaign: cleanString(attribution.firstUtmCampaign, 120),
+        lastUtmSource: cleanString(attribution.lastUtmSource, 120),
+        lastUtmMedium: cleanString(attribution.lastUtmMedium, 120),
+        lastUtmCampaign: cleanString(attribution.lastUtmCampaign, 120),
+      });
       await createAuthSession(user.id);
       return Response.json({ ok: true, redirectTo: companyReturnTo(payload.returnTo) });
     }

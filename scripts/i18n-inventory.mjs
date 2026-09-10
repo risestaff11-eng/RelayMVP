@@ -6,7 +6,7 @@ import { join, relative } from "node:path";
 // pages, dialogs, attributes, options, templates and API errors enter the gate.
 // Provider prompts, parsing tokens, logs and HTML email templates aren't UI.
 const ignoredProperties = new Set(["systemInstruction", "prompt", "schema", "responseJsonSchema", "html", "subject", "keywords"]);
-const ignoredCalls = new Set(["includes", "startsWith", "endsWith", "split", "replace", "replaceAll", "match", "test", "indexOf", "querySelector", "querySelectorAll"]);
+const ignoredCalls = new Set(["includes", "startsWith", "endsWith", "split", "replace", "replaceAll", "match", "test", "indexOf", "querySelector", "querySelectorAll", "prepare"]);
 const providerOnlyVariables = new Set(["typeRoles", "angles", "missionSchema", "fieldSchema"]);
 function files(directory, extension = /\.tsx?$/) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? files(join(directory, entry.name), extension) : extension.test(entry.name) ? [join(directory, entry.name)] : []);
@@ -16,6 +16,7 @@ function ignored(node) {
     if (ts.isJsxElement(current) && current.openingElement.attributes.properties.some((attribute) => ts.isJsxAttribute(attribute) && ["data-no-translate", "data-i18n-data"].includes(attribute.name.getText()))) return true;
     if (ts.isPropertyAssignment(current) && ignoredProperties.has(current.name.getText().replace(/["']/g, ""))) return true;
     if (ts.isVariableDeclaration(current) && providerOnlyVariables.has(current.name.getText()) && current.getSourceFile().fileName.replaceAll("\\", "/").includes("/api/programs/")) return true;
+    if (ts.isTaggedTemplateExpression(current) && current.tag.getText() === "sql") return true;
     if (ts.isCallExpression(current) && ts.isPropertyAccessExpression(current.expression)) {
       if (current.expression.expression.getText() === "console" || ignoredCalls.has(current.expression.name.text)) return true;
     }

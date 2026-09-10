@@ -1,7 +1,7 @@
 import { and, eq, gte, notInArray, or } from "drizzle-orm";
 import { getDb } from "../../../../../db";
 import { getPublicReferral } from "../../../../../db/referrals";
-import { submissionStatusEvents, submissions } from "../../../../../db/schema";
+import { integrationEvents, submissionStatusEvents, submissions } from "../../../../../db/schema";
 import { cleanString, sameOrigin } from "../../../company/_utils";
 import { notifyCompanyNewSubmission } from "../../../../../lib/company-submission-notifications";
 import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfReferral, SELF_REFERRAL_MESSAGE, hasHoneypotValue } from "../../../../../lib/submission-antifraud";
@@ -34,9 +34,12 @@ export async function POST(request: Request) {
     if (duplicate.length) return Response.json({ error: "Этот контакт уже закреплён за первой рекомендацией компании. Повторно отправлять его не нужно." }, { status: 409 });
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+    const integrationPayload = { submissionId: id, programId: referral.program.id, missionId: referral.mission.id, partnerId: referral.partner.id, contactName: name, contactEmail, contactPhone, source: "REFERRAL_LINK", createdAt: now };
+    const integrationIdempotencyKey = `submission.created:${id}`;
     await getDb().batch([
-      getDb().insert(submissions).values({ id, companyId: referral.company.id, programId: referral.program.id, missionId: referral.mission.id, partnerId: referral.partner.id, type: referral.mission.type, contactName: name, contactCompany: "", contactEmail, contactPhone, payloadJson: JSON.stringify({ partnerComment: comment, externalLinks: [], customAnswers: [], submittedByClient: true, referralSource: "CLIENT_SELF_SERVICE", clientConsentAcceptedAt: now }), status: "SUBMITTED", reviewStatus: "PENDING", salesStatus: "NONE", ownershipStatus: "CLEAR", reviewDueAt: reviewDueAt(now), createdAt: now, updatedAt: now }),
+      getDb().insert(submissions).values({ id, companyId: referral.company.id, programId: referral.program.id, missionId: referral.mission.id, partnerId: referral.partner.id, type: referral.mission.type, contactName: name, contactCompany: "", contactEmail, contactPhone, payloadJson: JSON.stringify({ partnerComment: comment, externalLinks: [], customAnswers: [], submittedByClient: true, referralSource: "CLIENT_SELF_SERVICE", clientConsentAcceptedAt: now }), status: "SUBMITTED", reviewStatus: "PENDING", salesStatus: "NONE", ownershipStatus: "CLEAR", reviewDueAt: reviewDueAt(now, referral.company.reviewSlaHours), createdAt: now, updatedAt: now }),
       getDb().insert(submissionStatusEvents).values({ id: crypto.randomUUID(), submissionId: id, fromStatus: null, toStatus: "SUBMITTED", actorType: "CLIENT", comment: "Клиент самостоятельно заполнил реферальную форму агента", createdAt: now }),
+      getDb().insert(integrationEvents).values({ id: crypto.randomUUID(), companyId: referral.company.id, eventType: "submission.created", aggregateType: "submission", aggregateId: id, payloadJson: JSON.stringify(integrationPayload), idempotencyKey: integrationIdempotencyKey, createdAt: now }),
     ]);
     await notifyCompanyNewSubmission(referral.company.id, id);
     deferIntegrationEvent(recordIntegrationEvent({
@@ -44,8 +47,8 @@ export async function POST(request: Request) {
       eventType: "submission.created",
       aggregateType: "submission",
       aggregateId: id,
-      idempotencyKey: `submission.created:${id}`,
-      payload: { submissionId: id, programId: referral.program.id, missionId: referral.mission.id, partnerId: referral.partner.id, contactName: name, contactEmail, contactPhone, source: "REFERRAL_LINK", createdAt: now },
+      idempotencyKey: integrationIdempotencyKey,
+      payload: integrationPayload,
     }));
     return Response.json({ ok: true }, { status: 201 });
   } catch (error) {

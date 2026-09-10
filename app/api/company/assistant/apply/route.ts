@@ -5,6 +5,7 @@ import { getCompanyForUser } from "../../../../../db/company";
 import { getLatestCompanyProfile } from "../../../../../db/profile";
 import { companies, companyProfileVersions, programs } from "../../../../../db/schema";
 import { cleanString, sameOrigin } from "../../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../../lib/company-permissions";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   const body = await request.json() as { type?: string; payload?: Record<string, unknown> };
   const payload = body.payload ?? {};
   const now = new Date().toISOString();

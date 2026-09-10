@@ -4,6 +4,7 @@ import { getDb } from "../../../../../db";
 import { getCompanyForUser } from "../../../../../db/company";
 import { partners } from "../../../../../db/schema";
 import { sameOrigin } from "../../../company/_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../../lib/company-permissions";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -11,6 +12,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "AGENTS_MANAGE")) return companyPermissionDenied();
   const { id } = await params;
   const payload = await request.json() as { status?: string };
   const status = payload.status === "BLOCKED" ? "BLOCKED" : payload.status === "ACTIVE" ? "ACTIVE" : "";

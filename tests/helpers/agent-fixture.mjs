@@ -21,6 +21,7 @@ export function agentFixture({ rateTable = true, captureSubmissionEmail = true }
         bind(...values) { params = values; return this; },
         async raw() { statement.setReturnArrays(true); return statement.all(...params); },
         async all() { statement.setReturnArrays(false); return { results: statement.all(...params), success: true, meta: {} }; },
+        async first() { statement.setReturnArrays(false); return statement.get(...params) ?? null; },
         async run() { const result = statement.run(...params); return { success: true, meta: { changes: result.changes } }; },
       };
     },

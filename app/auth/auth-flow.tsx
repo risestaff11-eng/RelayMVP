@@ -19,6 +19,19 @@ async function post(path: string, payload: Record<string, unknown>) {
   return data;
 }
 
+function registrationAttribution() {
+  const query = new URLSearchParams(window.location.search);
+  return {
+    visitId: query.get("rs_visit") || "",
+    firstUtmSource: query.get("rs_first_source") || "",
+    firstUtmMedium: query.get("rs_first_medium") || "",
+    firstUtmCampaign: query.get("rs_first_campaign") || "",
+    lastUtmSource: query.get("rs_last_source") || "",
+    lastUtmMedium: query.get("rs_last_medium") || "",
+    lastUtmCampaign: query.get("rs_last_campaign") || "",
+  };
+}
+
 export function AuthFlow({ returnTo }: { returnTo: string }) {
   const [step, setStep] = useState<Step>("login");
   const [email, setEmail] = useState("");
@@ -59,6 +72,7 @@ export function AuthFlow({ returnTo }: { returnTo: string }) {
         password: form.get("password"),
         acceptedTerms: form.get("acceptedTerms") === "on",
         acceptedPrivacy: form.get("acceptedPrivacy") === "on",
+        marketingAttribution: registrationAttribution(),
       });
       setStep(data.verificationSent ? "verify-email" : "success");
     } catch (reason) {

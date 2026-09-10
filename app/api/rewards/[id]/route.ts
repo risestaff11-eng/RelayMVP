@@ -7,6 +7,7 @@ import { sameOrigin } from "../../company/_utils";
 import { notifyAgentWorkChanges } from "../../../../lib/agent-work-notifications";
 import { recordRewardTransfer } from "../../../../lib/reward-transfer";
 import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../lib/integrations/service";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -14,6 +15,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PAYOUTS_MANAGE")) return companyPermissionDenied();
   const { id } = await params;
   const row = (await getDb().select().from(rewards).where(eq(rewards.id, id)).limit(1))[0];
   if (!row || row.companyId !== company.id) return Response.json({ error: "Начисление не найдено" }, { status: 404 });

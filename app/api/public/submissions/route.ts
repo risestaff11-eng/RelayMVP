@@ -1,7 +1,7 @@
 import { and, eq, gte, notInArray, or } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { getMissionForPublicSubmission, getPartnerPortal } from "../../../../db/partner";
-import { submissionAttachments, submissionStatusEvents, submissions } from "../../../../db/schema";
+import { integrationEvents, submissionAttachments, submissionStatusEvents, submissions } from "../../../../db/schema";
 import { getFilesBucket } from "../../../../lib/storage";
 import { visibleSubmissionFormFields, type SubmissionFormField } from "../../../../lib/submission-form";
 import { cleanString, sameOrigin } from "../../company/_utils";
@@ -96,18 +96,21 @@ export async function POST(request: Request) {
       attachmentRows.push({ id: crypto.randomUUID(), submissionId, objectKey, fileName: `Голосовой комментарий.${extension}`, mimeType: voiceMime, size: voiceNote.size, createdAt: now });
     }
     const customAnswers = fields.filter((field) => field.semantic === "CUSTOM").map((field) => ({ fieldId: field.id, label: field.label, type: field.type, value: values.get(field.id) || (field.type === "FILE" ? allFiles.filter((item) => item.field.id === field.id).map((item) => item.file.name) : "") }));
-    const submissionStatement = db.insert(submissions).values({ id: submissionId, companyId: target.company.id, programId: target.program.id, missionId, partnerId: missionPartner.id, type: target.mission.type, contactName, contactCompany, contactEmail, contactPhone, payloadJson: JSON.stringify({ partnerComment, externalLinks, customAnswers, audioTranscript, audioDurationSeconds, audioConfirmed: Boolean(audioTranscript) }), status: "SUBMITTED", reviewStatus: "PENDING", salesStatus: "NONE", ownershipStatus: "CLEAR", reviewDueAt: reviewDueAt(now), createdAt: now, updatedAt: now });
+    const submissionStatement = db.insert(submissions).values({ id: submissionId, companyId: target.company.id, programId: target.program.id, missionId, partnerId: missionPartner.id, type: target.mission.type, contactName, contactCompany, contactEmail, contactPhone, payloadJson: JSON.stringify({ partnerComment, externalLinks, customAnswers, audioTranscript, audioDurationSeconds, audioConfirmed: Boolean(audioTranscript) }), status: "SUBMITTED", reviewStatus: "PENDING", salesStatus: "NONE", ownershipStatus: "CLEAR", reviewDueAt: reviewDueAt(now, target.company.reviewSlaHours), createdAt: now, updatedAt: now });
     const eventStatement = db.insert(submissionStatusEvents).values({ id: crypto.randomUUID(), submissionId, fromStatus: null, toStatus: "SUBMITTED", actorType: "PARTNER", comment: "Результат отправлен компании", createdAt: now });
-    if (attachmentRows.length) await db.batch([submissionStatement, eventStatement, db.insert(submissionAttachments).values(attachmentRows)]);
-    else await db.batch([submissionStatement, eventStatement]);
+    const integrationPayload = { submissionId, programId: target.program.id, missionId, partnerId: missionPartner.id, contactName, contactCompany, contactEmail, contactPhone, source: "AGENT_PORTAL", createdAt: now };
+    const integrationIdempotencyKey = `submission.created:${submissionId}`;
+    const integrationStatement = db.insert(integrationEvents).values({ id: crypto.randomUUID(), companyId: target.company.id, eventType: "submission.created", aggregateType: "submission", aggregateId: submissionId, payloadJson: JSON.stringify(integrationPayload), idempotencyKey: integrationIdempotencyKey, createdAt: now });
+    if (attachmentRows.length) await db.batch([submissionStatement, eventStatement, integrationStatement, db.insert(submissionAttachments).values(attachmentRows)]);
+    else await db.batch([submissionStatement, eventStatement, integrationStatement]);
     await notifyCompanyNewSubmission(target.company.id, submissionId);
     deferIntegrationEvent(recordIntegrationEvent({
       companyId: target.company.id,
       eventType: "submission.created",
       aggregateType: "submission",
       aggregateId: submissionId,
-      idempotencyKey: `submission.created:${submissionId}`,
-      payload: { submissionId, programId: target.program.id, missionId, partnerId: missionPartner.id, contactName, contactCompany, contactEmail, contactPhone, source: "AGENT_PORTAL", createdAt: now },
+      idempotencyKey: integrationIdempotencyKey,
+      payload: integrationPayload,
     }));
     return Response.json({ partnerUrl: agentUrl(`/partner/${token}`), submissionId }, { status: 201 });
   } catch (error) {

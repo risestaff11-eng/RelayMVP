@@ -24,6 +24,8 @@ export async function getCompanyForUser(userId: string) {
       crmConversionRate: companies.crmConversionRate,
       crmLeadsPerAmbassador: companies.crmLeadsPerAmbassador,
       crmGoalCurrency: companies.crmGoalCurrency,
+      reviewSlaHours: companies.reviewSlaHours,
+      payoutSlaDays: companies.payoutSlaDays,
       role: companyMembers.role,
       createdAt: companies.createdAt,
     })

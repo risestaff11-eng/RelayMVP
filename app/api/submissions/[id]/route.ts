@@ -7,6 +7,7 @@ import { legacyStatus, type ReviewStatus, type SalesStatus } from "../../../../l
 import { cleanString, sameOrigin } from "../../company/_utils";
 import { notifyAgentWorkChanges } from "../../../../lib/agent-work-notifications";
 import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../lib/integrations/service";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 const reviewStatuses = new Set<ReviewStatus>(["PENDING", "REVIEWING", "ACCEPTED", "REJECTED"]);
 const salesStatuses = new Set<SalesStatus>(["NONE", "IN_PROGRESS", "AGREEMENT", "WON", "LOST"]);
@@ -30,6 +31,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "CRM_MANAGE")) return companyPermissionDenied();
   try {
     const { id } = await params;
     const payload = await request.json() as Record<string, unknown>;
@@ -60,7 +62,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (reviewStatus === "REJECTED" && comment.length < 5) throw new Error("При отказе обязательно объясните причину партнёру");
     if (reviewStatus !== "ACCEPTED") salesStatus = reviewStatus === "REJECTED" ? "LOST" : "NONE";
 
-    const mission = (await db.select({ rewardMode: missions.rewardMode, rewardValue: missions.rewardValue }).from(missions).where(eq(missions.id, submission.missionId)).limit(1))[0];
+    const mission = (await db.select({ rewardMode: missions.rewardMode, rewardValue: missions.rewardValue, rewardTrigger: missions.rewardTrigger }).from(missions).where(eq(missions.id, submission.missionId)).limit(1))[0];
     const program = (await db.select({ currency: programs.currency }).from(programs).where(eq(programs.id, submission.programId)).limit(1))[0];
     if (salesStatus === "WON" && currentSales !== "WON" && dealAmount <= 0 && (["LEAD", "DEAL"].includes(submission.type) || mission?.rewardMode === "PERCENT")) throw new Error("Укажите сумму сделки — RiseStaff рассчитает вознаграждение автоматически");
     const existingReward = (await db.select().from(rewards).where(eq(rewards.submissionId, id)).limit(1))[0];
@@ -73,8 +75,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (settled && ((requestedAmount !== undefined && requestedAmount !== existingReward.amount) || dealAmount !== submission.dealAmount || currentSales !== salesStatus || currentReview !== reviewStatus)) {
       return Response.json({ error: "Перевод уже отмечен. Сумму и этап нельзя менять обычным редактированием; обратитесь в поддержку для корректировки." }, { status: 409 });
     }
-    const nextRewardStatus = settled ? "PAID" : salesStatus === "WON" ? "APPROVED" : salesStatus === "LOST" ? "CANCELLED" : "PENDING";
-    const nextApprovedAt = salesStatus === "WON" ? existingReward?.approvedAt || now : existingReward?.status === "PAID" ? existingReward.approvedAt : null;
+    const rewardTrigger = mission?.rewardMode === "PERCENT" ? "SALE_PAID" : mission?.rewardTrigger || (submission.type === "DEAL" ? "SALE_PAID" : "REVIEW_ACCEPTED");
+    const rewardEarned = reviewStatus === "ACCEPTED" && (rewardTrigger === "REVIEW_ACCEPTED" || salesStatus === "WON");
+    const nextRewardStatus = settled ? "PAID" : rewardEarned ? "APPROVED" : reviewStatus === "REJECTED" || (rewardTrigger === "SALE_PAID" && salesStatus === "LOST") ? "CANCELLED" : "PENDING";
+    const nextApprovedAt = rewardEarned ? existingReward?.approvedAt || now : existingReward?.status === "PAID" ? existingReward.approvedAt : null;
     const nextLegacyStatus = legacyStatus(reviewStatus, salesStatus, nextRewardStatus);
     const transitionComment = [
       currentReview !== reviewStatus ? `Проверка: ${currentReview} → ${reviewStatus}` : "",
@@ -107,6 +111,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${gate}`)
         .bind(crypto.randomUUID(), company.id, id, submission.partnerId, amount, program?.currency || "KZT", nextRewardStatus, nextApprovedAt, plannedAt, now, now, eventId));
     }
+    const integrationPayload = { submissionId: id, programId: submission.programId, missionId: submission.missionId, partnerId: submission.partnerId, reviewStatus, salesStatus, rewardStatus: nextRewardStatus, estimatedDealAmount, dealAmount, rewardAmount: amount, updatedAt: now };
+    const integrationIdempotencyKey = `submission.updated:${eventId}`;
+    statements.push(d1.prepare(`INSERT OR IGNORE INTO integration_events
+      (id, company_id, event_type, aggregate_type, aggregate_id, payload_json, idempotency_key, created_at)
+      SELECT ?, ?, 'submission.updated', 'submission', ?, ?, ?, ? WHERE ${gate}`)
+      .bind(crypto.randomUUID(), company.id, id, JSON.stringify(integrationPayload), integrationIdempotencyKey, now, eventId));
     const saved = await d1.batch(statements);
     if (!saved[0].results.length) return Response.json({ error: "Карточка уже изменена. Обновите страницу и повторите действие." }, { status: 409 });
     if (currentReview !== reviewStatus || currentSales !== salesStatus || (nextRewardStatus === "APPROVED" && existingReward?.status !== "APPROVED")) {
@@ -117,8 +127,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       eventType: "submission.updated",
       aggregateType: "submission",
       aggregateId: id,
-      idempotencyKey: `submission.updated:${eventId}`,
-      payload: { submissionId: id, programId: submission.programId, missionId: submission.missionId, partnerId: submission.partnerId, reviewStatus, salesStatus, rewardStatus: nextRewardStatus, estimatedDealAmount, dealAmount, rewardAmount: amount, updatedAt: now },
+      idempotencyKey: integrationIdempotencyKey,
+      payload: integrationPayload,
     }));
     return Response.json({ ok: true, status: nextLegacyStatus, reviewStatus, salesStatus, rewardStatus: nextRewardStatus, estimatedDealAmount, dealAmount, rewardAmount: amount,
       event: { id: eventId, fromStatus: submission.status, toStatus: nextLegacyStatus, actorType: "COMPANY", comment: transitionComment || "Карточка заявки обновлена", createdAt: now } });

@@ -8,6 +8,7 @@ export function CompanyApplicationForm() {
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const applicationId = useRef("");
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -27,7 +28,8 @@ export function CompanyApplicationForm() {
     setPending(true);
     setError("");
     const form = event.currentTarget;
-    const data = { ...Object.fromEntries(new FormData(form).entries()), ...readMarketingAttribution() };
+    if (!applicationId.current) applicationId.current = crypto.randomUUID();
+    const data = { ...Object.fromEntries(new FormData(form).entries()), applicationId: applicationId.current, ...readMarketingAttribution() };
     try {
       const response = await fetch("/api/marketing/company-application", {
         method: "POST",
@@ -37,6 +39,7 @@ export function CompanyApplicationForm() {
       const payload = await response.json() as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Не удалось отправить заявку");
       setDone(true);
+      applicationId.current = "";
       form.reset();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Не удалось отправить заявку");

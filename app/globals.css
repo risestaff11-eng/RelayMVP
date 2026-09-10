@@ -1604,7 +1604,8 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .system-admin-header > div > span,.system-deleted-section > header > div > span { color: #65685f; font-size: 10px; font-weight: 900; letter-spacing: .13em; }
 .system-admin-header h1 { margin: 7px 0 5px; font-size: clamp(32px,4vw,54px); line-height: .98; letter-spacing: -.055em; }
 .system-admin-header p,.system-deleted-section header p,.system-list-heading p { margin: 0; color: var(--system-muted); line-height: 1.5; }
-.system-admin-header > button,.system-deleted-section header button,.system-list-heading button { min-height: 44px; padding: 0 17px; border: 1px solid #171914; border-radius: 12px; color: #fff; background: #171914; font-weight: 800; cursor: pointer; }
+.system-admin-header > button,.system-admin-actions button,.system-deleted-section header button,.system-list-heading button { min-height: 44px; padding: 0 17px; border: 1px solid #171914; border-radius: 12px; color: #fff; background: #171914; font-weight: 800; cursor: pointer; }
+.system-admin-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .system-error,.system-success { margin: 18px 0 0; padding: 13px 15px; border-radius: 12px; font-weight: 700; }
 .system-error { border: 1px solid #eab6ae; color: #8f241a; background: #fff0ed; }
 .system-success { border: 1px solid #b8d987; color: #294900; background: #efffd8; }
@@ -1693,7 +1694,7 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 @media (max-width: 720px) {
   .system-admin-v2 { padding: 22px 13px 52px; font-size: 14px; }
   .system-admin-header,.system-deleted-section > header,.system-account-actions { align-items: stretch; flex-direction: column; }
-  .system-admin-header > button { width: 100%; }
+  .system-admin-header > button,.system-admin-actions,.system-admin-actions button { width: 100%; }
   .system-summary { grid-template-columns: repeat(2,1fr); }
   .system-summary article { min-height: 112px; border-top: 1px solid var(--system-line); }
   .system-summary article:nth-child(odd) { border-left: 0; }
@@ -1791,6 +1792,11 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .payout-record-body strong { margin-top: 5px; font-size: 12px; }
 .payout-record-body a,.payout-record-body span { margin-top: 5px; color: #65685f; font-size: 9px; }
 .payout-record > footer { padding: 12px 17px; border-top: 1px solid #e3e3dc; background: #fafaf7; }
+.payout-record > footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.payout-record > footer > button,.payout-correction > button { border: 1px solid #cfd1c7; border-radius: 9px; background: #fff; padding: 9px 12px; color: #171914; font: inherit; font-weight: 800; cursor: pointer; }
+.payout-correction { display: grid; grid-template-columns: minmax(140px,.35fr) 1fr auto; gap: 10px; padding: 14px 17px; border-top: 1px solid #e3e3dc; background: #f4f3ee; }
+.payout-correction label { display: grid; gap: 5px; color: #62655c; font-size: 12px; font-weight: 800; }
+.payout-correction input { min-width: 0; border: 1px solid #cfd1c7; border-radius: 9px; background: #fff; padding: 10px 12px; font: inherit; }
 .payout-record footer label { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 850; }
 .payout-record footer input { width: 19px; height: 19px; accent-color: #86b20f; }
 .analytics-visual-summary { margin-top: 14px; display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
@@ -1822,6 +1828,7 @@ html[lang="kk"] .agent-analytics-table .brand-table-row > div:nth-child(8)::befo
 .analytics-agent-cards footer a { color: #177e48; font-weight: 850; }
 
 @media (max-width: 760px) {
+  .payout-correction { grid-template-columns: 1fr; }
   .results-controls,.directory-controls,.payout-toolbar,.analytics-local-controls { align-items: stretch; flex-direction: column; }
   .results-controls input,.results-controls select,.directory-controls input,.directory-controls select,.payout-toolbar input,.analytics-local-controls input,.analytics-local-controls select { width: 100%; min-width: 0; min-height: 48px; font-size: 14px; }
   .result-summary-card { min-height: 0; padding: 14px; grid-template-columns: 44px 1fr auto; gap: 10px; }

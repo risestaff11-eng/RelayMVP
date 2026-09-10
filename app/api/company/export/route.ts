@@ -4,17 +4,23 @@ import { getCompanyKnowledge } from "../../../../db/knowledge";
 import { getLatestCompanyProfile } from "../../../../db/profile";
 import { getAgentsForCompany, getProgramsForCompany, getRewardsForCompany, getSubmissionsForCompany } from "../../../../db/programs";
 import { getCompanyReports } from "../../../../db/reports";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
+import { getDb } from "../../../../db";
+import { rewardAdjustments } from "../../../../db/schema";
+import { eq } from "drizzle-orm";
 
 export async function GET() {
   const user = await getChatGPTUser();
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
-  const [programs, agents, submissions, rewardRows, reports, knowledge, profile] = await Promise.all([
+  if (!hasCompanyPermission(company.role, "DATA_EXPORT")) return companyPermissionDenied();
+  const [programs, agents, submissions, rewardRows, adjustments, reports, knowledge, profile] = await Promise.all([
     getProgramsForCompany(company.id),
     getAgentsForCompany(company.id),
     getSubmissionsForCompany(company.id),
     getRewardsForCompany(company.id),
+    getDb().select().from(rewardAdjustments).where(eq(rewardAdjustments.companyId, company.id)),
     getCompanyReports(company.id),
     getCompanyKnowledge(company.id),
     getLatestCompanyProfile(company.id),
@@ -28,6 +34,7 @@ export async function GET() {
     agents,
     submissions,
     rewards: rewardRows.map(({ reward, agent, submission, mission, program }) => ({ reward, agent: { id: agent.id, name: agent.name, email: agent.email, phone: agent.phone }, submissionId: submission.id, mission: { id: mission.id, title: mission.title }, program: { id: program.id, name: program.name } })),
+    rewardAdjustments: adjustments,
     reports,
     knowledge,
   };

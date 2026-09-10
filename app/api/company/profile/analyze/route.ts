@@ -7,6 +7,7 @@ import { companies, companyProfileVersions } from "../../../../../db/schema";
 import { generateStructuredJson } from "../../../../../lib/ai";
 import { aiCreditLimit, calculateAiCredits, minimumAiCredits } from "../../../../../lib/ai-credits";
 import { assertPublicUrl, sameOrigin } from "../../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../../lib/company-permissions";
 
 const PROFILE_SCHEMA = {
   type: "object",
@@ -181,6 +182,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите в аккаунт" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "COMPANY_SETTINGS_MANAGE")) return companyPermissionDenied();
   if (company.aiTokenBalance < minimumAiCredits("PROFILE_ANALYSIS")) return Response.json({ error: "Недостаточно AI-кредитов для анализа. Пополните баланс в настройках." }, { status: 402 });
 
   try {

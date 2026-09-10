@@ -4,6 +4,7 @@ import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
 import { companies } from "../../../../db/schema";
 import { normalizeWebsite, sameOrigin } from "../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 const PLANS = new Set(["TRIAL", "STARTER", "GROWTH"]);
 
@@ -13,6 +14,7 @@ export async function PATCH(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите в аккаунт" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "COMPANY_SETTINGS_MANAGE")) return companyPermissionDenied();
 
   try {
     const payload = (await request.json()) as Record<string, unknown>;
@@ -22,11 +24,17 @@ export async function PATCH(request: Request) {
     const contactWhatsapp = hasWhatsapp && typeof payload.contactWhatsapp === "string" ? payload.contactWhatsapp.trim().slice(0, 40) : null;
     const contactInstagram = hasInstagram && typeof payload.contactInstagram === "string" ? payload.contactInstagram.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").replace(/\/$/, "").slice(0, 100) : null;
     const planCode = typeof payload.planCode === "string" ? payload.planCode : null;
-    if (!websiteValue && !planCode && !hasWhatsapp && !hasInstagram) throw new Error("Нет данных для сохранения");
+    const hasReviewSla = Object.prototype.hasOwnProperty.call(payload, "reviewSlaHours");
+    const hasPayoutSla = Object.prototype.hasOwnProperty.call(payload, "payoutSlaDays");
+    const reviewSlaHours = Math.round(Number(payload.reviewSlaHours));
+    const payoutSlaDays = Math.round(Number(payload.payoutSlaDays));
+    if (!websiteValue && !planCode && !hasWhatsapp && !hasInstagram && !hasReviewSla && !hasPayoutSla) throw new Error("Нет данных для сохранения");
     if (contactWhatsapp && contactWhatsapp.replace(/\D/g, "").length < 7) throw new Error("Проверьте номер WhatsApp");
     if (contactInstagram && !/^[a-zA-Z0-9._]+$/.test(contactInstagram)) throw new Error("Укажите имя пользователя Instagram без пробелов");
     if (planCode && !PLANS.has(planCode)) throw new Error("Неизвестный тариф");
     if (planCode) throw new Error("Автоматическая смена тарифа пока не подключена");
+    if (hasReviewSla && (!Number.isSafeInteger(reviewSlaHours) || reviewSlaHours < 1 || reviewSlaHours > 336)) throw new Error("Срок проверки должен быть от 1 до 336 часов");
+    if (hasPayoutSla && (!Number.isSafeInteger(payoutSlaDays) || payoutSlaDays < 1 || payoutSlaDays > 90)) throw new Error("Срок выплаты должен быть от 1 до 90 дней");
 
     const now = new Date().toISOString();
     const changes: Partial<typeof companies.$inferInsert> = { updatedAt: now };
@@ -36,6 +44,8 @@ export async function PATCH(request: Request) {
     }
     if (hasWhatsapp) changes.contactWhatsapp = contactWhatsapp ?? "";
     if (hasInstagram) changes.contactInstagram = contactInstagram ?? "";
+    if (hasReviewSla) changes.reviewSlaHours = reviewSlaHours;
+    if (hasPayoutSla) changes.payoutSlaDays = payoutSlaDays;
 
     await getDb().update(companies).set(changes).where(eq(companies.id, company.id));
     return Response.json({
@@ -44,6 +54,8 @@ export async function PATCH(request: Request) {
       contactInstagram: hasInstagram ? contactInstagram ?? "" : company.contactInstagram,
       planCode: planCode ?? company.planCode,
       aiTokenBalance: changes.aiTokenBalance ?? company.aiTokenBalance,
+      reviewSlaHours: hasReviewSla ? reviewSlaHours : company.reviewSlaHours,
+      payoutSlaDays: hasPayoutSla ? payoutSlaDays : company.payoutSlaDays,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Не удалось сохранить настройки";

@@ -7,6 +7,7 @@ import { sameOrigin } from "../../../company/_utils";
 import { notifyAgentWorkChanges } from "../../../../../lib/agent-work-notifications";
 import { recordRewardTransfer } from "../../../../../lib/reward-transfer";
 import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../../lib/integrations/service";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../../lib/company-permissions";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -14,6 +15,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PAYOUTS_MANAGE")) return companyPermissionDenied();
   const { id } = await params;
   const agent = (await getDb().select().from(partners).where(and(eq(partners.id, id), eq(partners.companyId, company.id))).limit(1))[0];
   if (!agent) return Response.json({ error: "Агент не найден" }, { status: 404 });
@@ -28,7 +30,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const result = await recordRewardTransfer(company.id, row.id, paid);
     if (result) {
       changed.push(result.submission_id);
-      deferIntegrationEvent(recordIntegrationEvent({ companyId: company.id, eventType: "reward.updated", aggregateType: "reward", aggregateId: row.id, payload: { rewardId: row.id, submissionId: result.submission_id, status: paid ? "PAID" : "APPROVED", source: "BULK_AGENT_ACTION" } }));
+      deferIntegrationEvent(recordIntegrationEvent({ companyId: company.id, eventType: "reward.updated", aggregateType: "reward", aggregateId: row.id, idempotencyKey: result.integrationIdempotencyKey, payload: { rewardId: row.id, submissionId: result.submission_id, status: paid ? "PAID" : "APPROVED", source: "BULK_AGENT_ACTION" } }));
     }
   }
   await notifyAgentWorkChanges(company.id, changed);
