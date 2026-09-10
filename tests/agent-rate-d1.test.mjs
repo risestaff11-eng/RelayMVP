@@ -45,8 +45,9 @@ test("D1 enforces normalized email uniqueness, claims email codes once and prote
       DB.prepare("CREATE TABLE users(id TEXT PRIMARY KEY, email TEXT NOT NULL)"),
       DB.prepare("CREATE TABLE company_email_verification_codes(id TEXT PRIMARY KEY, user_id TEXT, destination TEXT, attempts INTEGER DEFAULT 0, consumed_at TEXT, expires_at TEXT, created_at TEXT)"),
       DB.prepare("CREATE TABLE submissions(id TEXT PRIMARY KEY, status TEXT)"),
-      DB.prepare("CREATE TABLE rewards(id TEXT PRIMARY KEY, submission_id TEXT, company_id TEXT, partner_id TEXT, status TEXT, paid_at TEXT, partner_confirmed_at TEXT, updated_at TEXT)"),
+      DB.prepare("CREATE TABLE rewards(id TEXT PRIMARY KEY, submission_id TEXT, company_id TEXT, partner_id TEXT, amount INTEGER DEFAULT 0, currency TEXT DEFAULT 'KZT', status TEXT, paid_at TEXT, partner_confirmed_at TEXT, updated_at TEXT)"),
       DB.prepare("CREATE TABLE submission_status_events(id TEXT PRIMARY KEY, submission_id TEXT, from_status TEXT, to_status TEXT, actor_type TEXT, comment TEXT, created_at TEXT)"),
+      DB.prepare("CREATE TABLE integration_events(id TEXT PRIMARY KEY, company_id TEXT, event_type TEXT, aggregate_type TEXT, aggregate_id TEXT, payload_json TEXT, idempotency_key TEXT UNIQUE, created_at TEXT)"),
     ]);
     await DB.prepare(await readFile(new URL("../drizzle/0031_sharp_lady_bullseye.sql", import.meta.url), "utf8")).run();
     await DB.prepare("INSERT INTO users VALUES('u','Owner@example.test')").run();

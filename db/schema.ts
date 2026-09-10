@@ -15,8 +15,40 @@ export const marketingEvents = sqliteTable("marketing_events", {
   utmSource: text("utm_source").notNull().default(""),
   utmMedium: text("utm_medium").notNull().default(""),
   utmCampaign: text("utm_campaign").notNull().default(""),
+  visitId: text("visit_id").notNull().default(""),
+  lastUtmSource: text("last_utm_source").notNull().default(""),
+  lastUtmMedium: text("last_utm_medium").notNull().default(""),
+  lastUtmCampaign: text("last_utm_campaign").notNull().default(""),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [index("idx_marketing_events_event_created").on(table.event, table.createdAt), index("idx_marketing_events_utm_created").on(table.utmSource, table.utmCampaign, table.createdAt)]);
+}, (table) => [index("idx_marketing_events_event_created").on(table.event, table.createdAt), index("idx_marketing_events_utm_created").on(table.utmSource, table.utmCampaign, table.createdAt), index("idx_marketing_events_visit_created").on(table.visitId, table.createdAt)]);
+
+export const companyApplications = sqliteTable("company_applications", {
+  id: text("id").primaryKey().notNull(),
+  visitId: text("visit_id").notNull().default(""),
+  name: text("name").notNull(),
+  company: text("company").notNull(),
+  email: text("email").notNull().default(""),
+  phone: text("phone").notNull(),
+  comment: text("comment").notNull().default(""),
+  firstUtmSource: text("first_utm_source").notNull().default(""),
+  firstUtmMedium: text("first_utm_medium").notNull().default(""),
+  firstUtmCampaign: text("first_utm_campaign").notNull().default(""),
+  lastUtmSource: text("last_utm_source").notNull().default(""),
+  lastUtmMedium: text("last_utm_medium").notNull().default(""),
+  lastUtmCampaign: text("last_utm_campaign").notNull().default(""),
+  status: text("status").notNull().default("NEW"),
+  notificationStatus: text("notification_status").notNull().default("PENDING"),
+  notificationAttempts: integer("notification_attempts").notNull().default(0),
+  nextNotificationAt: text("next_notification_at"),
+  notifiedAt: text("notified_at"),
+  lastError: text("last_error").notNull().default(""),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  index("idx_company_applications_created").on(table.createdAt),
+  index("idx_company_applications_notification").on(table.notificationStatus, table.nextNotificationAt),
+  index("idx_company_applications_visit").on(table.visitId),
+]);
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -29,6 +61,7 @@ export const users = sqliteTable("users", {
   emailVerifiedAt: text("email_verified_at"),
   lastLoginAt: text("last_login_at"),
   loginCount: integer("login_count").notNull().default(0),
+  marketingAttributionJson: text("marketing_attribution_json").notNull().default("{}"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("idx_users_email").on(table.email), uniqueIndex("idx_users_email_normalized").on(sql`lower(trim(${table.email}))`)]);
@@ -51,12 +84,37 @@ export const companyEmailVerificationCodes = sqliteTable(
   ],
 );
 
+export const pendingCompanyRegistrations = sqliteTable(
+  "pending_company_registrations",
+  {
+    userId: text("user_id").primaryKey().notNull().references(() => users.id),
+    email: text("email").notNull(),
+    displayName: text("display_name").notNull(),
+    phone: text("phone").notNull(),
+    companyName: text("company_name").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    marketingAttributionJson: text("marketing_attribution_json").notNull().default("{}"),
+    expiresAt: text("expires_at").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_pending_company_registrations_email").on(table.email), index("idx_pending_company_registrations_expires").on(table.expiresAt)],
+);
+
 export const authSessions = sqliteTable("auth_sessions", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id),
   expiresAt: text("expires_at").notNull(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("idx_auth_sessions_user").on(table.userId)]);
+
+export const adminSessions = sqliteTable("admin_sessions", {
+  id: text("id").primaryKey().notNull(),
+  expiresAt: text("expires_at").notNull(),
+  lastUsedAt: text("last_used_at"),
+  revokedAt: text("revoked_at"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("idx_admin_sessions_expires").on(table.expiresAt)]);
 
 export const agentLoginCodes = sqliteTable(
   "agent_login_codes",
@@ -175,6 +233,8 @@ export const companies = sqliteTable("companies", {
   crmConversionRate: integer("crm_conversion_rate").notNull().default(0),
   crmLeadsPerAmbassador: integer("crm_leads_per_ambassador").notNull().default(0),
   crmGoalCurrency: text("crm_goal_currency").notNull().default("KZT"),
+  reviewSlaHours: integer("review_sla_hours").notNull().default(48),
+  payoutSlaDays: integer("payout_sla_days").notNull().default(7),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
@@ -410,6 +470,7 @@ export const programs = sqliteTable(
     payoutTerms: text("payout_terms").notNull().default(""),
     legalTerms: text("legal_terms").notNull().default(""),
     submissionFormJson: text("submission_form_json").notNull().default("[]"),
+    isTest: integer("is_test", { mode: "boolean" }).notNull().default(false),
     expiresAt: text("expires_at"),
     status: text("status").notNull().default("DRAFT"),
     publishedAt: text("published_at"),
@@ -465,6 +526,7 @@ export const missions = sqliteTable(
     rewardMode: text("reward_mode").notNull().default("FIXED"),
     rewardValue: integer("reward_value").notNull().default(0),
     rewardLabel: text("reward_label").notNull().default(""),
+    rewardTrigger: text("reward_trigger").notNull().default("SALE_PAID"),
     verificationRules: text("verification_rules").notNull().default(""),
     status: text("status").notNull().default("ACTIVE"),
     sortOrder: integer("sort_order").notNull().default(0),
@@ -704,6 +766,22 @@ export const rewards = sqliteTable(
     index("idx_rewards_company_status").on(table.companyId, table.status),
     index("idx_rewards_partner_status").on(table.partnerId, table.status),
   ],
+);
+
+export const rewardAdjustments = sqliteTable(
+  "reward_adjustments",
+  {
+    id: text("id").primaryKey().notNull(),
+    rewardId: text("reward_id").notNull().references(() => rewards.id),
+    companyId: text("company_id").notNull().references(() => companies.id),
+    actorUserId: text("actor_user_id").notNull().references(() => users.id),
+    previousAmount: integer("previous_amount").notNull(),
+    amount: integer("amount").notNull(),
+    difference: integer("difference").notNull(),
+    reason: text("reason").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_reward_adjustments_reward_created").on(table.rewardId, table.createdAt), index("idx_reward_adjustments_company_created").on(table.companyId, table.createdAt)],
 );
 
 export const reportTemplates = sqliteTable(

@@ -4,6 +4,7 @@ import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
 import { companies } from "../../../../db/schema";
 import { sameOrigin } from "../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 const currencies = new Set(["KZT", "RUB", "USD", "EUR"]);
 
@@ -19,6 +20,7 @@ export async function PATCH(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "CRM_MANAGE")) return companyPermissionDenied();
   try {
     const body = await request.json() as Record<string, unknown>;
     const currency = String(body.currency || company.crmGoalCurrency || "KZT").toUpperCase();

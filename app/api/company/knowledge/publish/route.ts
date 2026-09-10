@@ -3,6 +3,7 @@ import { getDb } from "../../../../../db";
 import { getCompanyForUser } from "../../../../../db/company";
 import { companyKnowledgeItems } from "../../../../../db/schema";
 import { cleanString, sameOrigin } from "../../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../../lib/company-permissions";
 
 const kinds = new Set(["OFFER", "ICP", "SCRIPT", "DISCOVERY", "OBJECTION", "PROCESS", "FOLLOW_UP", "FAQ", "CASE", "CHECKLIST", "COMPLIANCE"]);
 const channels = new Set(["ALL", "WHATSAPP", "CALL", "MEETING", "EMAIL", "SOCIAL"]);
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   const payload = await request.json() as { items?: Array<Record<string, unknown>> };
   if (!Array.isArray(payload.items) || !payload.items.length || payload.items.length > 8) return Response.json({ error: "Нет материалов для публикации" }, { status: 400 });
   const now = new Date().toISOString();

@@ -54,6 +54,11 @@ type AgentApplication = {
   network: string; preferredTypes: string[]; availability: string; comment: string; status: string; reviewedAt: string | null; createdAt: string;
 };
 
+type CompanyApplication = {
+  id: string; name: string; company: string; email: string; phone: string; comment: string; status: string;
+  firstUtmSource: string; firstUtmMedium: string; firstUtmCampaign: string; notificationStatus: string; createdAt: string;
+};
+
 const statusNames: Record<string, string> = {
   active: "Активен",
   pending: "Ожидает активации",
@@ -97,18 +102,21 @@ export function SystemUsers({
   initialRows,
   initialDeletedRows,
   initialApplications,
+  initialCompanyApplications,
   generatedAt,
 }: {
   authorized: boolean;
   initialRows: Row[];
   initialDeletedRows: DeletedRow[];
   initialApplications: AgentApplication[];
+  initialCompanyApplications: CompanyApplication[];
   generatedAt: string;
 }) {
   const [ready] = useState(authorized);
   const [rows, setRows] = useState(initialRows);
   const [deletedRows, setDeletedRows] = useState(initialDeletedRows);
   const [applications, setApplications] = useState(initialApplications);
+  const [companyApplications, setCompanyApplications] = useState(initialCompanyApplications);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState("");
@@ -195,6 +203,11 @@ export function SystemUsers({
     });
     const data = (await response.json()) as { error?: string };
     if (!response.ok) return setError(data.error || "Доступ запрещён");
+    window.location.reload();
+  }
+
+  async function logout() {
+    await fetch("/api/system/login", { method: "DELETE" });
     window.location.reload();
   }
 
@@ -295,6 +308,15 @@ export function SystemUsers({
     const data = await response.json() as { status?: string; reviewedAt?: string | null; error?: string };
     if (response.ok) setApplications((current) => current.map((item) => item.id === id ? { ...item, status: data.status || nextStatus, reviewedAt: data.reviewedAt ?? null } : item));
     else setError(data.error || "Не удалось обновить заявку");
+    setBusy("");
+  }
+
+  async function updateCompanyApplication(id: string, nextStatus: string) {
+    setBusy(id); setError("");
+    const response = await fetch(`/api/system/company-applications/${id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status: nextStatus }) });
+    const data = await response.json() as { status?: string; error?: string };
+    if (response.ok) setCompanyApplications((current) => current.map((item) => item.id === id ? { ...item, status: data.status || nextStatus } : item));
+    else setError(data.error || "Не удалось обновить заявку компании");
     setBusy("");
   }
 
@@ -405,9 +427,10 @@ export function SystemUsers({
           <h1>Состояние проекта</h1>
           <p>Компании, активность и деньги. Дата и время указаны по Астане.</p>
         </div>
-        <button type="button" onClick={downloadCsv}>
-          ↓ Скачать сводку CSV
-        </button>
+        <div className="system-admin-actions">
+          <button type="button" onClick={downloadCsv}>↓ Скачать сводку CSV</button>
+          <button type="button" onClick={() => void logout()}>Выйти из админки</button>
+        </div>
       </header>
 
       {error && (
@@ -742,6 +765,12 @@ export function SystemUsers({
             <span>Измените фильтры или поисковый запрос.</span>
           </div>
         )}
+      </section>
+
+      <section className="system-agent-applications">
+        <header><div><span>НОВЫЕ КОМПАНИИ</span><h2>Заявки на запуск</h2><p>Заявки с лендинга сохранены в базе, даже если письмо временно не отправилось.</p></div><strong>{companyApplications.filter((item) => item.status === "NEW").length} новых</strong></header>
+        <div className="system-application-list">{companyApplications.map((application) => <details key={application.id} className={`system-application status-${application.status.toLowerCase()}`}><summary><div><b>{application.company.slice(0,1).toUpperCase()}</b><span><strong>{application.company}</strong><small>{application.name} · {application.email || "email не указан"} · {application.phone}</small></span></div><span>{[application.firstUtmSource, application.firstUtmCampaign].filter(Boolean).join(" · ") || "Источник не определён"}</span><time>{formatDateTimeSeconds(application.createdAt)}</time><em>{application.status === "NEW" ? "Новая" : application.status === "ACCEPTED" ? "Принята" : application.status === "REJECTED" ? "Отклонена" : "Обработана"}</em></summary><div><dl><dt>Контакт</dt><dd>{application.name} · {application.phone} · {application.email || "—"}</dd><dt>Комментарий</dt><dd>{application.comment || "—"}</dd><dt>Первый источник</dt><dd>{[application.firstUtmSource, application.firstUtmMedium, application.firstUtmCampaign].filter(Boolean).join(" / ") || "—"}</dd><dt>Уведомление</dt><dd>{application.notificationStatus}</dd></dl><footer><a href={`https://wa.me/${application.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Написать в WhatsApp ↗</a><button disabled={busy === application.id} onClick={() => void updateCompanyApplication(application.id, "REVIEWED")}>Обработана</button><button disabled={busy === application.id} onClick={() => void updateCompanyApplication(application.id, "ACCEPTED")}>Принять</button><button disabled={busy === application.id} onClick={() => void updateCompanyApplication(application.id, "REJECTED")}>Отклонить</button></footer></div></details>)}</div>
+        {!companyApplications.length && <p className="system-empty">Заявок компаний пока нет.</p>}
       </section>
 
       <section className="system-agent-applications">

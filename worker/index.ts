@@ -2,6 +2,8 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { canonicalRedirectFor } from "../lib/domain-routing";
+import { drainDueIntegrationDeliveries, safeIntegrationEvent } from "../lib/integrations/service";
+import { drainCompanyApplicationNotifications } from "../lib/company-application-service";
 
 interface Env {
   ASSETS: Fetcher;
@@ -26,6 +28,19 @@ interface ExecutionContext {
   passThroughOnException(): void;
 }
 
+let lastIntegrationDrainAt = 0;
+
+function scheduleIntegrationDrain(env: Env, ctx: ExecutionContext) {
+  if (!env.DB) return;
+  const now = Date.now();
+  if (now - lastIntegrationDrainAt < 30_000) return;
+  lastIntegrationDrainAt = now;
+  ctx.waitUntil(Promise.all([
+    safeIntegrationEvent(drainDueIntegrationDeliveries()),
+    drainCompanyApplicationNotifications().catch(() => console.error("Company application notification drain failed")),
+  ]));
+}
+
 // Image security config. SVG sources with .svg extension auto-skip the
 // optimization endpoint on the client side (served directly, no proxy).
 // To route SVGs through the optimizer (with security headers), set
@@ -34,6 +49,7 @@ interface ExecutionContext {
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    scheduleIntegrationDrain(env, ctx);
     const url = new URL(request.url);
 
     if (request.method === "GET" || request.method === "HEAD") {
@@ -64,6 +80,12 @@ const worker = {
       return privateResponse;
     }
     return response;
+  },
+  async scheduled(_controller: ScheduledController, _env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(Promise.all([
+      safeIntegrationEvent(drainDueIntegrationDeliveries()),
+      drainCompanyApplicationNotifications().catch(() => console.error("Company application notification drain failed")),
+    ]));
   },
 };
 

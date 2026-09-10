@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { timingSafeEqual } from "./secure-compare";
 import { and, eq, gt, sql } from "drizzle-orm";
-import { authSessions, companies, supportSessions, userRoles, users } from "../db/schema";
+import { adminSessions, authSessions, companies, supportSessions, userRoles, users } from "../db/schema";
 
 const SESSION_COOKIE = "relay_session";
 const ADMIN_COOKIE = "relay_admin";
@@ -179,12 +179,43 @@ export async function verifyAdminPassword(password: string) {
 export async function createAdminSession() {
   const secret = await runtimeAdminSecret();
   if (!secret) throw new Error("ADMIN_SECRET не настроен");
+  const rawToken = bytesToBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + ADMIN_TTL_MS);
+  const { getDb } = await import("../db");
+  const db = getDb();
+  await db.batch([
+    db.delete(adminSessions).where(sql`${adminSessions.expiresAt} <= ${now}`),
+    db.insert(adminSessions).values({ id: await sha256(rawToken), expiresAt: expiresAt.toISOString(), createdAt: now }),
+  ]);
   const jar = await cookies();
-  jar.set(ADMIN_COOKIE, await adminCookieValue(secret), { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/", maxAge: Math.floor(ADMIN_TTL_MS / 1000) });
+  jar.set(ADMIN_COOKIE, rawToken, { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/", expires: expiresAt });
 }
 
 export async function hasAdminSession() {
-  const secret = await runtimeAdminSecret();
+  if (!(await runtimeAdminSecret())) return false;
   const current = (await cookies()).get(ADMIN_COOKIE)?.value ?? "";
-  return Boolean(secret && current && timingSafeEqual(current, await adminCookieValue(secret)));
+  if (!current) return false;
+  const now = new Date().toISOString();
+  const { getDb } = await import("../db");
+  const db = getDb();
+  const row = (await db.select({ id: adminSessions.id }).from(adminSessions).where(and(
+    eq(adminSessions.id, await sha256(current)),
+    gt(adminSessions.expiresAt, now),
+    sql`${adminSessions.revokedAt} is null`,
+  )).limit(1))[0];
+  if (!row) return false;
+  await db.update(adminSessions).set({ lastUsedAt: now }).where(eq(adminSessions.id, row.id));
+  return true;
+}
+
+export async function clearAdminSession() {
+  const jar = await cookies();
+  const current = jar.get(ADMIN_COOKIE)?.value;
+  if (current) {
+    const { getDb } = await import("../db");
+    await getDb().update(adminSessions).set({ revokedAt: new Date().toISOString() }).where(eq(adminSessions.id, await sha256(current)));
+  }
+  jar.set(ADMIN_COOKIE, "", { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/", expires: new Date(0) });
+  await clearSupportSession();
 }

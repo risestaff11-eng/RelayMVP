@@ -19,14 +19,14 @@ export const salesStatusNames: Record<SalesStatus, string> = {
   LOST: "Сделка не состоялась",
 };
 
-export function reviewDueAt(createdAt: string | Date) {
-  return new Date(new Date(createdAt).getTime() + REVIEW_SLA_HOURS * 60 * 60 * 1000).toISOString();
+export function reviewDueAt(createdAt: string | Date, hours = REVIEW_SLA_HOURS) {
+  return new Date(new Date(createdAt).getTime() + Math.max(1, hours) * 60 * 60 * 1000).toISOString();
 }
 
-export function payoutDueAt(approvedAt: string | null, plannedAt: string | null) {
+export function payoutDueAt(approvedAt: string | null, plannedAt: string | null, days = PAYOUT_SLA_DAYS) {
   if (plannedAt) return new Date(`${plannedAt.slice(0, 10)}T23:59:59.999Z`).toISOString();
   if (!approvedAt) return null;
-  return new Date(new Date(approvedAt).getTime() + PAYOUT_SLA_DAYS * 86400000).toISOString();
+  return new Date(new Date(approvedAt).getTime() + Math.max(1, days) * 86400000).toISOString();
 }
 
 export function slaState(dueAt: string | null, completed = false, now = Date.now()) {
@@ -52,6 +52,7 @@ export function isTestProgramName(name: string) {
   return /(^|[\s_-])(test|demo|sandbox|тест|демо|черновик)([\s_-]|$)/i.test(name.trim());
 }
 
-export function isAnalyticsProgram(program: { name: string; status: string }) {
-  return program.status !== "ARCHIVED" && !isTestProgramName(program.name);
+export function isAnalyticsProgram(program: { name: string; status: string; isTest?: boolean }) {
+  const test = program.isTest ?? isTestProgramName(program.name);
+  return program.status !== "ARCHIVED" && !test;
 }

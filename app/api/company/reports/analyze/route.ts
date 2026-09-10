@@ -3,10 +3,12 @@ import { getCompanyForUser } from "../../../../../db/company";
 import { getCompanyReports } from "../../../../../db/reports";
 import { generateStructuredJson } from "../../../../../lib/ai";
 import { cleanString, sameOrigin } from "../../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../../lib/company-permissions";
 
 type Analysis = { summary: string; trends: string[]; blockers: string[]; achievements: string[]; companyRecommendations: string[]; agentRecommendations: string[]; evidence: string[] };
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 }); const user = await getChatGPTUser(); if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 }); const company = await getCompanyForUser(user.userId); if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "REPORTS_MANAGE")) return companyPermissionDenied();
   try { const payload = await request.json() as Record<string, unknown>; const partnerId = cleanString(payload.partnerId, 80); const reports = (await getCompanyReports(company.id)).filter((item) => item.status !== "DRAFT" && (!partnerId || item.partnerId === partnerId)).slice(0, 12); if (!reports.length) throw new Error("Для анализа нужны отправленные отчёты");
     const context = reports.map((item) => ({ id: item.id, agent: item.partnerName, period: [item.periodStart, item.periodEnd], metrics: item.metrics, summary: item.aiSummary, answers: Object.fromEntries(Object.entries(item.answers).filter(([key]) => ["main_results", "wins", "blockers", "support", "next_plan", "comment"].includes(key))) }));
     const schema = { type: "object", additionalProperties: false, required: ["summary", "trends", "blockers", "achievements", "companyRecommendations", "agentRecommendations", "evidence"], properties: { summary: { type: "string" }, trends: { type: "array", items: { type: "string" } }, blockers: { type: "array", items: { type: "string" } }, achievements: { type: "array", items: { type: "string" } }, companyRecommendations: { type: "array", items: { type: "string" } }, agentRecommendations: { type: "array", items: { type: "string" } }, evidence: { type: "array", items: { type: "string" } } } };

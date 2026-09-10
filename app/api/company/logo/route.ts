@@ -4,6 +4,7 @@ import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
 import { companies } from "../../../../db/schema";
 import { getFilesBucket } from "../../../../lib/storage";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 import { sameOrigin } from "../_utils";
 
 const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "COMPANY_SETTINGS_MANAGE")) return companyPermissionDenied();
   const file = (await request.formData()).get("logo");
   if (!(file instanceof File) || !file.size) return Response.json({ error: "Выберите изображение" }, { status: 400 });
   if (file.size > 5 * 1024 * 1024 || !allowed.has(file.type)) return Response.json({ error: "Логотип: JPG, PNG или WEBP до 5 МБ" }, { status: 400 });

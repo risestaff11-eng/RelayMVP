@@ -1,6 +1,7 @@
 import { getCompanyForUser } from "@/db/company";
 import { getChatGPTUser } from "@/app/chatgpt-auth";
 import { sameOrigin } from "../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "@/lib/company-permissions";
 
 export async function integrationCompany(request: Request) {
   if (!sameOrigin(request)) return { error: Response.json({ error: "Недопустимый источник запроса" }, { status: 403 }) };
@@ -8,6 +9,7 @@ export async function integrationCompany(request: Request) {
   if (!user) return { error: Response.json({ error: "Сначала войдите" }, { status: 401 }) };
   const company = await getCompanyForUser(user.userId);
   if (!company) return { error: Response.json({ error: "Компания не найдена" }, { status: 404 }) };
+  if (!hasCompanyPermission(company.role, "INTEGRATIONS_MANAGE")) return { error: companyPermissionDenied() };
   return { company };
 }
 

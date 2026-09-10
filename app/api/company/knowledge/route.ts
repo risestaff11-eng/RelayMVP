@@ -5,6 +5,7 @@ import { getCompanyForUser } from "../../../../db/company";
 import { companyKnowledgeItems } from "../../../../db/schema";
 import { getFilesBucket } from "../../../../lib/storage";
 import { cleanString, sameOrigin } from "../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 const kinds = new Set(["OFFER", "ICP", "SCRIPT", "DISCOVERY", "OBJECTION", "PROCESS", "FOLLOW_UP", "FAQ", "CASE", "CHECKLIST", "COMPLIANCE", "LINK", "FILE"]);
 const channels = new Set(["ALL", "WHATSAPP", "CALL", "MEETING", "EMAIL", "SOCIAL"]);
@@ -62,6 +63,8 @@ export async function PATCH(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   try {
     const payload = await request.json() as Record<string, unknown>;
     const id = cleanString(payload.id, 80);
@@ -98,6 +101,7 @@ export async function DELETE(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   const id = new URL(request.url).searchParams.get("id") || "";
   const row = (await getDb().select().from(companyKnowledgeItems).where(and(eq(companyKnowledgeItems.id, id), eq(companyKnowledgeItems.companyId, company.id))).limit(1))[0];
   if (!row) return Response.json({ error: "Материал не найден" }, { status: 404 });

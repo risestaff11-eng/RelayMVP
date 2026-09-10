@@ -8,11 +8,13 @@ import { getFilesBucket } from "../../../../lib/storage";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
 import { agentUrl } from "../../../../lib/public-origins";
 import { normalizeSubmissionFormFields, serializeSubmissionFormFields, submissionFormError } from "../../../../lib/submission-form";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 const GOALS = new Set(["LEADS", "DEALS", "BRAND", "ENGAGEMENT", "MIXED"]);
 const CURRENCIES = new Set(["KZT", "RUB", "USD", "EUR"]);
 const REWARD_MODES = new Set(["FIXED", "PERCENT", "POINTS", "NON_MONETARY"]);
 const MISSION_TYPES = new Set(["LEAD", "DEAL", "IMAGE", "ENGAGEMENT"]);
+const REWARD_TRIGGERS = new Set(["REVIEW_ACCEPTED", "SALE_PAID"]);
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -20,6 +22,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return Response.json({ error: "Сначала войдите в аккаунт" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   const { id } = await params;
   const current = await getProgramForCompany(company.id, id);
   if (!current) return Response.json({ error: "Программа не найдена" }, { status: 404 });
@@ -33,6 +36,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const payoutTerms = cleanString(payload.payoutTerms, 1800);
     const legalTerms = cleanString(payload.legalTerms, 2400);
     const expiresAtValue = cleanString(payload.expiresAt, 30);
+    const isTest = payload.isTest === true;
     const publish = payload.publish === true;
     const pause = payload.pause === true;
     const missionPayloads = Array.isArray(payload.missions) ? payload.missions as Array<Record<string, unknown>> : [];
@@ -57,12 +61,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       const rewardMode = cleanString(mission.rewardMode, 30);
       const rewardValue = Math.max(0, Math.min(100000000, Math.round(Number(mission.rewardValue) || 0)));
       const rewardLabel = cleanString(mission.rewardLabel, 120);
+      const requestedRewardTrigger = cleanString(mission.rewardTrigger, 30).toUpperCase();
+      const rewardTrigger = rewardMode === "PERCENT" ? "SALE_PAID" : REWARD_TRIGGERS.has(requestedRewardTrigger) ? requestedRewardTrigger : type === "DEAL" ? "SALE_PAID" : "REVIEW_ACCEPTED";
       const verificationRules = cleanString(mission.verificationRules, 1200);
       if (!REWARD_MODES.has(rewardMode)) throw new Error("Выберите корректный тип вознаграждения");
       if (publish && (!title || !missionDescription || instructions.length < 1 || proofRequirements.length < 1 || !verificationRules)) throw new Error("Перед публикацией заполните описание, шаги, подтверждение и правила каждого задания");
       if (publish && rewardMode !== "NON_MONETARY" && rewardValue <= 0) throw new Error("Перед публикацией укажите размер вознаграждения для каждого денежного задания");
       if (publish && !rewardLabel) throw new Error("Перед публикацией укажите понятное название вознаграждения");
-      return { id: missionId, type, title, description: missionDescription, instructions, proofRequirements, rewardMode, rewardValue, rewardLabel, verificationRules, sortOrder: index, isNew };
+      return { id: missionId, type, title, description: missionDescription, instructions, proofRequirements, rewardMode, rewardValue, rewardLabel, rewardTrigger, verificationRules, sortOrder: index, isNew };
     });
     const formError = submissionFormError(formFields, normalizedMissions.map((mission) => mission.type));
     if (formError) throw new Error(formError);
@@ -86,6 +92,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       rewardMode: mission.rewardMode,
       rewardValue: mission.rewardValue,
       rewardLabel: mission.rewardLabel,
+      rewardTrigger: mission.rewardTrigger,
       verificationRules: mission.verificationRules,
       sortOrder: mission.sortOrder,
       updatedAt: now,
@@ -101,6 +108,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       rewardMode: mission.rewardMode,
       rewardValue: mission.rewardValue,
       rewardLabel: mission.rewardLabel,
+      rewardTrigger: mission.rewardTrigger,
       verificationRules: mission.verificationRules,
       sortOrder: mission.sortOrder,
       status: "ACTIVE",
@@ -108,7 +116,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       updatedAt: now,
     }));
     await db.batch([
-      db.update(programs).set({ name, description, goal, currency, payoutTerms, legalTerms, submissionFormJson: serializeSubmissionFormFields(formFields), expiresAt, status: nextStatus, publishedAt: publish ? current.publishedAt ?? now : current.publishedAt, updatedAt: now }).where(and(eq(programs.id, id), eq(programs.companyId, company.id))),
+      db.update(programs).set({ name, description, goal, currency, payoutTerms, legalTerms, submissionFormJson: serializeSubmissionFormFields(formFields), isTest, expiresAt, status: nextStatus, publishedAt: publish ? current.publishedAt ?? now : current.publishedAt, updatedAt: now }).where(and(eq(programs.id, id), eq(programs.companyId, company.id))),
       ...missionUpdates,
       ...missionInserts,
       db.update(companies).set({ onboardingStatus: publish ? "PROGRAM_PUBLISHED" : "PROGRAM_DRAFT", updatedAt: now }).where(eq(companies.id, company.id)),
@@ -127,6 +135,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (!user) return Response.json({ error: "Сначала войдите в аккаунт" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   const { id } = await params;
   const current = await getProgramForCompany(company.id, id);
   if (!current) return Response.json({ error: "Программа не найдена" }, { status: 404 });

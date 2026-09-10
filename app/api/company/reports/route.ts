@@ -6,11 +6,13 @@ import { getDb } from "../../../../db";
 import { agentReports, reportRevisions, reportTemplates } from "../../../../db/schema";
 import { DEFAULT_REPORT_METRICS, REPORT_FIELD_TYPES, type ReportField } from "../../../../lib/reporting";
 import { cleanString, sameOrigin } from "../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 async function context() { const user = await getChatGPTUser(); if (!user) return null; const company = await getCompanyForUser(user.userId); return company ? { user, company } : null; }
 
 export async function PATCH(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 }); const ctx = await context(); if (!ctx) return Response.json({ error: "Сначала войдите" }, { status: 401 });
+  if (!hasCompanyPermission(ctx.company.role, "REPORTS_MANAGE")) return companyPermissionDenied();
   try {
     const payload = await request.json() as Record<string, unknown>; const action = cleanString(payload.action, 30); const now = new Date().toISOString();
     if (action === "TEMPLATE") {

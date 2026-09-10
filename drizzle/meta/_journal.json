@@ -225,6 +225,13 @@
       "when": 1788514875398,
       "tag": "0032_neat_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1789033662749,
+      "tag": "0033_bumpy_viper",
+      "breakpoints": true
     }
   ]
 }

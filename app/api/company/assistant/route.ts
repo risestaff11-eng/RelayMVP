@@ -6,6 +6,7 @@ import { generateStructuredJson } from "../../../../lib/ai";
 import { aiCreditLimit, calculateAiCredits, minimumAiCredits } from "../../../../lib/ai-credits";
 import { reserveCompanyAiCredits, settleCompanyAiCredits } from "../../../../lib/company-credit-reservation";
 import { cleanString, sameOrigin } from "../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 type AssistantReply = {
   reply: string;
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   if (company.aiTokenBalance < minimumAiCredits("ASSISTANT_REPLY")) return Response.json({ error: "Недостаточно AI-кредитов для ответа. Пополните баланс в настройках." }, { status: 402 });
 
   try {

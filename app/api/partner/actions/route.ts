@@ -4,6 +4,7 @@ import { getPartnerPortal } from "../../../../db/partner";
 import { partnerMissionAcceptances, partnerProfiles, submissionDisputes } from "../../../../db/schema";
 import { recordRewardReceipt } from "../../../../lib/reward-transfer";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
+import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../lib/integrations/service";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -50,6 +51,14 @@ export async function POST(request: Request) {
       if (!confirmed || reward.partnerConfirmedAt) return Response.json({ ok: true, partnerConfirmedAt: reward.partnerConfirmedAt });
       const confirmedAt = await recordRewardReceipt(reward.partnerId, rewardId);
       if (!confirmedAt) throw new Error("Выплата уже изменена. Обновите страницу.");
+      deferIntegrationEvent(recordIntegrationEvent({
+        companyId: portal.company.id,
+        eventType: "reward.updated",
+        aggregateType: "reward",
+        aggregateId: rewardId,
+        idempotencyKey: `reward.received:${rewardId}:${confirmedAt}`,
+        payload: { rewardId, submissionId: reward.submissionId, status: "RECEIVED", partnerConfirmedAt: confirmedAt },
+      }));
       return Response.json({ ok: true, partnerConfirmedAt: confirmedAt });
     }
 

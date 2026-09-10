@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { companyEmailVerificationCodes, userRoles, users } from "../../../../db/schema";
+import { companyEmailVerificationCodes, pendingCompanyRegistrations, userRoles, users } from "../../../../db/schema";
 import { hashPassword } from "../../../../lib/account-auth";
 import { companyEmailCodeExpiresAt, createCompanyEmailCode, hashCompanyEmailCode, sendCompanyEmailCode } from "../../../../lib/company-email-verification";
 import { cleanString, sameOrigin } from "../../company/_utils";
@@ -15,6 +15,16 @@ export async function POST(request: Request) {
     const phone = cleanString(payload.phone, 40);
     const companyName = cleanString(payload.company, 120);
     const password = String(payload.password ?? "");
+    const rawAttribution = payload.marketingAttribution && typeof payload.marketingAttribution === "object" ? payload.marketingAttribution as Record<string, unknown> : {};
+    const marketingAttributionJson = JSON.stringify({
+      visitId: cleanString(rawAttribution.visitId, 120),
+      firstUtmSource: cleanString(rawAttribution.firstUtmSource, 120),
+      firstUtmMedium: cleanString(rawAttribution.firstUtmMedium, 120),
+      firstUtmCampaign: cleanString(rawAttribution.firstUtmCampaign, 120),
+      lastUtmSource: cleanString(rawAttribution.lastUtmSource, 120),
+      lastUtmMedium: cleanString(rawAttribution.lastUtmMedium, 120),
+      lastUtmCampaign: cleanString(rawAttribution.lastUtmCampaign, 120),
+    });
     if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Укажите корректный email");
     if (displayName.length < 2) throw new Error("Укажите имя");
     if (phone.length < 6) throw new Error("Укажите телефон");
@@ -37,13 +47,25 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const passwordHash = await hashPassword(password);
     if (user) {
-      await db.batch([
-        db.insert(userRoles).values({ userId, role: "COMPANY", createdAt: now }),
-        db.update(users).set({ displayName, phone, companyName, passwordHash, status: "pending", emailVerifiedAt: null, updatedAt: now }).where(eq(users.id, userId)),
-      ]);
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      await db.insert(pendingCompanyRegistrations).values({
+        userId,
+        email,
+        displayName,
+        phone,
+        companyName,
+        passwordHash,
+        marketingAttributionJson,
+        expiresAt,
+        createdAt: now,
+        updatedAt: now,
+      }).onConflictDoUpdate({
+        target: pendingCompanyRegistrations.userId,
+        set: { email, displayName, phone, companyName, passwordHash, marketingAttributionJson, expiresAt, updatedAt: now },
+      });
     } else {
       await db.batch([
-        db.insert(users).values({ id: userId, email, displayName, phone, companyName, passwordHash, status: "pending", emailVerifiedAt: null, createdAt: now, updatedAt: now }),
+        db.insert(users).values({ id: userId, email, displayName, phone, companyName, passwordHash, marketingAttributionJson, status: "pending", emailVerifiedAt: null, createdAt: now, updatedAt: now }),
         db.insert(userRoles).values({ userId, role: "COMPANY", createdAt: now }),
       ]);
     }

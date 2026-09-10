@@ -1,5 +1,4 @@
 import { getD1 } from "../../db";
-import { waitUntil } from "cloudflare:workers";
 import { decryptIntegrationSecret, encryptIntegrationSecret, randomToken, sha256, signWebhook } from "./crypto";
 import { normalizeWebhookUrl } from "./url";
 
@@ -30,6 +29,33 @@ function isoNow() { return new Date().toISOString(); }
 function retryAt(attempt: number) {
   const minutes = [1, 5, 30, 120][Math.max(0, Math.min(attempt - 1, 3))];
   return new Date(Date.now() + minutes * 60_000).toISOString();
+}
+
+async function materializeMissingDeliveries(companyId: string) {
+  const now = isoNow();
+  await getD1().prepare(`INSERT OR IGNORE INTO integration_deliveries
+    (id, event_id, connection_id, status, attempt_count, next_attempt_at, created_at, updated_at)
+    SELECT lower(hex(randomblob(16))), e.id, c.id, 'PENDING', 0, ?, ?, ?
+    FROM integration_events e
+    JOIN integration_connections c ON c.company_id = e.company_id AND c.provider = 'WEBHOOK' AND c.status = 'ACTIVE'
+    WHERE e.company_id = ? AND e.event_type <> 'integration.test'
+      AND EXISTS (SELECT 1 FROM json_each(c.config_json, '$.eventTypes') WHERE value = e.event_type)
+      AND NOT EXISTS (SELECT 1 FROM integration_deliveries d WHERE d.event_id = e.id AND d.connection_id = c.id)
+    ORDER BY e.created_at DESC
+    LIMIT 200`).bind(now, now, now, companyId).run();
+}
+
+async function recoverStaleDeliveries(companyId: string) {
+  const now = isoNow();
+  const staleBefore = new Date(Date.now() - 5 * 60_000).toISOString();
+  await getD1().prepare(`UPDATE integration_deliveries
+    SET status = 'RETRY', next_attempt_at = ?, last_error = 'Предыдущая попытка прервалась', updated_at = ?
+    WHERE id IN (
+      SELECT d.id FROM integration_deliveries d
+      JOIN integration_events e ON e.id = d.event_id
+      WHERE e.company_id = ? AND d.status = 'PROCESSING' AND d.updated_at <= ?
+      ORDER BY d.updated_at LIMIT 100
+    )`).bind(now, now, companyId, staleBefore).run();
 }
 
 export async function getIntegrationOverview(companyId: string): Promise<IntegrationOverview> {
@@ -150,6 +176,8 @@ export async function retryDelivery(companyId: string, deliveryId: string) {
 
 export async function dispatchPendingDeliveries(companyId: string, onlyDeliveryId?: string) {
   const db = getD1();
+  await materializeMissingDeliveries(companyId);
+  await recoverStaleDeliveries(companyId);
   const rows = await db.prepare(`SELECT d.id, d.attempt_count AS attemptCount, e.id AS eventId, e.event_type AS eventType, e.aggregate_type AS aggregateType, e.aggregate_id AS aggregateId, e.payload_json AS payloadJson, e.created_at AS eventCreatedAt, c.id AS connectionId, c.config_json AS configJson, c.encrypted_credentials AS encryptedCredentials FROM integration_deliveries d JOIN integration_events e ON e.id = d.event_id JOIN integration_connections c ON c.id = d.connection_id WHERE e.company_id = ? AND c.status = 'ACTIVE' AND d.status IN ('PENDING','RETRY') AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?) AND (? IS NULL OR d.id = ?) ORDER BY d.created_at LIMIT 20`)
     .bind(companyId, isoNow(), onlyDeliveryId || null, onlyDeliveryId || null).all<Record<string, unknown>>();
   for (const row of rows.results) {
@@ -199,12 +227,38 @@ export async function dispatchPendingDeliveries(companyId: string, onlyDeliveryI
   }
 }
 
+export async function drainDueIntegrationDeliveries() {
+  const db = getD1();
+  const now = isoNow();
+  const staleBefore = new Date(Date.now() - 5 * 60_000).toISOString();
+  const companies = await db.prepare(`SELECT DISTINCT companyId FROM (
+      SELECT e.company_id AS companyId
+      FROM integration_deliveries d
+      JOIN integration_events e ON e.id = d.event_id
+      JOIN integration_connections c ON c.id = d.connection_id
+      WHERE c.status = 'ACTIVE' AND (
+        (d.status IN ('PENDING', 'RETRY') AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?))
+        OR (d.status = 'PROCESSING' AND d.updated_at <= ?)
+      )
+      UNION ALL
+      SELECT e.company_id AS companyId
+      FROM integration_events e
+      JOIN integration_connections c ON c.company_id = e.company_id AND c.provider = 'WEBHOOK' AND c.status = 'ACTIVE'
+      WHERE e.event_type <> 'integration.test'
+        AND EXISTS (SELECT 1 FROM json_each(c.config_json, '$.eventTypes') WHERE value = e.event_type)
+        AND NOT EXISTS (SELECT 1 FROM integration_deliveries d WHERE d.event_id = e.id AND d.connection_id = c.id)
+    ) ORDER BY companyId LIMIT 20`).bind(now, staleBefore).all<{ companyId: string }>();
+  for (const company of companies.results) await dispatchPendingDeliveries(company.companyId);
+}
+
 export function safeIntegrationEvent(promise: Promise<unknown>) {
   return promise.catch((error) => console.warn("Integration event failed", error instanceof Error ? error.message : "unknown error"));
 }
 
 export function deferIntegrationEvent(promise: Promise<unknown>) {
   const safe = safeIntegrationEvent(promise);
-  if (typeof waitUntil === "function") waitUntil(safe);
+  // The persisted outbox is the source of truth. Start a best-effort delivery
+  // now; the worker drain retries it on later traffic or a scheduled run.
+  void safe;
   return safe;
 }

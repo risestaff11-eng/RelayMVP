@@ -40,6 +40,7 @@ export type MissionRecord = {
   rewardMode: string;
   rewardValue: number;
   rewardLabel: string;
+  rewardTrigger: string;
   verificationRules: string;
   status: string;
   sortOrder: number;
@@ -57,6 +58,7 @@ export type ProgramRecord = {
   payoutTerms: string;
   legalTerms: string;
   formFields: SubmissionFormField[];
+  isTest: boolean;
   expiresAt: string | null;
   status: string;
   publishedAt: string | null;
@@ -78,6 +80,7 @@ function serializeMission(row: typeof missions.$inferSelect, resources: Array<ty
     rewardMode: row.rewardMode,
     rewardValue: row.rewardValue,
     rewardLabel: row.rewardLabel,
+    rewardTrigger: row.rewardTrigger,
     verificationRules: row.verificationRules,
     status: row.status,
     sortOrder: row.sortOrder,
@@ -94,6 +97,14 @@ async function attachMissions(programRows: Array<typeof programs.$inferSelect>) 
     getDb().select({ id: partners.id, programId: partners.programId }).from(partners).where(inArray(partners.programId, ids)),
     getDb().select({ id: submissions.id, programId: submissions.programId }).from(submissions).where(inArray(submissions.programId, ids)),
   ]);
+  const resourcesByMission = new Map<string, Array<typeof missionResources.$inferSelect>>();
+  for (const resource of resourceRows) resourcesByMission.set(resource.missionId, [...(resourcesByMission.get(resource.missionId) ?? []), resource]);
+  const missionsByProgram = new Map<string, MissionRecord[]>();
+  for (const mission of missionRows) missionsByProgram.set(mission.programId, [...(missionsByProgram.get(mission.programId) ?? []), serializeMission(mission, resourcesByMission.get(mission.id) ?? [])]);
+  const agentCounts = new Map<string, number>();
+  for (const agent of agentRows) agentCounts.set(agent.programId, (agentCounts.get(agent.programId) ?? 0) + 1);
+  const resultCounts = new Map<string, number>();
+  for (const result of resultRows) resultCounts.set(result.programId, (resultCounts.get(result.programId) ?? 0) + 1);
   return programRows.map((program): ProgramRecord => ({
     id: program.id,
     companyId: program.companyId,
@@ -105,14 +116,15 @@ async function attachMissions(programRows: Array<typeof programs.$inferSelect>) 
     payoutTerms: program.payoutTerms,
     legalTerms: program.legalTerms,
     formFields: parseSubmissionFormFields(program.submissionFormJson),
+    isTest: program.isTest,
     expiresAt: program.expiresAt,
     status: program.status,
     publishedAt: program.publishedAt,
     createdAt: program.createdAt,
     updatedAt: program.updatedAt,
-    missions: missionRows.filter((mission) => mission.programId === program.id).map((mission) => serializeMission(mission, resourceRows)),
-    agentCount: agentRows.filter((agent) => agent.programId === program.id).length,
-    resultCount: resultRows.filter((result) => result.programId === program.id).length,
+    missions: missionsByProgram.get(program.id) ?? [],
+    agentCount: agentCounts.get(program.id) ?? 0,
+    resultCount: resultCounts.get(program.id) ?? 0,
   }));
 }
 
@@ -180,6 +192,11 @@ export async function getSubmissionsForCompany(companyId: string) {
     db.select().from(submissionStatusEvents).where(inArray(submissionStatusEvents.submissionId, ids)).orderBy(desc(submissionStatusEvents.createdAt)),
     db.select().from(rewards).where(inArray(rewards.submissionId, ids)),
   ]) : [[], [], []];
+  const attachmentsBySubmission = new Map<string, typeof attachmentRows>();
+  for (const attachment of attachmentRows) attachmentsBySubmission.set(attachment.submissionId, [...(attachmentsBySubmission.get(attachment.submissionId) ?? []), attachment]);
+  const eventsBySubmission = new Map<string, typeof eventRows>();
+  for (const event of eventRows) eventsBySubmission.set(event.submissionId, [...(eventsBySubmission.get(event.submissionId) ?? []), event]);
+  const rewardBySubmission = new Map(rewardRows.map((reward) => [reward.submissionId, reward]));
   return rows.map((row) => ({
     ...row.submission,
     partnerName: row.partner.name,
@@ -189,12 +206,12 @@ export async function getSubmissionsForCompany(companyId: string) {
     rewardMode: row.mission.rewardMode,
     rewardValue: row.mission.rewardValue,
     rewardLabel: row.mission.rewardLabel,
-    currency: rewardRows.find((reward) => reward.submissionId === row.submission.id)?.currency || row.program.currency,
+    currency: rewardBySubmission.get(row.submission.id)?.currency || row.program.currency,
     programName: row.program.name,
     ...parseSubmissionPayload(row.submission.payloadJson),
-    reward: rewardRows.find((reward) => reward.submissionId === row.submission.id) ?? null,
-    attachments: attachmentRows.filter((attachment) => attachment.submissionId === row.submission.id),
-    events: eventRows.filter((event) => event.submissionId === row.submission.id),
+    reward: rewardBySubmission.get(row.submission.id) ?? null,
+    attachments: attachmentsBySubmission.get(row.submission.id) ?? [],
+    events: eventsBySubmission.get(row.submission.id) ?? [],
   }));
 }
 
@@ -210,6 +227,10 @@ export async function getAgentsForCompany(companyId: string) {
     db.select({ id: submissions.id, partnerId: submissions.partnerId, status: submissions.status, reviewStatus: submissions.reviewStatus, salesStatus: submissions.salesStatus }).from(submissions).where(inArray(submissions.partnerId, ids)),
     db.select({ partnerId: rewards.partnerId, amount: rewards.amount, status: rewards.status, partnerConfirmedAt: rewards.partnerConfirmedAt }).from(rewards).where(inArray(rewards.partnerId, ids)),
   ]) : [[], []];
+  const resultsByPartner = new Map<string, typeof resultRows>();
+  for (const result of resultRows) resultsByPartner.set(result.partnerId, [...(resultsByPartner.get(result.partnerId) ?? []), result]);
+  const rewardsByPartner = new Map<string, typeof rewardRows>();
+  for (const reward of rewardRows) rewardsByPartner.set(reward.partnerId, [...(rewardsByPartner.get(reward.partnerId) ?? []), reward]);
   const grouped = new Map<string, typeof rows>();
   for (const row of rows) {
     const key = row.agent.userId || row.agent.email.toLowerCase();
@@ -217,9 +238,9 @@ export async function getAgentsForCompany(companyId: string) {
   }
   return [...grouped.values()].map((group) => {
     const primary = group[0].agent;
-    const groupIds = new Set(group.map((item) => item.agent.id));
-    const agentResults = resultRows.filter((result) => groupIds.has(result.partnerId));
-    const agentRewards = rewardRows.filter((reward) => groupIds.has(reward.partnerId));
+    const groupIds = group.map((item) => item.agent.id);
+    const agentResults = groupIds.flatMap((id) => resultsByPartner.get(id) ?? []);
+    const agentRewards = groupIds.flatMap((id) => rewardsByPartner.get(id) ?? []);
     return {
       ...primary,
       status: group.some((item) => item.agent.status === "ACTIVE") ? "ACTIVE" : "BLOCKED",
@@ -271,26 +292,35 @@ export async function getCompanyAnalytics(companyId: string, days: number | null
   const results = resultRows.filter((result) => selectedIds.has(result.programId) && within(result.createdAt));
   const resultIds = new Set(results.map((result) => result.id));
   const rewardItems = rewardRows.filter((reward) => resultIds.has(reward.submissionId));
+  const agentsByProgram = new Map<string, typeof programAgents>();
+  for (const agent of programAgents) agentsByProgram.set(agent.programId, [...(agentsByProgram.get(agent.programId) ?? []), agent]);
+  const resultsByProgram = new Map<string, typeof results>();
+  const resultsByPartner = new Map<string, typeof results>();
+  for (const result of results) {
+    resultsByProgram.set(result.programId, [...(resultsByProgram.get(result.programId) ?? []), result]);
+    resultsByPartner.set(result.partnerId, [...(resultsByPartner.get(result.partnerId) ?? []), result]);
+  }
+  const rewardsBySubmission = new Map(rewardItems.map((reward) => [reward.submissionId, reward]));
   const byProgram = selectedPrograms.map((program) => {
-    const programResults = results.filter((result) => result.programId === program.id);
+    const programResults = resultsByProgram.get(program.id) ?? [];
     return {
       id: program.id,
       name: program.name,
       currency: program.currency,
-      agents: new Set(programAgents.filter((agent) => agent.programId === program.id).map((agent) => agent.userId || agent.email.toLowerCase())).size,
+      agents: new Set((agentsByProgram.get(program.id) ?? []).map((agent) => agent.userId || agent.email.toLowerCase())).size,
       results: programResults.length,
       accepted: programResults.filter((result) => result.reviewStatus === "ACCEPTED").length,
       deals: programResults.filter((result) => result.salesStatus === "WON").length,
-      paid: rewardItems.filter((reward) => reward.status === "PAID" && reward.partnerConfirmedAt && programResults.some((result) => result.id === reward.submissionId)).reduce((total, reward) => total + reward.amount, 0),
+      paid: programResults.map((result) => rewardsBySubmission.get(result.id)).filter((reward) => reward?.status === "PAID" && reward.partnerConfirmedAt).reduce((total, reward) => total + (reward?.amount ?? 0), 0),
     };
   });
   const programNames = new Map(selectedPrograms.map((program) => [program.id, program.name]));
   const byAgent = [...identityGroups.values()].map((group) => {
     const agent = group[0];
-    const groupIds = new Set(group.map((item) => item.id));
-    const agentResults = results.filter((result) => groupIds.has(result.partnerId));
+    const groupIds = group.map((item) => item.id);
+    const agentResults = groupIds.flatMap((id) => resultsByPartner.get(id) ?? []);
     const agentResultIds = new Set(agentResults.map((result) => result.id));
-    const agentRewards = rewardItems.filter((reward) => agentResultIds.has(reward.submissionId));
+    const agentRewards = [...agentResultIds].map((id) => rewardsBySubmission.get(id)).filter((reward): reward is NonNullable<typeof reward> => Boolean(reward));
     const accepted = agentResults.filter((result) => result.reviewStatus === "ACCEPTED").length;
     const deals = agentResults.filter((result) => result.salesStatus === "WON").length;
     const activityDates = [agent.lastActiveAt, ...agentResults.map((result) => result.updatedAt || result.createdAt)].filter(Boolean).map((date) => new Date(date as string).getTime());

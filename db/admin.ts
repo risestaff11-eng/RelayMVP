@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb } from ".";
-import { agentApplications, companies, companyAccountDeletionLogs, userRoles, users } from "./schema";
+import { agentApplications, companies, companyAccountDeletionLogs, companyApplications, userRoles, users } from "./schema";
 
 export type CompanyAdminRow = {
   id: string;
@@ -53,6 +53,8 @@ export type AgentApplicationAdminRow = {
   network: string; preferredTypes: string[]; availability: string; comment: string; status: string; reviewedAt: string | null; createdAt: string;
 };
 
+export type CompanyApplicationAdminRow = typeof companyApplications.$inferSelect;
+
 export async function listCompanyUsers(): Promise<CompanyAdminRow[]> {
   return getDb().select({
     id: users.id,
@@ -97,6 +99,10 @@ export async function listAgentApplications(): Promise<AgentApplicationAdminRow[
   return rows.map((row) => ({ ...row, industries: parse(row.industriesJson), preferredTypes: parse(row.preferredTypesJson) }));
 }
 
+export async function listCompanyApplications(): Promise<CompanyApplicationAdminRow[]> {
+  return getDb().select().from(companyApplications).orderBy(desc(companyApplications.createdAt));
+}
+
 function maskedEmail(email: string) {
   const [local = "", domain = ""] = email.toLowerCase().split("@");
   const visible = local.slice(0, Math.min(2, local.length));
@@ -128,10 +134,17 @@ export async function deleteCompanyUser(userId: string) {
   ];
   const deletionSql = [
     "DELETE FROM support_sessions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM integration_delivery_attempts WHERE delivery_id IN (SELECT id FROM integration_deliveries WHERE connection_id IN (SELECT id FROM integration_connections WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)))",
+    "DELETE FROM integration_deliveries WHERE connection_id IN (SELECT id FROM integration_connections WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
+    "DELETE FROM external_entity_links WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM integration_events WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM integration_api_keys WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM integration_connections WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM report_revisions WHERE report_id IN (SELECT id FROM agent_reports WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM report_files WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM agent_reports WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM report_templates WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM pending_company_registrations WHERE user_id = ?",
     "DELETE FROM company_email_verification_codes WHERE user_id = ?",
     "DELETE FROM password_reset_codes WHERE user_id = ?",
     "DELETE FROM contact_verification_codes WHERE partner_id IN (SELECT id FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
@@ -139,6 +152,7 @@ export async function deleteCompanyUser(userId: string) {
     "DELETE FROM submission_disputes WHERE submission_id IN (SELECT id FROM submissions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM submission_status_events WHERE submission_id IN (SELECT id FROM submissions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM submission_attachments WHERE submission_id IN (SELECT id FROM submissions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
+    "DELETE FROM reward_adjustments WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM rewards WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM submissions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM partner_mission_acceptances WHERE partner_id IN (SELECT id FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",

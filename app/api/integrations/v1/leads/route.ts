@@ -3,12 +3,16 @@ import { authenticateApiKey, deferIntegrationEvent, recordIntegrationEvent } fro
 import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone } from "@/lib/submission-antifraud";
 import { reviewDueAt } from "@/lib/workflow";
 import { apiError, apiJson } from "../_response";
+import { acceptsNewSubmissions } from "@/lib/program-status";
+import { notifyCompanyNewSubmission } from "@/lib/company-submission-notifications";
+import { limitIntegrationApi, requestLimitResponse } from "@/lib/request-rate-limit";
 
 function text(value: unknown, length: number) { return String(value ?? "").trim().slice(0, length); }
 
 export async function POST(request: Request) {
   const access = await authenticateApiKey(request, "leads:write");
   if (!access) return apiError("Проверьте API-ключ и его разрешения", 401, "UNAUTHORIZED");
+  try { await limitIntegrationApi(access.keyId, 120); } catch (error) { return requestLimitResponse(error) ?? apiError("Не удалось проверить лимит API", 503, "RATE_LIMIT_UNAVAILABLE"); }
   const idempotencyKey = text(request.headers.get("idempotency-key"), 120);
   if (idempotencyKey.length < 8) return apiError("Передайте уникальный Idempotency-Key длиной от 8 символов", 400, "IDEMPOTENCY_KEY_REQUIRED");
   let body: Record<string, unknown>;
@@ -27,9 +31,9 @@ export async function POST(request: Request) {
   if (!contactEmail && !contactPhone) return apiError("Укажите телефон или email клиента", 400, "CONTACT_REQUIRED");
   if (estimatedDealAmount > 1_000_000_000_000) return apiError("Проверьте потенциальную сумму сделки", 400, "INVALID_AMOUNT");
   const db = getD1();
-  const target = await db.prepare("SELECT p.id AS programId, p.status AS programStatus, m.id AS missionId, m.type AS missionType, m.status AS missionStatus, a.id AS partnerId, a.status AS partnerStatus FROM programs p JOIN missions m ON m.program_id = p.id JOIN partners a ON a.program_id = p.id AND a.company_id = p.company_id WHERE p.id = ? AND p.company_id = ? AND m.id = ? AND a.id = ?")
-    .bind(programId, access.companyId, missionId, partnerId).first<Record<string, string>>();
-  if (!target || !["PUBLISHED", "PAUSED"].includes(target.programStatus) || target.missionStatus !== "ACTIVE" || target.partnerStatus !== "ACTIVE") return apiError("Программа, задание или агент недоступны", 404, "RELATION_NOT_FOUND");
+  const target = await db.prepare("SELECT p.id AS programId, p.status AS programStatus, m.id AS missionId, m.type AS missionType, m.status AS missionStatus, a.id AS partnerId, a.status AS partnerStatus, c.review_sla_hours AS reviewSlaHours FROM programs p JOIN companies c ON c.id = p.company_id JOIN missions m ON m.program_id = p.id JOIN partners a ON a.program_id = p.id AND a.company_id = p.company_id WHERE p.id = ? AND p.company_id = ? AND m.id = ? AND a.id = ?")
+    .bind(programId, access.companyId, missionId, partnerId).first<Record<string, string | number>>();
+  if (!target || !acceptsNewSubmissions(String(target.programStatus)) || target.missionStatus !== "ACTIVE" || target.partnerStatus !== "ACTIVE") return apiError("Программа, задание или агент недоступны", 404, "RELATION_NOT_FOUND");
   const fullIdempotencyKey = `api:${access.keyId}:${idempotencyKey}`;
   const existing = await db.prepare("SELECT aggregate_id AS aggregateId FROM integration_events WHERE company_id = ? AND idempotency_key = ?").bind(access.companyId, fullIdempotencyKey).first<{ aggregateId: string }>();
   if (existing) return apiJson({ submissionId: existing.aggregateId, duplicateRequest: true });
@@ -43,13 +47,14 @@ export async function POST(request: Request) {
   const eventPayload = { submissionId, programId, missionId, partnerId, contactName, contactCompany, contactEmail, contactPhone, source: "EXTERNAL_API" };
   const saved = await db.batch([
     db.prepare("INSERT OR IGNORE INTO integration_events (id, company_id, event_type, aggregate_type, aggregate_id, payload_json, idempotency_key, created_at) VALUES (?, ?, 'submission.created', 'submission', ?, ?, ?, ?)").bind(eventId, access.companyId, submissionId, JSON.stringify(eventPayload), fullIdempotencyKey, now),
-    db.prepare("INSERT INTO submissions (id, company_id, program_id, mission_id, partner_id, type, contact_name, contact_company, contact_email, contact_phone, payload_json, status, review_status, sales_status, ownership_status, review_due_at, estimated_deal_amount, deal_amount, company_comment, created_at, updated_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', 'PENDING', 'NONE', 'CLEAR', ?, ?, 0, '', ?, ? WHERE EXISTS (SELECT 1 FROM integration_events WHERE id = ?)").bind(submissionId, access.companyId, programId, missionId, partnerId, target.missionType, contactName, contactCompany, contactEmail, contactPhone, JSON.stringify({ partnerComment: comment, source: "EXTERNAL_API", apiKeyId: access.keyId }), reviewDueAt(now), estimatedDealAmount, now, now, eventId),
+    db.prepare("INSERT INTO submissions (id, company_id, program_id, mission_id, partner_id, type, contact_name, contact_company, contact_email, contact_phone, payload_json, status, review_status, sales_status, ownership_status, review_due_at, estimated_deal_amount, deal_amount, company_comment, created_at, updated_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', 'PENDING', 'NONE', 'CLEAR', ?, ?, 0, '', ?, ? WHERE EXISTS (SELECT 1 FROM integration_events WHERE id = ?)").bind(submissionId, access.companyId, programId, missionId, partnerId, target.missionType, contactName, contactCompany, contactEmail, contactPhone, JSON.stringify({ partnerComment: comment, referralSource: "EXTERNAL_API", apiKeyId: access.keyId }), reviewDueAt(now, Number(target.reviewSlaHours) || 48), estimatedDealAmount, now, now, eventId),
     db.prepare("INSERT INTO submission_status_events (id, submission_id, from_status, to_status, actor_type, comment, created_at) SELECT ?, ?, NULL, 'SUBMITTED', 'INTEGRATION', ?, ? WHERE EXISTS (SELECT 1 FROM submissions WHERE id = ?)").bind(timelineId, submissionId, "Заявка получена через API", now, submissionId),
   ]);
   if (!saved[0].meta.changes) {
     const raced = await db.prepare("SELECT aggregate_id AS aggregateId FROM integration_events WHERE company_id = ? AND idempotency_key = ?").bind(access.companyId, fullIdempotencyKey).first<{ aggregateId: string }>();
     return apiJson({ submissionId: raced?.aggregateId, duplicateRequest: true });
   }
+  await notifyCompanyNewSubmission(access.companyId, submissionId);
   deferIntegrationEvent(recordIntegrationEvent({ companyId: access.companyId, eventType: "submission.created", aggregateType: "submission", aggregateId: submissionId, payload: eventPayload, idempotencyKey: fullIdempotencyKey }));
   return apiJson({ submissionId, duplicateRequest: false }, 201);
 }

@@ -3,6 +3,7 @@ import { getDb } from "../../../../../db";
 import { getCompanyForUser } from "../../../../../db/company";
 import { companyMethodologyBriefs } from "../../../../../db/schema";
 import { cleanString, sameOrigin } from "../../_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../../lib/company-permissions";
 
 const allowedChannels = new Set(["WHATSAPP", "CALL", "MEETING", "EMAIL", "SOCIAL"]);
 
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   try {
     const payload = await request.json() as Record<string, unknown>;
     const values = {

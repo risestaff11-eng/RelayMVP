@@ -7,6 +7,7 @@ import { companies, missions, programs } from "../../../../db/schema";
 import { generateStructuredJson } from "../../../../lib/ai";
 import { aiCreditLimit, calculateAiCredits, minimumAiCredits } from "../../../../lib/ai-credits";
 import { cleanString, sameOrigin } from "../../company/_utils";
+import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 const MISSION_TYPES = new Set(["LEAD", "DEAL", "IMAGE", "ENGAGEMENT"]);
 const GOALS = new Set(["LEADS", "DEALS", "BRAND", "ENGAGEMENT", "MIXED"]);
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Сначала войдите в аккаунт" }, { status: 401 });
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
+  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
   const profile = await getConfirmedCompanyProfile(company.id) ?? await getLatestCompanyProfile(company.id);
 
   try {
@@ -67,7 +69,7 @@ export async function POST(request: Request) {
       const now = new Date().toISOString();
       await db.batch([
         db.insert(programs).values({ id: programId, companyId: company.id, profileVersionId: profile?.id ?? null, name, slug, description: "Опишите, что предлагает компания и кому будет полезна программа.", goal, currency, payoutTerms: "Укажите срок и порядок выплаты после подтверждения результата.", legalTerms: "Запрещены спам, ложные обещания и передача контактов без согласия.", status: "DRAFT", createdAt: now, updatedAt: now }),
-        db.insert(missions).values(selectedTypes.map((type, index) => { const mission = manualTemplates[type]; return { id: crypto.randomUUID(), programId, type, title: mission.title, description: mission.description, instructionsJson: JSON.stringify(mission.instructions), proofRequirementsJson: JSON.stringify(mission.proofRequirements), rewardMode: mission.rewardMode, rewardValue: mission.rewardValue, rewardLabel: mission.rewardLabel, verificationRules: mission.verificationRules, sortOrder: index, createdAt: now, updatedAt: now }; })),
+        db.insert(missions).values(selectedTypes.map((type, index) => { const mission = manualTemplates[type]; return { id: crypto.randomUUID(), programId, type, title: mission.title, description: mission.description, instructionsJson: JSON.stringify(mission.instructions), proofRequirementsJson: JSON.stringify(mission.proofRequirements), rewardMode: mission.rewardMode, rewardTrigger: type === "DEAL" ? "SALE_PAID" : "REVIEW_ACCEPTED", rewardValue: mission.rewardValue, rewardLabel: mission.rewardLabel, verificationRules: mission.verificationRules, sortOrder: index, createdAt: now, updatedAt: now }; })),
         db.update(companies).set({ onboardingStatus: "PROGRAM_DRAFT", updatedAt: now }).where(eq(companies.id, company.id)),
       ]);
       return Response.json({ programId, tokenBalance: company.aiTokenBalance, creditsSpent: 0 }, { status: 201 });
@@ -142,6 +144,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const missionRows = selectedTypes.map((type, index) => {
       const mission = byType.get(type)!;
+      const rewardMode = ["FIXED", "PERCENT", "POINTS", "NON_MONETARY"].includes(mission.rewardMode) ? mission.rewardMode : "FIXED";
       return {
         id: crypto.randomUUID(),
         programId,
@@ -150,7 +153,8 @@ export async function POST(request: Request) {
         description: cleanString(mission.description, 1200),
         instructionsJson: JSON.stringify((mission.instructions ?? []).map((item) => cleanString(item, 240)).filter(Boolean).slice(0, 6)),
         proofRequirementsJson: JSON.stringify((mission.proofRequirements ?? []).map((item) => cleanString(item, 240)).filter(Boolean).slice(0, 5)),
-        rewardMode: ["FIXED", "PERCENT", "POINTS", "NON_MONETARY"].includes(mission.rewardMode) ? mission.rewardMode : "FIXED",
+        rewardMode,
+        rewardTrigger: rewardMode === "PERCENT" || type === "DEAL" ? "SALE_PAID" : "REVIEW_ACCEPTED",
         rewardValue: Math.max(0, Math.min(100000000, Math.round(Number(mission.rewardValue) || 0))),
         rewardLabel: cleanString(mission.rewardLabel, 120),
         verificationRules: cleanString(mission.verificationRules, 1200),

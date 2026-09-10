@@ -36,7 +36,7 @@ export default async function PartnerPayoutsPage({ params }: { params: Promise<{
             const submission = portal.submissions.find((item) => item.id === reward.submissionId);
             const complete = reward.status === "PAID" && Boolean(reward.partnerConfirmedAt);
             const status = complete ? "Получено" : reward.status === "PAID" ? "Компания отметила перевод" : reward.status === "APPROVED" ? "К выплате" : reward.status === "PENDING" ? "Ожидается" : "Отменено";
-            const sla = slaState(payoutDueAt(reward.approvedAt, reward.plannedAt), reward.status === "PAID");
+            const sla = slaState(payoutDueAt(reward.approvedAt, reward.plannedAt, portal.company.payoutSlaDays), reward.status === "PAID");
             return (
               <article key={reward.id}>
                 <div><strong>{submission?.mission?.title || "Вознаграждение"}</strong><small>{<bdi data-no-translate>{submission?.contactCompany}</bdi>}</small></div>
