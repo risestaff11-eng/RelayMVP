@@ -64,7 +64,7 @@ test("broker domain renders its own landing without disturbing product routing",
   const response = await route("https://broker.risestaff.kz/?utm_source=partner");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Хорошие связи/);
+  assert.match(html, /Сделку закрыли/);
   assert.match(html, /Заявка агентства недвижимости/);
   assert.match(html, /rel="canonical" href="https:\/\/broker\.risestaff\.kz\//);
   assert.doesNotMatch(html, /образовательный центр продаёт/);
@@ -74,7 +74,7 @@ test("broker domain renders its own landing without disturbing product routing",
   assert.equal((await route("https://broker.risestaff.kz/legal/privacy")).headers.get("location"), "https://risestaff.kz/legal/privacy");
   const fallback = await render("/broker");
   assert.equal(fallback.status, 200);
-  assert.match(await fallback.text(), /Хорошие связи/);
+  assert.match(await fallback.text(), /Сделку закрыли/);
   const robots = await route("https://broker.risestaff.kz/robots.txt");
   assert.equal(robots.status, 200);
   assert.match(await robots.text(), /Sitemap: https:\/\/broker\.risestaff\.kz\/sitemap.xml/);
