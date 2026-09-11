@@ -52,6 +52,11 @@ const worker = {
     scheduleIntegrationDrain(env, ctx);
     const url = new URL(request.url);
 
+    if (url.hostname === "broker.risestaff.kz" && (request.method === "GET" || request.method === "HEAD")) {
+      if (url.pathname === "/robots.txt") return new Response(request.method === "HEAD" ? null : "User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: https://broker.risestaff.kz/sitemap.xml\n", { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      if (url.pathname === "/sitemap.xml") return new Response(request.method === "HEAD" ? null : '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://broker.risestaff.kz/</loc></url></urlset>', { headers: { "Content-Type": "application/xml; charset=utf-8" } });
+    }
+
     if (request.method === "GET" || request.method === "HEAD") {
       const destination = canonicalRedirectFor(request.url);
       if (destination) return Response.redirect(destination, 308);
@@ -68,7 +73,15 @@ const worker = {
       }, allowedWidths);
     }
 
-    const response = await handler.fetch(request, env, ctx);
+    // Keep the public broker hostname while rendering its dedicated landing route.
+    // API requests retain their original URL for same-origin validation.
+    let routedRequest = request;
+    if (url.hostname === "broker.risestaff.kz" && url.pathname === "/") {
+      const brokerUrl = new URL(request.url);
+      brokerUrl.pathname = "/broker";
+      routedRequest = new Request(brokerUrl, request);
+    }
+    const response = await handler.fetch(routedRequest, env, ctx);
     const privateAgentPath = ["/partner", "/ref", "/agent", "/agent-login", "/api/partner", "/api/agent"].some((prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`));
     if (url.pathname === "/auth" || url.pathname.startsWith("/api/auth/") || privateAgentPath) {
       const privateResponse = new Response(response.body, response);

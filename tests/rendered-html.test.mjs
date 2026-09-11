@@ -60,6 +60,29 @@ test("keeps Russian as default and restores the shared Kazakh preference", async
   assert.match(html, /class="active" aria-pressed="true">ҚАЗ/);
 });
 
+test("broker domain renders its own landing without disturbing product routing", async () => {
+  const response = await route("https://broker.risestaff.kz/?utm_source=partner");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Хорошие связи/);
+  assert.match(html, /Заявка агентства недвижимости/);
+  assert.match(html, /rel="canonical" href="https:\/\/broker\.risestaff\.kz\//);
+  assert.doesNotMatch(html, /образовательный центр продаёт/);
+  assert.equal((await route("https://broker.risestaff.kz/broker?utm_source=partner")).headers.get("location"), "https://broker.risestaff.kz/?utm_source=partner");
+  assert.equal((await route("https://broker.risestaff.kz/dashboard")).headers.get("location"), "https://company.risestaff.kz/dashboard");
+  assert.equal((await route("https://broker.risestaff.kz/agent-login")).headers.get("location"), "https://agents.risestaff.kz/agent-login");
+  assert.equal((await route("https://broker.risestaff.kz/legal/privacy")).headers.get("location"), "https://risestaff.kz/legal/privacy");
+  const fallback = await render("/broker");
+  assert.equal(fallback.status, 200);
+  assert.match(await fallback.text(), /Хорошие связи/);
+  const robots = await route("https://broker.risestaff.kz/robots.txt");
+  assert.equal(robots.status, 200);
+  assert.match(await robots.text(), /Sitemap: https:\/\/broker\.risestaff\.kz\/sitemap.xml/);
+  const sitemap = await route("https://broker.risestaff.kz/sitemap.xml");
+  assert.equal(sitemap.status, 200);
+  assert.match(await sitemap.text(), /<loc>https:\/\/broker\.risestaff\.kz\/<\/loc>/);
+});
+
 test("renders the RiseStaff landing page", async () => {
   const response = await render();
   assert.equal(response.status, 200);

@@ -5,6 +5,7 @@ const productionHosts = new Set([
   "www.risestaff.kz",
   "company.risestaff.kz",
   "agents.risestaff.kz",
+  "broker.risestaff.kz",
 ]);
 
 function isProductionSiteHost(hostname: string) {
@@ -15,7 +16,7 @@ export const COMPANY_ROUTE_ROOTS = ["dashboard", "onboarding", "auth", "admin", 
 // IMPORTANT: adding a public agent page requires updating AGENT_ROUTE_ROOTS
 // manually. The route inventory test fails for unclassified top-level pages.
 export const AGENT_ROUTE_ROOTS = ["agent", "agent-login", "p", "partner", "ref"] as const;
-export const MARKETING_ROUTE_ROOTS = ["integrators", "legal", "pricing"] as const;
+export const MARKETING_ROUTE_ROOTS = ["integrators", "legal", "pricing", "broker"] as const;
 
 function isCompanyPath(pathname: string) {
   return COMPANY_ROUTE_ROOTS.map((root) => `/${root}`).some(
@@ -45,5 +46,10 @@ export function canonicalRedirectFor(requestUrl: string) {
   }
   if (isCompanyPath(url.pathname)) return redirectUrl(url, COMPANY_ORIGIN);
   if (isAgentPath(url.pathname)) return redirectUrl(url, AGENT_ORIGIN);
+  if (url.hostname === "broker.risestaff.kz") {
+    if (url.pathname === "/broker" || url.pathname === "/broker/") return redirectUrl(url, "https://broker.risestaff.kz", "/");
+    if (url.pathname === "/legal" || url.pathname.startsWith("/legal/")) return redirectUrl(url, MARKETING_ORIGIN);
+    return null;
+  }
   return redirectUrl(url, MARKETING_ORIGIN);
 }
