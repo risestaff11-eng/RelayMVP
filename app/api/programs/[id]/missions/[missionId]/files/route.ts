@@ -1,3 +1,4 @@
+import { subscriptionDenied } from "@/lib/company-subscription";
 import { and, eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../../../../chatgpt-auth";
 import { getDb } from "../../../../../../../db";
@@ -24,6 +25,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const company = await context(id, missionId);
   if (!company) return Response.json({ error: "Задание не найдено" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   try {
     const form = await request.formData();
     const file = form.get("file");
@@ -60,6 +62,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const company = await context(id, missionId);
   if (!company) return Response.json({ error: "Задание не найдено" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   const resourceId = new URL(request.url).searchParams.get("resource") || "";
   const row = (await getDb().select().from(missionResources).where(and(eq(missionResources.id, resourceId), eq(missionResources.missionId, missionId), eq(missionResources.companyId, company.id))).limit(1))[0];
   if (!row) return Response.json({ error: "Файл не найден" }, { status: 404 });

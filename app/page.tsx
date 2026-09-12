@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import SiteImage from "next/image";
 import { SafeLink as Link } from "@/app/safe-link";
 import { chatGPTSignInPath, getChatGPTUser } from "./chatgpt-auth";
 import { MarketingAnalytics } from "./marketing-analytics";
 import { MarketingLogo } from "./marketing-logo";
-import { MarketingSpecialOffer } from "./marketing-special-offer";
+import { PAID_PLANS } from "@/lib/subscription-plans";
+import { formatInteger } from "@/lib/format-display";
 import { CompanyApplicationForm } from "./company-application-form";
 import { agentUrl, companyUrl } from "../lib/public-origins";
 
@@ -58,11 +60,11 @@ const faqs = [
   ],
   [
     "Сколько это стоит?",
-    "Сейчас RiseStaff работает в пилотном формате. Оставьте заявку — мы покажем подходящий вариант и заранее назовём стоимость. Вознаграждения людям вы платите напрямую, RiseStaff не удерживает процент с выплат.",
+    "Первые 14 дней — без карты. Затем: Старт — 19 900 ₸, Рост — 49 900 ₸, Масштаб — 99 900 ₸ за 30 дней. После согласования и оплаты активируем тариф вручную. Вознаграждения агентам оплачиваются отдельно.",
   ],
   [
     "Это заменит CRM?",
-    "Нет. CRM ведёт продажи после получения контакта. RiseStaff помогает до этого: объясняет, кого вы ищете, принимает заявки от рекомендателей и считает, кому сколько вы должны.",
+    "В RiseStaff есть CRM для клиентов от рекомендателей: этапы сделки, суммы, комментарии и выплаты. Если продажи уже ведутся в другой CRM, процесс совместной работы согласуем при запуске.",
   ],
   [
     "Как оформить выплату человеку в Казахстане?",
@@ -167,7 +169,7 @@ export default async function Home() {
             Заработать на рекомендациях
           </a>
           <a className="lp-login" href={loginHref} data-track="header_primary">
-            {user ? "Открыть кабинет" : "Начать бесплатно"}
+            {user ? "Открыть кабинет" : "Начать 14 дней"}
           </a>
           <a
             className="lp-nav-cta lp-whatsapp-cta"
@@ -212,7 +214,7 @@ export default async function Home() {
               href={dashboardHref}
               data-track="hero_primary"
             >
-              {user ? "Открыть кабинет" : "Запустить рекомендации бесплатно"}
+              {user ? "Открыть кабинет" : "Начать 14 дней"}
               <span>↗</span>
             </a>
             <a className="lp-secondary" href="#how" data-track="hero_secondary">
@@ -351,7 +353,7 @@ export default async function Home() {
             <b>Рабочий стол RiseStaff</b>
           </div>
           <div className="lp-screen-wrap">
-            <img
+            <SiteImage unoptimized
               src="/company-cabinet.jpg?v=20260902"
               width="1138"
               height="904"
@@ -491,7 +493,7 @@ export default async function Home() {
             <b>Кого ищет компания и сколько платит</b>
           </div>
           <div className="lp-screen-wrap">
-            <img
+            <SiteImage unoptimized
               src="/agent-cabinet.jpg?v=20260902"
               width="1138"
               height="904"
@@ -519,7 +521,7 @@ export default async function Home() {
           <article>
             <b>01</b>
             <h3>Клиенты</h3>
-            <p>Обычно дают 60–70% первых рекомендаций: уже знают продукт и доверяют вам.</p>
+            <p>Начните с клиентов и партнёров: они уже знают ваш продукт и могут рекомендовать его знакомым.</p>
           </article>
           <article>
             <b>02</b>
@@ -545,11 +547,11 @@ export default async function Home() {
 
       <section className="lp-offer lp-section" id="offer">
         <div className="lp-offer-copy">
-          <span>ПИЛОТНЫЙ ЗАПУСК · ТОЛЬКО 20 КОМПАНИЙ</span>
+          <span>14 ДНЕЙ ДЛЯ ПРОВЕРКИ ВАШЕЙ ПРОГРАММЫ</span>
           <h2>Запустите рекомендации без долгой настройки.</h2>
           <p>
-            Разберём ваш продукт, напишем правила и подготовим ссылку. За настройку
-            денег не берём — нам нужны ваши первые заявки и честная обратная связь.
+            Разберём ваш продукт, подготовим правила и ссылку. Проверьте программу за 14 дней.
+            Затем выберите тариф и согласуйте дальнейшее сопровождение.
           </p>
           <ul>
             <li>Напишем, кого вы ищете и за что платите</li>
@@ -563,7 +565,7 @@ export default async function Home() {
               href={dashboardHref}
               data-track="offer_primary"
             >
-              {user ? "Перейти к программам" : "Запустить программу бесплатно"}
+              {user ? "Перейти к программам" : "Начать 14 дней"}
               <span>↗</span>
             </a>
             <a href="#company-application" data-track="application_offer">Обсудить запуск →</a>
@@ -597,7 +599,7 @@ export default async function Home() {
         </ol>
       </section>
 
-      <MarketingSpecialOffer />
+      <section className="lp-section" id="pricing"><div className="lp-section-intro"><span>ТАРИФЫ</span><h2>Выберите масштаб программы.</h2><p>14 дней без карты. Оплата и активация — после согласования.</p></div><div className="plan-grid">{PAID_PLANS.map((plan) => <article className="plan-card" key={plan.code}><h3>{plan.name}</h3><strong>{formatInteger(plan.price)} ₸</strong><p>за 30 дней</p><p>Работающих программ: {plan.programs}</p><p>{formatInteger(plan.credits)} AI-кредитов</p><p>{plan.reports ? "Отчёты агентов включены" : "CRM, аналитика и выплаты"}</p><p>{plan.integrations ? "API и вебхуки включены" : "Экспорт данных включён"}</p><a className="lp-primary" href={dashboardHref} data-track="pricing_link">Начать 14 дней</a></article>)}</div><p>Количество агентов и заявок не ограничено. Вознаграждения агентам оплачиваются отдельно.</p></section>
       <section className="lp-payments lp-section" id="payments">
         <div className="lp-section-intro">
           <span>ДЕНЬГИ И ОФОРМЛЕНИЕ В КАЗАХСТАНЕ</span>
@@ -647,7 +649,7 @@ export default async function Home() {
           Получайте новые контакты, принимайте подходящих и платите только за результат.
         </p>
         <div className="lp-final-actions">
-          <a className="lp-primary" href={dashboardHref} data-track="final_primary">{user ? "Открыть кабинет" : "Запустить программу бесплатно"}<span>↗</span></a>
+          <a className="lp-primary" href={dashboardHref} data-track="final_primary">{user ? "Открыть кабинет" : "Начать 14 дней"}<span>↗</span></a>
           <a className="lp-final-secondary" href="#company-application" data-track="final_application">Оставить заявку</a>
         </div>
       </section>
@@ -656,7 +658,7 @@ export default async function Home() {
         href={dashboardHref}
         data-track="mobile_sticky"
       >
-        {user ? "Открыть кабинет" : "Запустить бесплатно"}
+        {user ? "Открыть кабинет" : "Начать 14 дней"}
         <span>↗</span>
       </a>
       <footer className="lp-footer">

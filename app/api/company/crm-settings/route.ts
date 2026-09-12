@@ -1,3 +1,4 @@
+import { subscriptionDenied } from "@/lib/company-subscription";
 import { eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
@@ -21,6 +22,7 @@ export async function PATCH(request: Request) {
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "CRM_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   try {
     const body = await request.json() as Record<string, unknown>;
     const currency = String(body.currency || company.crmGoalCurrency || "KZT").toUpperCase();

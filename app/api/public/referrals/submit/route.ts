@@ -8,6 +8,7 @@ import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfRe
 import { reviewDueAt } from "../../../../../lib/workflow";
 import { limitPublicSubmission, requestLimitResponse } from "../../../../../lib/request-rate-limit";
 import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../../lib/integrations/service";
+import { subscriptionDenied } from "../../../../../lib/company-subscription";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
     if (!isEmail && contact.replace(/\D/g, "").length < 7) throw new Error("Проверьте номер телефона");
     const referral = await getPublicReferral(referralToken);
     if (!referral) return Response.json({ error: "Реферальная ссылка недействительна или устарела" }, { status: 404 });
+    { const denied = await subscriptionDenied(referral.company.id); if (denied) return denied; }
     const contactEmail = isEmail ? normalizeContactEmail(contact) : "";
     const contactPhone = isEmail ? "" : normalizeContactPhone(contact);
     if (isSelfReferral({ email: contactEmail, phone: contactPhone }, [referral.partner])) return Response.json({ error: SELF_REFERRAL_MESSAGE, code: "SELF_REFERRAL" }, { status: 422 });
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
       getDb().insert(integrationEvents).values({ id: crypto.randomUUID(), companyId: referral.company.id, eventType: "submission.created", aggregateType: "submission", aggregateId: id, payloadJson: JSON.stringify(integrationPayload), idempotencyKey: integrationIdempotencyKey, createdAt: now }),
     ]);
     await notifyCompanyNewSubmission(referral.company.id, id);
-    deferIntegrationEvent(recordIntegrationEvent({
+    await deferIntegrationEvent(recordIntegrationEvent({
       companyId: referral.company.id,
       eventType: "submission.created",
       aggregateType: "submission",

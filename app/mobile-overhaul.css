@@ -35,6 +35,7 @@ html[lang="kk"] .partner-mission-details[open] > summary b::after { content: "Ж
     background: transparent;
   }
   .dashboard-shell > .sidebar > .brand,
+  .dashboard-shell > .sidebar > .company-white-label-brand-wrap,
   .dashboard-shell > .sidebar > .sidebar-nav,
   .dashboard-shell > .sidebar > .sidebar-footer { display: none; }
   .dashboard-shell .dashboard-main { width: 100%; min-width: 0; }
@@ -294,8 +295,9 @@ html[lang="kk"] .partner-mission-details[open] > summary b::after { content: "Ж
 
   /* Avoid stacked fixed controls on the marketing page. */
   .lp-shell { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
-  .lp-shell ~ .global-language-switcher { bottom: calc(76px + env(safe-area-inset-bottom)); }
-  .lp-mobile-sticky-cta { bottom: max(10px,env(safe-area-inset-bottom)); min-height: 54px; font-size: 14px; }
+  .lp-shell ~ .global-language-switcher { bottom: max(10px,env(safe-area-inset-bottom)); right: max(10px,env(safe-area-inset-right)); }
+  .lp-shell ~ .global-language-switcher .relay-language-options { bottom: 54px; }
+  .lp-mobile-sticky-cta { bottom: max(10px,env(safe-area-inset-bottom)); right: 70px; width:auto; min-height: 54px; font-size: 14px; }
   .lp-hero-copy > p,
   .lp-section-intro > p,
   .lp-company-application p { font-size: 16px; }

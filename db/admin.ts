@@ -6,6 +6,10 @@ import { agentApplications, companies, companyAccountDeletionLogs, companyApplic
 export type CompanyAdminRow = {
   id: string;
   companyId: string | null;
+  planCode: string | null;
+  subscriptionStatus: string | null;
+  subscriptionEndsAt: string | null;
+  subscriptionRevision: number | null;
   name: string;
   email: string;
   phone: string;
@@ -59,6 +63,10 @@ export async function listCompanyUsers(): Promise<CompanyAdminRow[]> {
   return getDb().select({
     id: users.id,
     companyId: companies.id,
+    planCode: companies.planCode,
+    subscriptionStatus: companies.subscriptionStatus,
+    subscriptionEndsAt: companies.subscriptionEndsAt,
+    subscriptionRevision: companies.subscriptionRevision,
     name: users.displayName,
     email: users.email,
     phone: users.phone,
@@ -133,6 +141,8 @@ export async function deleteCompanyUser(userId: string) {
       .bind(deletionId, userId, source.companyId, source.company || source.name, maskedEmail(source.email), emailDomain, source.programCount, source.agentCount, source.submissionCount, source.paidRewardsCount, source.paidRewardsAmount, deletedAt),
   ];
   const deletionSql = [
+    "DELETE FROM product_milestones WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM subscription_events WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM support_sessions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM integration_delivery_attempts WHERE delivery_id IN (SELECT id FROM integration_deliveries WHERE connection_id IN (SELECT id FROM integration_connections WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)))",
     "DELETE FROM integration_deliveries WHERE connection_id IN (SELECT id FROM integration_connections WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",

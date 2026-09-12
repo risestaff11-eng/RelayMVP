@@ -1,8 +1,10 @@
 import { and, eq, gte, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { companies } from "../db/schema";
+import { subscriptionDenied } from "./company-subscription";
 
 export async function reserveCompanyAiCredits(companyId: string, maximum: number) {
+  if (await subscriptionDenied(companyId)) return null;
   const amount = Math.max(0, Math.round(maximum));
   const rows = await getDb().update(companies).set({ aiTokenBalance: sql`${companies.aiTokenBalance} - ${amount}`, aiTokensUsed: sql`${companies.aiTokensUsed} + ${amount}`, updatedAt: new Date().toISOString() }).where(and(eq(companies.id, companyId), gte(companies.aiTokenBalance, amount))).returning({ balance: companies.aiTokenBalance });
   return rows[0] ? { reserved: amount, balance: rows[0].balance } : null;

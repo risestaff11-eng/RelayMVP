@@ -5,6 +5,7 @@ import { calculateCrmGoal, conversionFromLeadsPerPayment, CRM_STAGES, crmStage, 
 import { countRu, formatDateTime, formatMoney } from "@/lib/format-display";
 import { reviewStatusNames, salesStatusNames, slaState } from "@/lib/workflow";
 import { localMonth, saleCompletedAt, withinMonth } from "@/lib/financial-periods";
+import type { BoardTotals } from "@/db/crm-board";
 
 type Reward = { amount: number; currency: string; status: string; paidAt: string | null; partnerConfirmedAt: string | null; plannedAt: string | null } | null;
 type Attachment = { id: string; objectKey: string | null; externalUrl: string | null; fileName: string; mimeType: string; size: number };
@@ -18,7 +19,9 @@ export type CrmLead = {
   referralSource: string; customAnswers: Answer[]; companyComment: string; status: string; reviewStatus: string; salesStatus: string;
   ownershipStatus: string; reviewDueAt: string | null; estimatedDealAmount: number; dealAmount: number; createdAt: string;
   events: Event[]; attachments: Attachment[]; reward: Reward;
+  assignedToUserId?: string | null; nextAction?: string; nextActionAt?: string | null;
 };
+type Board = { totals: BoardTotals; fact: number; potential: number; programs: string[]; ambassadors: [string, string][]; members: { id: string; name: string }[] };
 
 export type CrmSettings = { monthlyGoal: number; averageCheck: number; conversionRate: number; currency: string };
 
@@ -70,7 +73,7 @@ function humanEvent(event: Event) {
   return Object.entries(names).reduce((text, [status, label]) => text.replaceAll(status, `«${label}»`), raw);
 }
 
-export function CrmWorkspace({ companyName, initialItems, initialSettings, initialSelectedId = "" }: { companyName: string; initialItems: CrmLead[]; initialSettings: CrmSettings; initialSelectedId?: string }) {
+export function CrmWorkspace({ companyName, initialItems, initialSettings, initialSelectedId = "", initialBoard }: { companyName: string; initialItems: CrmLead[]; initialSettings: CrmSettings; initialSelectedId?: string; initialBoard?: Board }) {
   const [items, setItems] = useState(initialItems);
   const [settings, setSettings] = useState(initialSettings);
   const [goalOpen, setGoalOpen] = useState(false);
@@ -88,21 +91,70 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
   const [closing, setClosing] = useState<CrmLead | null>(null);
   const [month, setMonth] = useState(() => localMonth());
   const stageNavRef = useRef<HTMLElement>(null);
+  const [board, setBoard] = useState(initialBoard);
+  const [refresh, setRefresh] = useState(0);
+  const [loadingMore, setLoadingMore] = useState("");
+  const boardGeneration = useRef(0);
+  const [detailLoaded, setDetailLoaded] = useState("");
+  const [detailRetry, setDetailRetry] = useState(0);
 
-  const programs = [...new Set(items.map((item) => item.programName))];
-  const ambassadors = [...new Map(items.map((item) => [item.partnerEmail, item.partnerName || item.partnerEmail])).entries()];
-  const filtered = useMemo(() => items.filter((item) => {
+  useEffect(() => {
+    if (!initialBoard) return;
+    boardGeneration.current += 1;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ q: query, program, ambassador, quick, month });
+      fetch(`/api/company/crm?${params}`, { signal: controller.signal }).then(async (response) => {
+        const data = await response.json() as Board & { items: CrmLead[]; error?: string };
+        if (!response.ok) throw new Error(data.error || "Не удалось загрузить CRM");
+        if (!controller.signal.aborted) { setBoard(data); setItems(data.items); }
+      }).catch((error) => { if (!controller.signal.aborted) setNotice(error.message); });
+    }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [initialBoard, query, program, ambassador, quick, month, refresh, settings]);
+
+  useEffect(() => {
+    if (!initialBoard || !selected?.id) return;
+    const controller = new AbortController();
+    const id = selected.id;
+    fetch(`/api/company/crm?id=${encodeURIComponent(id)}`, { signal: controller.signal }).then(async (response) => {
+      const data = await response.json() as { item: CrmLead; error?: string };
+      if (!response.ok) throw new Error(data.error || "Не удалось загрузить карточку");
+      if (!controller.signal.aborted) { setSelected((current) => current?.id === id ? data.item : current); setDetailLoaded(id); }
+    }).catch((error) => { if (!controller.signal.aborted) setNotice(error.message); });
+    return () => controller.abort();
+  }, [initialBoard, selected?.id, detailRetry]);
+
+  async function loadMore(stage: CrmStageId) {
+    if (loadingMore) return;
+    const last = items.filter((item) => crmStage(item) === stage).at(-1);
+    if (!last) return;
+    setLoadingMore(stage);
+    const generation = boardGeneration.current;
+    try {
+      const params = new URLSearchParams({ q: query, program, ambassador, quick, month, stage, cursorDate: last.createdAt, cursorId: last.id });
+      const response = await fetch(`/api/company/crm?${params}`);
+      const data = await response.json() as Board & { items: CrmLead[]; error?: string };
+      if (!response.ok) throw new Error(data.error || "Не удалось загрузить клиентов");
+      if (generation === boardGeneration.current) { setItems((current) => [...current, ...data.items.filter((item) => !current.some((row) => row.id === item.id))]); setBoard(data); }
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Не удалось загрузить клиентов"); }
+    finally { setLoadingMore(""); }
+  }
+
+  const programs = board?.programs ?? [...new Set(items.map((item) => item.programName))];
+  const ambassadors = board?.ambassadors ?? [...new Map(items.map((item) => [item.partnerEmail, item.partnerName || item.partnerEmail])).entries()];
+  const filtered = useMemo(() => board ? items : items.filter((item) => {
     const stage = crmStage(item);
     const haystack = `${leadTitle(item)} ${item.contactCompany} ${item.contactPhone} ${item.contactEmail} ${item.partnerName} ${item.partnerEmail} ${item.programName} ${item.missionTitle}`.toLowerCase();
     const quickMatch = quick === "ALL" || (quick === "ACTION" && ["NEW", "REVIEW"].includes(stage)) || (quick === "WORK" && ["WORK", "AGREEMENT"].includes(stage)) || (quick === "MONEY" && ["AGREEMENT", "PAID"].includes(stage)) || (quick === "CLOSED" && stage === "CLOSED");
     return haystack.includes(query.trim().toLowerCase()) && quickMatch && (program === "ALL" || item.programName === program) && (ambassador === "ALL" || item.partnerEmail === ambassador);
-  }), [items, query, quick, program, ambassador]);
+  }), [items, query, quick, program, ambassador, board]);
 
   const goal = calculateCrmGoal(settings.monthlyGoal, settings.averageCheck, settings.conversionRate);
   const paid = items.filter((item) => crmStage(item) === "PAID" && item.currency === settings.currency && withinMonth(saleCompletedAt(item.events), month));
-  const fact = paid.reduce((sum, item) => sum + Math.max(0, item.dealAmount || 0), 0);
+  const fact = board?.fact ?? paid.reduce((sum, item) => sum + Math.max(0, item.dealAmount || 0), 0);
   const openItems = items.filter((item) => !["PAID", "CLOSED"].includes(crmStage(item)) && item.currency === settings.currency);
-  const potential = openItems.reduce((sum, item) => sum + potentialForLead(item, settings.averageCheck).amount, 0);
+  const potential = board?.potential ?? openItems.reduce((sum, item) => sum + potentialForLead(item, settings.averageCheck).amount, 0);
   const progress = goal.goal > 0 ? Math.min(100, Math.round(fact / goal.goal * 100)) : 0;
 
   useEffect(() => {
@@ -110,7 +162,7 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
   }, [mobileStage]);
 
   function optimisticLead(item: CrmLead, body: Record<string, unknown>) {
-    return { ...item, reviewStatus: String(body.reviewStatus || item.reviewStatus), salesStatus: String(body.salesStatus || item.salesStatus), estimatedDealAmount: Number(body.estimatedDealAmount ?? item.estimatedDealAmount), dealAmount: Number(body.dealAmount ?? item.dealAmount), companyComment: String(body.comment ?? item.companyComment) };
+    return { ...item, reviewStatus: String(body.reviewStatus || item.reviewStatus), salesStatus: String(body.salesStatus || item.salesStatus), estimatedDealAmount: Number(body.estimatedDealAmount ?? item.estimatedDealAmount), dealAmount: Number(body.dealAmount ?? item.dealAmount), companyComment: String(body.comment ?? item.companyComment), assignedToUserId: body.assignedToUserId === undefined ? item.assignedToUserId : String(body.assignedToUserId || "") || null, nextAction: String(body.nextAction ?? item.nextAction ?? ""), nextActionAt: body.nextActionAt === undefined ? item.nextActionAt : String(body.nextActionAt || "") || null };
   }
 
   async function patchLead(item: CrmLead, payload: Record<string, unknown>, success = "Карточка обновлена", optimistic = false) {
@@ -129,6 +181,7 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
       setItems((current) => current.map((row) => row.id === item.id ? next : row));
       setSelected((current) => current?.id === item.id ? next : current);
       setNotice(success);
+      setRefresh((value) => value + 1);
       return true;
     } catch (error) {
       if (optimistic) setItems((current) => current.map((row) => row.id === item.id ? item : row));
@@ -138,9 +191,11 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
     } finally { setPending(""); }
   }
 
+  function openLead(item: CrmLead) { setDetailLoaded(""); setSelected(item); }
+
   function move(item: CrmLead, stage: CrmStageId) {
     if (crmStage(item) === stage) return;
-    if (stage === "PAID" && !item.dealAmount) { setSelected(item); setNotice("Укажите фактическую сумму оплаты перед переводом клиента в «Оплачено»."); return; }
+    if (stage === "PAID" && !item.dealAmount) { openLead(item); setNotice("Укажите фактическую сумму оплаты перед переводом клиента в «Оплачено»."); return; }
     if (stage === "CLOSED") { setClosing(item); return; }
     void patchLead(item, crmStageMutation(stage), `Клиент переведён в «${CRM_STAGES.find((value) => value.id === stage)?.label}»`, true);
   }
@@ -164,31 +219,32 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
     </section>
 
     {notice && <div className="crm-notice" role="status">{notice}<button type="button" onClick={() => setNotice("")} aria-label="Закрыть сообщение">×</button></div>}
-    <div className="crm-mobile-stage-shell"><nav ref={stageNavRef} className="crm-mobile-stages" aria-label="Этап воронки">{CRM_STAGES.map((stage) => <button type="button" className={mobileStage === stage.id ? "active" : ""} onClick={() => setMobileStage(stage.id)} key={stage.id}>{stage.label}<b>{filtered.filter((item) => crmStage(item) === stage.id).length}</b></button>)}</nav></div>
+    <div className="crm-mobile-stage-shell"><nav ref={stageNavRef} className="crm-mobile-stages" aria-label="Этап воронки">{CRM_STAGES.map((stage) => <button type="button" className={mobileStage === stage.id ? "active" : ""} onClick={() => setMobileStage(stage.id)} key={stage.id}>{stage.label}<b>{board ? board.totals.filter((row) => row.stage === stage.id).reduce((sum, row) => sum + row.count, 0) : filtered.filter((item) => crmStage(item) === stage.id).length}</b></button>)}</nav></div>
     <section className="crm-board" aria-label="Воронка клиентов">{CRM_STAGES.map((stage) => {
       const leads = filtered.filter((item) => crmStage(item) === stage.id);
-      const money = leads.map((item) => ({ ...potentialForLead(item, item.currency === settings.currency ? settings.averageCheck : 0), currency: item.currency }));
+      const total = board ? board.totals.filter((row) => row.stage === stage.id).reduce((sum, row) => sum + row.count, 0) : leads.length;
+      const money = board ? board.totals.filter((row) => row.stage === stage.id) : leads.map((item) => ({ ...potentialForLead(item, item.currency === settings.currency ? settings.averageCheck : 0), currency: item.currency }));
       return <article className={`crm-column crm-stage-${stage.id.toLowerCase()} ${mobileStage === stage.id ? "mobile-active" : ""} ${dragOver === stage.id ? "drag-over" : ""}`} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDragOver(stage.id); }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragOver(""); }} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/plain") || dragged; const item = items.find((value) => value.id === id); setDragOver(""); setDragged(""); if (item) move(item, stage.id); }} key={stage.id}>
-        <header><div><span>{stage.label}</span><b>{leads.length}</b></div><strong>{compactMoneyByCurrency(money)}</strong><small>{stage.hint}</small></header>
+        <header><div><span>{stage.label}</span><b>{total}</b></div><strong>{compactMoneyByCurrency(money)}</strong><small>{stage.hint}</small></header>
         <div className="crm-column-body">{leads.map((item) => {
           const amount = potentialForLead(item, item.currency === settings.currency ? settings.averageCheck : 0);
           const clientWa = whatsapp(item.contactPhone, `Здравствуйте, ${item.contactName || "добрый день"}! Это ${companyName}. Связываемся по вашей заявке «${item.missionTitle}».`);
           const agentWa = whatsapp(item.partnerPhone, `Здравствуйте, ${item.partnerName}! Это ${companyName}. Уточняем детали по клиенту ${leadTitle(item)}.`);
           const payout = payoutState(item.reward);
-          return <div className={`crm-lead-card ${dragged === item.id ? "dragging" : ""}`} draggable={pending !== item.id} onDragStart={(event) => { setDragged(item.id); event.dataTransfer.setData("text/plain", item.id); event.dataTransfer.effectAllowed = "move"; }} onDragEnd={() => { setDragged(""); setDragOver(""); }} onClick={() => { setSelected(item); setNotice(""); }} onKeyDown={(event) => { if (event.key === "Enter") setSelected(item); }} role="button" tabIndex={0} aria-label={`Открыть карточку клиента ${leadTitle(item)}`} key={item.id}>
+          return <div className={`crm-lead-card ${dragged === item.id ? "dragging" : ""}`} draggable={pending !== item.id} onDragStart={(event) => { setDragged(item.id); event.dataTransfer.setData("text/plain", item.id); event.dataTransfer.effectAllowed = "move"; }} onDragEnd={() => { setDragged(""); setDragOver(""); }} onClick={() => { openLead(item); setNotice(""); }} onKeyDown={(event) => { if (event.key === "Enter") openLead(item); }} role="button" tabIndex={0} aria-label={`Открыть карточку клиента ${leadTitle(item)}`} key={item.id}>
             <div className="crm-card-top"><span><strong>{<bdi data-no-translate>{item.programName}</bdi>}</strong><small>{<bdi data-no-translate>{item.missionTitle}</bdi>}</small></span><time dateTime={item.createdAt}>{shortDate(item.createdAt)}</time></div>
             <h3>{item.contactName || item.contactCompany ? <bdi data-no-translate>{leadTitle(item)}</bdi> : "Клиент без имени"}</h3><div className="crm-client-contact">{clientWa ? <a href={clientWa} title="Открыть переписку" target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{formatPhone(item.contactPhone)} ↗</a> : <span>{(item.contactEmail) ? (<bdi data-no-translate>{item.contactEmail}</bdi>) : ("Контакт не указан")}</span>}</div><p>{(item.partnerComment || item.contactCompany) ? ((item.partnerComment) ? (<bdi data-no-translate>{item.partnerComment}</bdi>) : (<bdi data-no-translate>{item.contactCompany}</bdi>)) : ("Комментарий не оставлен")}</p>
-            <div className="crm-card-amount"><small>{amount.kind === "EXACT" ? "СУММА" : "ПОТЕНЦИАЛ"}</small><strong>{amount.amount ? `${amount.kind === "EXACT" ? "" : "≈ "}${formatMoney(amount.amount, item.currency)}` : "Не задан"}</strong></div>
+            {item.nextAction && <p className="crm-next-action"><bdi data-no-translate>{item.nextAction}</bdi>{item.nextActionAt && <> · {formatDateTime(item.nextActionAt)}{Date.parse(item.nextActionAt) < Date.now() && !["PAID","CLOSED"].includes(stage.id) ? " · Просрочено" : ""}</>}</p>}<div className="crm-card-amount"><small>{amount.kind === "EXACT" ? "СУММА" : "ПОТЕНЦИАЛ"}</small><strong>{amount.amount ? `${amount.kind === "EXACT" ? "" : "≈ "}${formatMoney(amount.amount, item.currency)}` : "Не задан"}</strong></div>
             <footer><span><small>Привёл:</small><strong>{(item.partnerName) ? (<bdi data-no-translate>{item.partnerName}</bdi>) : (<bdi data-no-translate>{item.partnerEmail}</bdi>)}</strong>{agentWa ? <a href={agentWa} title="Открыть переписку" target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{formatPhone(item.partnerPhone)} ↗</a> : item.partnerPhone && <em>{formatPhone(item.partnerPhone)}</em>}</span>{stage.id === "PAID" && <b className={`crm-payout-state ${payout.tone}`}>{item.reward?.amount ? `${formatMoney(item.reward.amount, item.reward.currency)} · ` : ""}{payout.label}</b>}</footer>
             <select className="crm-card-stage-select" aria-label="Изменить этап" value={stage.id} disabled={pending === item.id} onClick={(event) => event.stopPropagation()} onChange={(event) => move(item, event.target.value as CrmStageId)}>{CRM_STAGES.map((value) => <option value={value.id} key={value.id}>{value.label}</option>)}</select>
           </div>;
-        })}{!leads.length && <div className="crm-stage-empty">Перетащите клиента на этот этап</div>}</div>
+        })}{board && total > leads.length && <button type="button" className="button button-ghost" disabled={!!loadingMore} onClick={() => void loadMore(stage.id)}>{loadingMore === stage.id ? "Загружаем…" : "Показать ещё"}</button>}{!leads.length && <div className="crm-stage-empty">Перетащите клиента на этот этап</div>}</div>
       </article>;
     })}</section>
 
     {goalOpen && <GoalModal value={settings} onClose={() => setGoalOpen(false)} onSaved={(next) => { setSettings(next); setGoalOpen(false); setNotice("Цель и параметры прогноза сохранены"); }} />}
     {closing && <CloseLeadModal item={closing} pending={pending === closing.id} onClose={() => setClosing(null)} onConfirm={(reason) => { const payload = ["PENDING", "REVIEWING"].includes(closing.reviewStatus) ? { reviewStatus: "REJECTED", salesStatus: "LOST", comment: reason } : { reviewStatus: "ACCEPTED", salesStatus: "LOST", comment: reason }; void patchLead(closing, payload, "Негативный исход зафиксирован", true).then((ok) => { if (ok) setClosing(null); }); }} />}
-    {selected && <LeadFullscreen key={`${selected.id}-${selected.reviewStatus}-${selected.salesStatus}-${selected.dealAmount}-${selected.reward?.amount || 0}`} companyName={companyName} item={selected} pending={pending === selected.id} notice={notice} onClose={() => { setSelected(null); setNotice(""); }} onSave={(payload) => patchLead(selected, payload, "Карточка клиента сохранена")} />}
+    {selected && initialBoard && detailLoaded !== selected.id ? <div className="relay-modal-backdrop"><section className="panel" role="dialog" aria-modal="true" aria-label="Карточка клиента"><p role="status">{notice || "Загружаем карточку…"}</p>{notice && <button type="button" onClick={() => { setNotice(""); setDetailRetry((value) => value + 1); }}>Повторить</button>}<button type="button" onClick={() => { setSelected(null); setNotice(""); }}>Закрыть</button></section></div> : selected && <LeadFullscreen key={`${selected.id}-${selected.reviewStatus}-${selected.salesStatus}-${selected.dealAmount}-${selected.reward?.amount || 0}`} companyName={companyName} members={board?.members ?? []} item={selected} pending={pending === selected.id} notice={notice} onClose={() => { setSelected(null); setNotice(""); }} onSave={(payload) => patchLead(selected, payload, "Карточка клиента сохранена")} />}
   </div>;
 }
 
@@ -216,7 +272,7 @@ function CloseLeadModal({ item, pending, onClose, onConfirm }: { item: CrmLead; 
   return <div className="relay-modal-backdrop crm-close-backdrop"><button className="relay-modal-dismiss-layer" type="button" onClick={onClose} aria-label="Закрыть" /><section className="relay-modal crm-close-modal" role="dialog" aria-modal="true" aria-labelledby="crm-close-title"><button className="relay-modal-close" type="button" onClick={onClose}>×</button><small>НЕГАТИВНЫЙ ИСХОД</small><h2 id="crm-close-title">Почему закрываете {item.contactName || item.contactCompany ? <bdi data-no-translate>{leadTitle(item)}</bdi> : "Клиент без имени"}?</h2><p>Причина сохранится в истории и поможет разобрать дубли, брак и отказы.</p><textarea value={reason} onChange={(event) => setReason(event.target.value)} rows={4} placeholder="Например: клиент уже есть в базе" /><div><button className="button button-ghost" type="button" onClick={onClose}>Отмена</button><button className="button button-primary" type="button" disabled={pending || reason.trim().length < 5} onClick={() => onConfirm(reason.trim())}>{pending ? "Сохраняем…" : "Зафиксировать причину"}</button></div></section></div>;
 }
 
-function LeadFullscreen({ companyName, item, pending, notice, onClose, onSave }: { companyName: string; item: CrmLead; pending: boolean; notice: string; onClose: () => void; onSave: (payload: Record<string, unknown>) => void }) {
+function LeadFullscreen({ companyName, members, item, pending, notice, onClose, onSave }: { companyName: string; members: { id: string; name: string }[]; item: CrmLead; pending: boolean; notice: string; onClose: () => void; onSave: (payload: Record<string, unknown>) => void }) {
   const [reviewStatus, setReviewStatus] = useState(item.reviewStatus);
   const [salesStatus, setSalesStatus] = useState(item.salesStatus);
   const [estimatedDealAmount, setEstimatedDealAmount] = useState(item.estimatedDealAmount || 0);
@@ -240,12 +296,12 @@ function LeadFullscreen({ companyName, item, pending, notice, onClose, onSave }:
       {item.attachments.length > 0 && <section className="crm-detail-section"><div className="crm-section-heading"><small>МАТЕРИАЛЫ</small><h3>Файлы · {item.attachments.length}</h3></div><div className="crm-file-list">{item.attachments.map((file) => <a href={file.externalUrl || `/api/company/files/${file.id}`} target="_blank" rel="noreferrer" key={file.id}><span>{<bdi data-no-translate>{file.fileName}</bdi>}</span><small>{Math.max(1, Math.round(file.size / 1024))} КБ · открыть ↗</small></a>)}</div></section>}
       <section className="crm-detail-section crm-history"><div className="crm-section-heading"><small>ИСТОРИЯ</small><h3>{countRu(item.events.length, "событие", "события", "событий")}</h3></div>{item.events.length ? <div className="crm-timeline">{item.events.map((event) => <article key={event.id}><i /><time>{formatDateTime(event.createdAt)}</time><strong>{humanEvent(event)}</strong></article>)}</div> : <p>Изменений пока нет.</p>}</section>
     </main><aside>
-      <form className="crm-lead-form crm-inline-editor crm-company-editor" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); onSave({ reviewStatus, salesStatus, estimatedDealAmount, dealAmount, amount: calculatedReward, plannedAt: data.get("plannedAt"), comment: data.get("comment") }); }}>
+      <form className="crm-lead-form crm-inline-editor crm-company-editor" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); onSave({ reviewStatus, salesStatus, estimatedDealAmount, dealAmount, amount: calculatedReward, plannedAt: data.get("plannedAt"), comment: data.get("comment"), assignedToUserId: data.get("assignedToUserId"), nextAction: data.get("nextAction"), nextActionAt: data.get("nextActionAt") ? new Date(String(data.get("nextActionAt"))).toISOString() : null }); }}>
         <div className="crm-section-heading"><small>УПРАВЛЕНИЕ</small><h3>Ведите заявку по шагам</h3><p>Сначала подтвердите заявку, затем отметьте продажу и вознаграждение.</p></div>
         <section className="crm-editor-section"><header><small>1. РЕШЕНИЕ ПО ЗАЯВКЕ</small><strong>Проверка и продажа</strong></header><div className="crm-status-pair"><label><span>Проверка заявки</span><select value={reviewStatus} disabled={rewardLocked} onChange={(event) => { const value = event.target.value; setReviewStatus(value); if (value !== "ACCEPTED") setSalesStatus(value === "REJECTED" ? "LOST" : "NONE"); }}>{Object.entries(reviewStatusNames).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label><label><span>Статус продажи</span><select value={salesStatus} disabled={rewardLocked || reviewStatus !== "ACCEPTED"} onChange={(event) => setSalesStatus(event.target.value)}>{Object.entries(salesStatusNames).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><small className="crm-control-hint">{reviewStatus !== "ACCEPTED" ? "Доступен после принятия заявки" : "Покажет, где сейчас клиент"}</small></label></div></section>
         <section className="crm-editor-section"><header><small>2. ДЕНЬГИ</small><strong>Сумма сделки</strong></header><div className="crm-status-pair"><label><span>Прогноз по сделке</span><input name="estimatedDealAmount" type="number" inputMode="numeric" min="0" value={estimatedDealAmount || ""} onChange={(event) => setEstimatedDealAmount(Number(event.target.value) || 0)} placeholder="0" /></label><label><span>Оплачено клиентом</span><input name="dealAmount" disabled={rewardLocked} type="number" inputMode="numeric" min="0" value={dealAmount || ""} onChange={(event) => setDealAmount(Number(event.target.value) || 0)} placeholder="0" /></label></div></section>
         <section className="crm-reward-editor"><header><div><small>3. ВОЗНАГРАЖДЕНИЕ АМБАССАДОРУ</small><strong>{calculatedReward ? formatMoney(calculatedReward, item.reward?.currency || item.currency) : "Укажите сумму"}</strong></div><span className={`crm-reward-status ${payout.tone}`}>{payout.label}</span></header><p>После сохранения сумма появится в кабинете амбассадора.</p>{isPercentReward ? <label><span>Сумма рассчитывается автоматически</span><output>{item.rewardValue}% от оплаты клиента · {formatMoney(calculatedReward, item.reward?.currency || item.currency)}</output><small className="crm-control-hint">Введите сумму оплаты клиента выше, чтобы увидеть точный расчёт.</small></label> : <label><span>Сумма вознаграждения</span><input name="rewardAmount" disabled={rewardLocked} type="number" inputMode="numeric" min="0" value={rewardAmount || ""} onChange={(event) => setRewardAmount(Number(event.target.value) || 0)} placeholder="0" /><small className="crm-control-hint">Укажите сумму, которую амбассадор увидит к выплате.</small></label>}<label><span>Плановая дата выплаты</span><input name="plannedAt" type="date" defaultValue={item.reward?.plannedAt?.slice(0, 10) || ""} /></label></section>
-        <label className="crm-company-comment"><span>Следующий шаг для команды</span><textarea name="comment" defaultValue={item.companyComment} rows={3} placeholder="Например: договориться о встрече до пятницы" /></label><button className="button button-primary" disabled={pending} type="submit">{pending ? "Сохраняем…" : "Сохранить и обновить"}</button>
+        <section className="crm-editor-section"><label><span>Ответственный</span><select name="assignedToUserId" defaultValue={item.assignedToUserId || ""}><option value="">Не назначен</option>{members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</select></label><label><span>Следующее действие</span><input name="nextAction" maxLength={500} defaultValue={item.nextAction || ""} placeholder="Например: позвонить клиенту" /></label><label><span>Срок действия</span><input name="nextActionAt" type="datetime-local" defaultValue={item.nextActionAt ? new Date(Date.parse(item.nextActionAt) - new Date(item.nextActionAt).getTimezoneOffset() * 60000).toISOString().slice(0,16) : ""} /></label></section><label className="crm-company-comment"><span>Комментарий компании</span><textarea name="comment" defaultValue={item.companyComment} rows={3} placeholder="Например: договориться о встрече до пятницы" /></label><button className="button button-primary" disabled={pending} type="submit">{pending ? "Сохраняем…" : "Сохранить и обновить"}</button>
       </form>
       <section className="crm-service-state"><span><small>Проверка</small><strong>{reviewStatusNames[reviewStatus as keyof typeof reviewStatusNames] || reviewStatus}</strong></span><span><small>Продажа</small><strong>{salesStatusNames[salesStatus as keyof typeof salesStatusNames] || salesStatus}</strong></span><span><small>SLA проверки</small><strong>{slaState(item.reviewDueAt, !["PENDING", "REVIEWING"].includes(reviewStatus)).label}</strong></span></section>
     </aside></div>

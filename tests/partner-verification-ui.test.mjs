@@ -16,7 +16,7 @@ test("contact verification shows cooldown, disables both actions and permits cod
   const root = createRoot(container);
   context.mock.timers.enable({ apis: ["Date", "setInterval"], now: Date.now() });
   try {
-    const { ContactVerification } = typescriptLoader({ "@/app/safe-link": { SafeLink: "a" } })(new URL("../app/partner/_components/partner-actions.tsx", import.meta.url));
+    const { ContactVerification } = typescriptLoader({ "@/app/safe-link": { SafeLink: "a" }, "next/image": { default: "img", __esModule: true } })(new URL("../app/partner/_components/partner-actions.tsx", import.meta.url));
     const requests = [];
     globalThis.fetch = async (url, options) => {
       assert.equal(url, "/api/partner/verify");

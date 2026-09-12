@@ -1,6 +1,8 @@
 import { getD1 } from "../../db";
 import { decryptIntegrationSecret, encryptIntegrationSecret, randomToken, sha256, signWebhook } from "./crypto";
 import { normalizeWebhookUrl } from "./url";
+import { companySubscription } from "../company-subscription";
+import { subscriptionAllows } from "../subscription-plans";
 
 export const INTEGRATION_EVENT_TYPES = [
   "submission.created",
@@ -126,6 +128,8 @@ export async function authenticateApiKey(request: Request, requiredScope: ApiKey
   if (!token.startsWith("rsk_live_")) return null;
   const row = await getD1().prepare("SELECT id, company_id AS companyId, scopes_json AS scopesJson, expires_at AS expiresAt, revoked_at AS revokedAt FROM integration_api_keys WHERE token_hash = ?").bind(await sha256(token)).first<Record<string, string | null>>();
   if (!row || row.revokedAt || (row.expiresAt && row.expiresAt <= isoNow())) return null;
+  const company = await companySubscription(String(row.companyId));
+  if (!company || !subscriptionAllows(company, "INTEGRATIONS")) return null;
   const scopes = json<string[]>(row.scopesJson, []);
   if (!scopes.includes(requiredScope)) return null;
   await getD1().prepare("UPDATE integration_api_keys SET last_used_at = ? WHERE id = ?").bind(isoNow(), row.id).run();
@@ -151,7 +155,7 @@ export async function recordIntegrationEvent(input: { companyId: string; eventTy
     await db.prepare("INSERT OR IGNORE INTO integration_deliveries (id, event_id, connection_id, status, attempt_count, next_attempt_at, created_at, updated_at) VALUES (?, ?, ?, 'PENDING', 0, ?, ?, ?)")
       .bind(crypto.randomUUID(), eventId, connection.id, isoNow(), isoNow(), isoNow()).run();
   }
-  await dispatchPendingDeliveries(input.companyId);
+  // Delivery is handled by the durable worker drain; the request only persists the outbox.
   return { eventId };
 }
 
@@ -175,6 +179,8 @@ export async function retryDelivery(companyId: string, deliveryId: string) {
 }
 
 export async function dispatchPendingDeliveries(companyId: string, onlyDeliveryId?: string) {
+  const company = await companySubscription(companyId);
+  if (!company || !subscriptionAllows(company, "INTEGRATIONS")) return;
   const db = getD1();
   await materializeMissingDeliveries(companyId);
   await recoverStaleDeliveries(companyId);
@@ -257,8 +263,7 @@ export function safeIntegrationEvent(promise: Promise<unknown>) {
 
 export function deferIntegrationEvent(promise: Promise<unknown>) {
   const safe = safeIntegrationEvent(promise);
-  // The persisted outbox is the source of truth. Start a best-effort delivery
-  // now; the worker drain retries it on later traffic or a scheduled run.
-  void safe;
+  // Callers await outbox preparation, not third-party delivery. The worker drains
+  // persisted events separately; failures never undo a committed business action.
   return safe;
 }

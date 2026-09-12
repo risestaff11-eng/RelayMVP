@@ -226,6 +226,10 @@ export const companies = sqliteTable("companies", {
   primaryGoal: text("primary_goal").notNull(),
   onboardingStatus: text("onboarding_status").notNull().default("COMPANY_CREATED"),
   planCode: text("plan_code").notNull().default("TRIAL"),
+  subscriptionStatus: text("subscription_status").notNull().default("LEGACY"),
+  subscriptionStartedAt: text("subscription_started_at"),
+  subscriptionEndsAt: text("subscription_ends_at"),
+  subscriptionRevision: integer("subscription_revision").notNull().default(0),
   aiTokenBalance: integer("ai_token_balance").notNull().default(INITIAL_COMPANY_AI_CREDITS),
   aiTokensUsed: integer("ai_tokens_used").notNull().default(0),
   crmMonthlyGoal: integer("crm_monthly_goal").notNull().default(0),
@@ -238,6 +242,26 @@ export const companies = sqliteTable("companies", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const subscriptionEvents = sqliteTable("subscription_events", {
+  id: text("id").primaryKey().notNull(),
+  companyId: text("company_id").notNull().references(() => companies.id),
+  revision: integer("revision").notNull(),
+  actor: text("actor").notNull(),
+  action: text("action").notNull(),
+  planCode: text("plan_code").notNull(),
+  endsAt: text("ends_at"),
+  paidAmount: integer("paid_amount").notNull().default(0),
+  creditsGranted: integer("credits_granted").notNull().default(0),
+  note: text("note").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+}, (table) => [uniqueIndex("idx_subscription_company_revision").on(table.companyId, table.revision)]);
+
+export const productMilestones = sqliteTable("product_milestones", {
+  companyId: text("company_id").notNull().references(() => companies.id),
+  event: text("event").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [primaryKey({ columns: [table.companyId, table.event] }), index("idx_product_milestones_event").on(table.event, table.createdAt)]);
 
 export const integrationConnections = sqliteTable(
   "integration_connections",
@@ -689,6 +713,9 @@ export const submissions = sqliteTable(
     estimatedDealAmount: integer("estimated_deal_amount").notNull().default(0),
     dealAmount: integer("deal_amount").notNull().default(0),
     companyComment: text("company_comment").notNull().default(""),
+    assignedToUserId: text("assigned_to_user_id").references(() => users.id),
+    nextAction: text("next_action").notNull().default(""),
+    nextActionAt: text("next_action_at"),
     createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
     updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   },
@@ -696,6 +723,8 @@ export const submissions = sqliteTable(
     index("idx_submissions_company_status").on(table.companyId, table.status),
     index("idx_submissions_company_review_status").on(table.companyId, table.reviewStatus, table.reviewDueAt),
     index("idx_submissions_company_sales_status").on(table.companyId, table.salesStatus),
+    index("idx_submissions_company_created_id").on(table.companyId, table.createdAt, table.id),
+    index("idx_submissions_company_next_action").on(table.companyId, table.nextActionAt),
     index("idx_submissions_duplicate_of").on(table.duplicateOfSubmissionId),
     index("idx_submissions_program_created").on(table.programId, table.createdAt),
   ],

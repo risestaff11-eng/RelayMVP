@@ -144,16 +144,19 @@ test("invalid agent and referral links render recovery guidance instead of a gen
   }
 });
 
-test("renders pricing without publishing prices", async () => {
+test("renders the three published tariffs and a card-free trial", async () => {
   const response = await render("/pricing");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Варианты подключения/);
+  assert.match(html, /Тарифы RiseStaff/);
   assert.match(html, /С чего начать/);
   assert.match(html, /50 000 AI-кредитов/);
   assert.doesNotMatch(html, /бесплат|ранний доступ|бета-тест/i);
   assert.match(html, /rel="canonical" href="https:\/\/risestaff\.kz\/pricing"/);
-  assert.doesNotMatch(html, /₸|₽/);
+  assert.match(html, /19(?:\s|&nbsp;|\u00a0)900/);
+  assert.match(html, /49(?:\s|&nbsp;|\u00a0)900/);
+  assert.match(html, /99(?:\s|&nbsp;|\u00a0)900/);
+  assert.match(html, /Автоматического списания нет/);
 });
 
 test("renders the integrator one-screen offer", async () => {

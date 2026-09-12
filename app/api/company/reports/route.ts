@@ -1,3 +1,4 @@
+import { subscriptionDenied } from "@/lib/company-subscription";
 import { and, eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getCompanyForUser } from "../../../../db/company";
@@ -13,6 +14,7 @@ async function context() { const user = await getChatGPTUser(); if (!user) retur
 export async function PATCH(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 }); const ctx = await context(); if (!ctx) return Response.json({ error: "Сначала войдите" }, { status: 401 });
   if (!hasCompanyPermission(ctx.company.role, "REPORTS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(ctx.company, "REPORTS"); if (denied) return denied; }
   try {
     const payload = await request.json() as Record<string, unknown>; const action = cleanString(payload.action, 30); const now = new Date().toISOString();
     if (action === "TEMPLATE") {

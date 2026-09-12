@@ -1,3 +1,4 @@
+import { subscriptionDenied } from "@/lib/company-subscription";
 import { getChatGPTUser } from "../../../../chatgpt-auth";
 import { getDb } from "../../../../../db";
 import { getCompanyForUser } from "../../../../../db/company";
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   try {
     const payload = await request.json() as Record<string, unknown>;
     const values = {

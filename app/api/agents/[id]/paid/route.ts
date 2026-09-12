@@ -30,7 +30,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const result = await recordRewardTransfer(company.id, row.id, paid);
     if (result) {
       changed.push(result.submission_id);
-      deferIntegrationEvent(recordIntegrationEvent({ companyId: company.id, eventType: "reward.updated", aggregateType: "reward", aggregateId: row.id, idempotencyKey: result.integrationIdempotencyKey, payload: { rewardId: row.id, submissionId: result.submission_id, status: paid ? "PAID" : "APPROVED", source: "BULK_AGENT_ACTION" } }));
+      await deferIntegrationEvent(recordIntegrationEvent({ companyId: company.id, eventType: "reward.updated", aggregateType: "reward", aggregateId: row.id, idempotencyKey: result.integrationIdempotencyKey, payload: { rewardId: row.id, submissionId: result.submission_id, status: paid ? "PAID" : "APPROVED", source: "BULK_AGENT_ACTION" } }));
     }
   }
   await notifyAgentWorkChanges(company.id, changed);

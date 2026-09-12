@@ -55,6 +55,6 @@ export async function POST(request: Request) {
     return apiJson({ submissionId: raced?.aggregateId, duplicateRequest: true });
   }
   await notifyCompanyNewSubmission(access.companyId, submissionId);
-  deferIntegrationEvent(recordIntegrationEvent({ companyId: access.companyId, eventType: "submission.created", aggregateType: "submission", aggregateId: submissionId, payload: eventPayload, idempotencyKey: fullIdempotencyKey }));
+  await deferIntegrationEvent(recordIntegrationEvent({ companyId: access.companyId, eventType: "submission.created", aggregateType: "submission", aggregateId: submissionId, payload: eventPayload, idempotencyKey: fullIdempotencyKey }));
   return apiJson({ submissionId, duplicateRequest: false }, 201);
 }

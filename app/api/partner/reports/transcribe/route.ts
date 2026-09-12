@@ -42,6 +42,7 @@ export async function POST(request: Request) {
         { error: "Ссылка агента недействительна" },
         { status: 401 },
       );
+    { const denied = await subscriptionDenied(portal.company.id, "REPORTS"); if (denied) return denied; }
     const audio = form.get("audio");
     if (!(audio instanceof File) || !audio.size)
       throw new Error("Добавьте аудиозапись");
@@ -173,3 +174,4 @@ export async function POST(request: Request) {
     );
   }
 }
+import { subscriptionDenied } from "../../../../../lib/company-subscription";

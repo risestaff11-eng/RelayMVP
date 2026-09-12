@@ -50,7 +50,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .bind(crypto.randomUUID(), company.id, id, JSON.stringify({ rewardId: id, submissionId: current.submissionId, partnerId: current.partnerId, amount, previousAmount: current.amount, difference, currency: current.currency, status: current.status, adjustmentReason: reason, updatedAt: now }), integrationIdempotencyKey, now, adjustmentId),
   ]);
   if (!saved[0].results.length) return Response.json({ error: "Начисление уже изменилось. Обновите страницу и повторите." }, { status: 409 });
-  deferIntegrationEvent(recordIntegrationEvent({ companyId: company.id, eventType: "reward.updated", aggregateType: "reward", aggregateId: id, idempotencyKey: integrationIdempotencyKey, payload: { rewardId: id, submissionId: current.submissionId, partnerId: current.partnerId, amount, previousAmount: current.amount, difference, currency: current.currency, status: current.status, adjustmentReason: reason, updatedAt: now } }));
+  await deferIntegrationEvent(recordIntegrationEvent({ companyId: company.id, eventType: "reward.updated", aggregateType: "reward", aggregateId: id, idempotencyKey: integrationIdempotencyKey, payload: { rewardId: id, submissionId: current.submissionId, partnerId: current.partnerId, amount, previousAmount: current.amount, difference, currency: current.currency, status: current.status, adjustmentReason: reason, updatedAt: now } }));
   await notifyAgentWorkChanges(company.id, [String(current.submissionId)]);
   return Response.json({ ok: true, amount, difference, adjustmentId });
 }

@@ -1,3 +1,4 @@
+import { subscriptionDenied } from "@/lib/company-subscription";
 import { and, eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
@@ -64,7 +65,7 @@ export async function PATCH(request: Request) {
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
-  if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   try {
     const payload = await request.json() as Record<string, unknown>;
     const id = cleanString(payload.id, 80);
@@ -102,6 +103,7 @@ export async function DELETE(request: Request) {
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   const id = new URL(request.url).searchParams.get("id") || "";
   const row = (await getDb().select().from(companyKnowledgeItems).where(and(eq(companyKnowledgeItems.id, id), eq(companyKnowledgeItems.companyId, company.id))).limit(1))[0];
   if (!row) return Response.json({ error: "Материал не найден" }, { status: 404 });

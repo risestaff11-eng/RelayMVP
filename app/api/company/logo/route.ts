@@ -1,3 +1,4 @@
+import { subscriptionDenied } from "@/lib/company-subscription";
 import { eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "COMPANY_SETTINGS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   const file = (await request.formData()).get("logo");
   if (!(file instanceof File) || !file.size) return Response.json({ error: "Выберите изображение" }, { status: 400 });
   if (file.size > 5 * 1024 * 1024 || !allowed.has(file.type)) return Response.json({ error: "Логотип: JPG, PNG или WEBP до 5 МБ" }, { status: 400 });

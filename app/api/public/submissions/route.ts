@@ -11,6 +11,7 @@ import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfRe
 import { reviewDueAt } from "../../../../lib/workflow";
 import { limitPublicSubmission, requestLimitResponse } from "../../../../lib/request-rate-limit";
 import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../lib/integrations/service";
+import { subscriptionDenied } from "../../../../lib/company-subscription";
 
 const allowedTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
 const allowedAudioTypes = new Set(["audio/webm", "audio/mp4", "audio/mpeg", "audio/mp3", "audio/ogg", "audio/wav", "audio/x-wav", "audio/aac", "audio/x-m4a"]);
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
     if (!portal || !portal.programs.some((item) => item.slug === programSlug)) return Response.json({ error: "Ссылка агента недействительна для этой программы" }, { status: 401 });
     const target = await getMissionForPublicSubmission(programSlug, missionId);
     if (!target || !portal.programs.some((item) => item.id === target.program.id)) return Response.json({ error: "Задание недоступно" }, { status: 404 });
+    { const denied = await subscriptionDenied(target.company.id); if (denied) return denied; }
     if (!portal.acceptances.some((item) => item.missionId === missionId && item.status === "ACTIVE")) throw new Error("Сначала возьмите задание");
 
     const fields = visibleSubmissionFormFields(target.program.formFields, target.mission.type);
@@ -104,7 +106,7 @@ export async function POST(request: Request) {
     if (attachmentRows.length) await db.batch([submissionStatement, eventStatement, integrationStatement, db.insert(submissionAttachments).values(attachmentRows)]);
     else await db.batch([submissionStatement, eventStatement, integrationStatement]);
     await notifyCompanyNewSubmission(target.company.id, submissionId);
-    deferIntegrationEvent(recordIntegrationEvent({
+    await deferIntegrationEvent(recordIntegrationEvent({
       companyId: target.company.id,
       eventType: "submission.created",
       aggregateType: "submission",

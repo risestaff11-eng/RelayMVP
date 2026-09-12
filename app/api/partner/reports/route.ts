@@ -5,6 +5,7 @@ import { getDb } from "../../../../db";
 import { agentReports, reportFiles, reportRevisions } from "../../../../db/schema";
 import { getFilesBucket } from "../../../../lib/storage";
 import { cleanString, sameOrigin } from "../../company/_utils";
+import { subscriptionDenied } from "../../../../lib/company-subscription";
 
 const allowedTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "text/csv"]);
 const audioTypes = new Set(["audio/webm", "audio/mp4", "audio/mpeg", "audio/mp3", "audio/ogg", "audio/wav", "audio/x-wav", "audio/aac", "audio/x-m4a"]);
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
   try {
     const form = await request.formData(); const token = cleanString(form.get("token"), 80); const portal = await getPartnerPortal(token);
     if (!portal) return Response.json({ error: "Ссылка агента недействительна" }, { status: 401 });
+    { const denied = await subscriptionDenied(portal.company.id, "REPORTS"); if (denied) return denied; }
     const template = await ensureReportTemplate(portal.company.id); const reportId = cleanString(form.get("reportId"), 80) || crypto.randomUUID(); const now = new Date().toISOString();
     const existing = (await getDb().select().from(agentReports).where(and(eq(agentReports.id, reportId), inArray(agentReports.partnerId, portal.partners.map((item) => item.id)))).limit(1))[0];
     if (existing && !["DRAFT", "NEEDS_CLARIFICATION"].includes(existing.status)) throw new Error("Этот отчёт уже отправлен и доступен только для просмотра");

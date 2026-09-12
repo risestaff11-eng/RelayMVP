@@ -1,3 +1,5 @@
+import { subscriptionDenied } from "@/lib/company-subscription";
+import { programCapacityDenied } from "@/lib/company-subscription";
 import { and, eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
@@ -23,6 +25,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   const { id } = await params;
   const current = await getProgramForCompany(company.id, id);
   if (!current) return Response.json({ error: "Программа не найдена" }, { status: 404 });
@@ -83,6 +86,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     const now = new Date().toISOString();
     const nextStatus = pause ? "PAUSED" : publish ? "ACTIVE" : current.status;
+    if (nextStatus === "ACTIVE" || nextStatus === "PAUSED") { const denied = await programCapacityDenied(company.id, id, company); if (denied) return denied; }
     const db = getDb();
     const missionUpdates = normalizedMissions.filter((mission) => !mission.isNew).map((mission) => db.update(missions).set({
       title: mission.title,
@@ -136,6 +140,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   const { id } = await params;
   const current = await getProgramForCompany(company.id, id);
   if (!current) return Response.json({ error: "Программа не найдена" }, { status: 404 });
