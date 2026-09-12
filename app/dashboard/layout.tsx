@@ -10,6 +10,7 @@ import { CompanyBrand, CompanyLogo } from "./_components/company-brand";
 import { DashboardContext } from "./_components/dashboard-context";
 import { LanguageSwitcher } from "../language-switcher";
 import { cookies } from "next/headers";
+import { SubscriptionBanner } from "./_components/subscription-banner";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -39,6 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <DashboardContext nextStep={company.onboardingStatus === "PROGRAM_PUBLISHED" ? "Программа опубликована · отслеживайте агентов и результаты" : company.onboardingStatus === "PROFILE_CONFIRMED" || company.onboardingStatus === "PROGRAM_DRAFT" ? "Профиль подтверждён · создайте и опубликуйте программу" : "Следующий шаг — подтвердить профиль бизнеса"} />
           <div className="top-actions"><LanguageSwitcher locale={locale} className="embedded-language-switcher company-language-switcher" manageTranslation={false} compact /><DashboardTour /><AccountMenu name={user.displayName} email={user.email} initials={initials(user.displayName)} signOutHref={chatGPTSignOutPath("/")} /></div>
         </header>
+        <SubscriptionBanner company={company} />
         {children}
       </section>
     </main>

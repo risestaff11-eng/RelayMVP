@@ -193,6 +193,10 @@ export async function createAdminSession() {
 }
 
 export async function hasAdminSession() {
+  return Boolean(await getAdminSessionId());
+}
+
+export async function getAdminSessionId() {
   if (!(await runtimeAdminSecret())) return false;
   const current = (await cookies()).get(ADMIN_COOKIE)?.value ?? "";
   if (!current) return false;
@@ -206,7 +210,7 @@ export async function hasAdminSession() {
   )).limit(1))[0];
   if (!row) return false;
   await db.update(adminSessions).set({ lastUsedAt: now }).where(eq(adminSessions.id, row.id));
-  return true;
+  return row.id;
 }
 
 export async function clearAdminSession() {

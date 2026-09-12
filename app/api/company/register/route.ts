@@ -4,6 +4,7 @@ import { getDb } from "../../../../db";
 import { companies, companyMembers, users } from "../../../../db/schema";
 import { INITIAL_COMPANY_AI_CREDITS } from "../../../../lib/company-credits";
 import { normalizeWebsite, sameOrigin } from "../_utils";
+import { newTrial } from "../../../../lib/subscription-plans";
 
 const INDUSTRIES = new Set(["IT_AND_AUTOMATION", "MARKETING", "CONSULTING", "RECRUITING", "EDUCATION", "OTHER"]);
 const TEAM_SIZES = new Set(["1_10", "11_50", "51_200", "201_PLUS"]);
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     const companyId = crypto.randomUUID();
     await db.batch([
       db.insert(users).values({ id: user.userId, email: user.email, displayName: user.displayName }).onConflictDoUpdate({ target: users.id, set: { email: user.email, displayName: user.displayName, updatedAt: new Date().toISOString() } }),
-      db.insert(companies).values({ id: companyId, ownerUserId: user.userId, name, website, industry, teamSize, primaryGoal, aiTokenBalance: INITIAL_COMPANY_AI_CREDITS }),
+      db.insert(companies).values({ id: companyId, ownerUserId: user.userId, name, website, industry, teamSize, primaryGoal, aiTokenBalance: INITIAL_COMPANY_AI_CREDITS, ...newTrial() }),
       db.insert(companyMembers).values({ companyId, userId: user.userId, role: "OWNER" }),
     ]);
 

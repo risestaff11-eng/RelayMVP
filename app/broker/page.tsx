@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import SiteImage from "next/image";
 import { BrokerForm, BrokerDemo } from "./broker-interactions";
 import { MarketingAnalytics } from "../marketing-analytics";
 import "./broker.css";
@@ -41,8 +42,8 @@ export default function BrokerPage() {
           <div className="br-hero-actions"><a className="br-button" href="#request" data-track="hero_primary">Посмотреть RiseStaff <Arrow /></a><a className="br-text-link" href="#problems" data-track="hero_secondary">Задачи агентства ↓</a></div>
         </div>
         <figure className="br-hero-visual">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="br-building" src="/broker-building.jpg" alt="Белый фасад жилого дома со стеклянными балконами" width="1600" height="2400" fetchPriority="high" />
+
+          <SiteImage unoptimized className="br-building" src="/broker-building.jpg" alt="Белый фасад жилого дома со стеклянными балконами" width="1600" height="2400" fetchPriority="high" />
           <figcaption><span>RISESTAFF / НЕДВИЖИМОСТЬ</span><span>Казахстан</span></figcaption>
         </figure>
       </section>

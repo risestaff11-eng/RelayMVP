@@ -3,10 +3,15 @@
 import { localizeInterface } from "../../../lib/interface-locale";
 import { useMemo, useState } from "react";
 import { countRu, formatDateTimeSeconds, formatInteger } from "@/lib/format-display";
+import { SubscriptionControl } from "./subscription-control";
 
 type Row = {
   id: string;
   companyId: string | null;
+  planCode: string | null;
+  subscriptionStatus: string | null;
+  subscriptionEndsAt: string | null;
+  subscriptionRevision: number | null;
   name: string;
   email: string;
   phone: string;
@@ -698,6 +703,7 @@ export function SystemUsers({
                   </article>
                 </section>
 
+                {row.companyId && <SubscriptionControl companyId={row.companyId} planCode={row.planCode ?? "TRIAL"} subscriptionStatus={row.subscriptionStatus} subscriptionEndsAt={row.subscriptionEndsAt} subscriptionRevision={row.subscriptionRevision ?? 0} />}
                 <footer className="system-account-actions">
                   <div className="system-token-control">
                     <input

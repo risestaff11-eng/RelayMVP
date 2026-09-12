@@ -1,3 +1,4 @@
+import { subscriptionDenied } from "@/lib/company-subscription";
 import { eq, sql } from "drizzle-orm";
 import { getChatGPTUser } from "../../../../chatgpt-auth";
 import { getDb } from "../../../../../db";
@@ -70,6 +71,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const company = await getCompanyForUser(user.userId);
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "PROGRAMS_MANAGE")) return companyPermissionDenied();
+  { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
   const { id } = await params;
   const program = await getProgramForCompany(company.id, id);
   if (!program) return Response.json({ error: "Программа не найдена" }, { status: 404 });

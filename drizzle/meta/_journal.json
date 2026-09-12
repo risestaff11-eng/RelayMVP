@@ -232,6 +232,20 @@
       "when": 1789033662749,
       "tag": "0033_bumpy_viper",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1789157374352,
+      "tag": "0034_crazy_madelyne_pryor",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1789157401666,
+      "tag": "0035_subscription_guards",
+      "breakpoints": true
     }
   ]
 }

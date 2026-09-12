@@ -9,6 +9,35 @@ import { typescriptLoader } from "./helpers/load-typescript.mjs";
 const require = createRequire(import.meta.url);
 const { Miniflare } = createRequire(require.resolve("wrangler"))("miniflare");
 
+test("D1 upgrades existing companies without disabling them; subscription and capacity batches are atomic", { timeout: 45000 }, async () => {
+  const runtime = new Miniflare({ modules: true, script: "export default { fetch() { return new Response('test'); } };", d1Databases: ["DB"], compatibilityDate: "2026-05-15" });
+  try {
+    const DB = await runtime.getD1Database("DB");
+    const journal = JSON.parse(await readFile(new URL("../drizzle/meta/_journal.json", import.meta.url), "utf8"));
+    for (const entry of journal.entries.filter((entry) => entry.idx < 34)) {
+      const source = await readFile(new URL(`../drizzle/${entry.tag}.sql`, import.meta.url), "utf8");
+      await DB.batch(source.split("--> statement-breakpoint").filter((sql) => sql.trim()).map((sql) => DB.prepare(sql.trim())));
+    }
+    await DB.prepare("INSERT INTO users(id,email,display_name) VALUES ('owner','synthetic@example.test','Synthetic Owner')").run();
+    await DB.prepare("INSERT INTO companies(id,owner_user_id,name,website,industry,team_size,primary_goal) VALUES ('company','owner','Synthetic company','https://example.test','EDUCATION','1_10','LEADS')").run();
+    for (const entry of journal.entries.filter((entry) => entry.idx >= 34)) {
+      const source = await readFile(new URL(`../drizzle/${entry.tag}.sql`, import.meta.url), "utf8");
+      await DB.batch(source.split("--> statement-breakpoint").filter((sql) => sql.trim()).map((sql) => DB.prepare(sql.trim())));
+    }
+    assert.equal((await DB.prepare("SELECT subscription_status status FROM companies").first()).status, "LEGACY");
+    const load = typescriptLoader({ "cloudflare:workers": { env: { DB } } });
+    const { changeSubscription } = load(new URL("../lib/subscription-admin.ts", import.meta.url));
+    const input = { requestId: crypto.randomUUID(), revision: 0, action: "ACTIVATE", planCode: "STARTER", days: 30, paidAmount: 19900, grantCredits: true, note: "Synthetic test" };
+    await changeSubscription("company", "admin-test", input);
+    await changeSubscription("company", "admin-test", input);
+    assert.equal((await DB.prepare("SELECT count(*) n FROM subscription_events").first()).n, 1);
+    await DB.prepare("INSERT INTO programs(id,company_id,name,slug,status) VALUES('a','company','A','synthetic-a','DRAFT'),('b','company','B','synthetic-b','DRAFT')").run();
+    const results = await Promise.allSettled([DB.prepare("UPDATE programs SET status='ACTIVE' WHERE id='a'").run(), DB.prepare("UPDATE programs SET status='ACTIVE' WHERE id='b'").run()]);
+    assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+    assert.equal((await DB.prepare("SELECT count(*) n FROM product_milestones WHERE event='first_subscription_paid'").first()).n, 1);
+  } finally { await runtime.dispose(); }
+});
+
 test("D1 executes the migration and concurrent limiter/verification batches atomically", { timeout: 45000 }, async () => {
   const runtime = new Miniflare({ modules: true, script: "export default { fetch() { return new Response('test'); } };", d1Databases: ["DB"], compatibilityDate: "2026-05-15" });
   try {

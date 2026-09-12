@@ -4,6 +4,7 @@ import handler from "vinext/server/app-router-entry";
 import { canonicalRedirectFor } from "../lib/domain-routing";
 import { drainDueIntegrationDeliveries, safeIntegrationEvent } from "../lib/integrations/service";
 import { drainCompanyApplicationNotifications } from "../lib/company-application-service";
+import { secureResponse } from "../lib/security-headers";
 
 interface Env {
   ASSETS: Fetcher;
@@ -81,7 +82,7 @@ const worker = {
       brokerUrl.pathname = "/broker";
       routedRequest = new Request(brokerUrl, request);
     }
-    const response = await handler.fetch(routedRequest, env, ctx);
+    const response = secureResponse(await handler.fetch(routedRequest, env, ctx), request);
     const privateAgentPath = ["/partner", "/ref", "/agent", "/agent-login", "/api/partner", "/api/agent"].some((prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`));
     if (url.pathname === "/auth" || url.pathname.startsWith("/api/auth/") || privateAgentPath) {
       const privateResponse = new Response(response.body, response);

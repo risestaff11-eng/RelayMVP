@@ -6,8 +6,6 @@ import { companies } from "../../../../db/schema";
 import { normalizeWebsite, sameOrigin } from "../_utils";
 import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
-const PLANS = new Set(["TRIAL", "STARTER", "GROWTH"]);
-
 export async function PATCH(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
   const user = await getChatGPTUser();
@@ -31,7 +29,6 @@ export async function PATCH(request: Request) {
     if (!websiteValue && !planCode && !hasWhatsapp && !hasInstagram && !hasReviewSla && !hasPayoutSla) throw new Error("Нет данных для сохранения");
     if (contactWhatsapp && contactWhatsapp.replace(/\D/g, "").length < 7) throw new Error("Проверьте номер WhatsApp");
     if (contactInstagram && !/^[a-zA-Z0-9._]+$/.test(contactInstagram)) throw new Error("Укажите имя пользователя Instagram без пробелов");
-    if (planCode && !PLANS.has(planCode)) throw new Error("Неизвестный тариф");
     if (planCode) throw new Error("Автоматическая смена тарифа пока не подключена");
     if (hasReviewSla && (!Number.isSafeInteger(reviewSlaHours) || reviewSlaHours < 1 || reviewSlaHours > 336)) throw new Error("Срок проверки должен быть от 1 до 336 часов");
     if (hasPayoutSla && (!Number.isSafeInteger(payoutSlaDays) || payoutSlaDays < 1 || payoutSlaDays > 90)) throw new Error("Срок выплаты должен быть от 1 до 90 дней");

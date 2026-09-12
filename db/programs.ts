@@ -4,6 +4,10 @@ import { missionResources, missions, partners, programs, rewards, submissionAtta
 import { parseSubmissionFormFields, type SubmissionFormField } from "../lib/submission-form";
 import { isAnalyticsProgram } from "../lib/workflow";
 
+function batches<T>(values: T[], size = 80): T[][] {
+  return Array.from({ length: Math.ceil(values.length / size) }, (_, i) => values.slice(i * size, (i + 1) * size));
+}
+
 function parseList(value: string) {
   try {
     const parsed = JSON.parse(value);
@@ -177,20 +181,23 @@ export async function getCompanyOperations(companyId: string) {
   };
 }
 
-export async function getSubmissionsForCompany(companyId: string) {
+export async function getSubmissionsForCompany(companyId: string, options: { ids?: string[]; limit?: number; details?: boolean } = {}) {
+  if (options.ids?.length === 0) return [];
   const db = getDb();
-  const rows = await db.select({ submission: submissions, partner: partners, mission: missions, program: programs })
+  const readRows = (ids?: string[]) => db.select({ submission: submissions, partner: partners, mission: missions, program: programs })
     .from(submissions)
     .innerJoin(partners, eq(submissions.partnerId, partners.id))
     .innerJoin(missions, eq(submissions.missionId, missions.id))
     .innerJoin(programs, eq(submissions.programId, programs.id))
-    .where(eq(submissions.companyId, companyId))
-    .orderBy(desc(submissions.createdAt));
+    .where(and(eq(submissions.companyId, companyId), ids ? inArray(submissions.id, ids) : undefined))
+    .orderBy(desc(submissions.createdAt), desc(submissions.id)).limit(options.limit ?? 2147483647);
+  // D1 permits at most 100 bound parameters. Hydrate bounded batches, not one large IN clause.
+  const rows = options.ids ? (await Promise.all(batches(options.ids).map(readRows))).flat().sort((a, b) => b.submission.createdAt.localeCompare(a.submission.createdAt) || b.submission.id.localeCompare(a.submission.id)).slice(0, options.limit) : await readRows();
   const ids = rows.map((row) => row.submission.id);
   const [attachmentRows, eventRows, rewardRows] = ids.length ? await Promise.all([
-    db.select().from(submissionAttachments).where(inArray(submissionAttachments.submissionId, ids)).orderBy(asc(submissionAttachments.createdAt)),
-    db.select().from(submissionStatusEvents).where(inArray(submissionStatusEvents.submissionId, ids)).orderBy(desc(submissionStatusEvents.createdAt)),
-    db.select().from(rewards).where(inArray(rewards.submissionId, ids)),
+    options.details === false ? [] : Promise.all(batches(ids).map((batch) => db.select().from(submissionAttachments).where(inArray(submissionAttachments.submissionId, batch)).orderBy(asc(submissionAttachments.createdAt)))).then((rows) => rows.flat()),
+    options.details === false ? [] : Promise.all(batches(ids).map((batch) => db.select().from(submissionStatusEvents).where(inArray(submissionStatusEvents.submissionId, batch)).orderBy(desc(submissionStatusEvents.createdAt)))).then((rows) => rows.flat()),
+    Promise.all(batches(ids).map((batch) => db.select().from(rewards).where(inArray(rewards.submissionId, batch)))).then((rows) => rows.flat()),
   ]) : [[], [], []];
   const attachmentsBySubmission = new Map<string, typeof attachmentRows>();
   for (const attachment of attachmentRows) attachmentsBySubmission.set(attachment.submissionId, [...(attachmentsBySubmission.get(attachment.submissionId) ?? []), attachment]);
@@ -224,8 +231,8 @@ export async function getAgentsForCompany(companyId: string) {
     .orderBy(desc(partners.joinedAt));
   const ids = rows.map((row) => row.agent.id);
   const [resultRows, rewardRows] = ids.length ? await Promise.all([
-    db.select({ id: submissions.id, partnerId: submissions.partnerId, status: submissions.status, reviewStatus: submissions.reviewStatus, salesStatus: submissions.salesStatus }).from(submissions).where(inArray(submissions.partnerId, ids)),
-    db.select({ partnerId: rewards.partnerId, amount: rewards.amount, status: rewards.status, partnerConfirmedAt: rewards.partnerConfirmedAt }).from(rewards).where(inArray(rewards.partnerId, ids)),
+    Promise.all(batches(ids).map((batch) => db.select({ id: submissions.id, partnerId: submissions.partnerId, status: submissions.status, reviewStatus: submissions.reviewStatus, salesStatus: submissions.salesStatus }).from(submissions).where(inArray(submissions.partnerId, batch)))).then((rows) => rows.flat()),
+    Promise.all(batches(ids).map((batch) => db.select({ partnerId: rewards.partnerId, amount: rewards.amount, status: rewards.status, partnerConfirmedAt: rewards.partnerConfirmedAt }).from(rewards).where(inArray(rewards.partnerId, batch)))).then((rows) => rows.flat()),
   ]) : [[], []];
   const resultsByPartner = new Map<string, typeof resultRows>();
   for (const result of resultRows) resultsByPartner.set(result.partnerId, [...(resultsByPartner.get(result.partnerId) ?? []), result]);

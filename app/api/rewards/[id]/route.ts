@@ -27,7 +27,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!changed) return Response.json({ error: "Выплата уже изменена или получение подтверждено. Обновите страницу." }, { status: 409 });
   await notifyAgentWorkChanges(company.id, [row.submissionId]);
   const current = (await getDb().select().from(rewards).where(eq(rewards.id, id)).limit(1))[0];
-  deferIntegrationEvent(recordIntegrationEvent({
+  await deferIntegrationEvent(recordIntegrationEvent({
     companyId: company.id,
     eventType: "reward.updated",
     aggregateType: "reward",

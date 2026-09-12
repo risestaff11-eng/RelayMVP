@@ -6,6 +6,7 @@ import { companies, legalAcceptances, partnerAccessLinks, partnerMissionAcceptan
 import { createPartnerToken, hashPartnerToken } from "../../../../../lib/partner-token";
 import { cleanString, sameOrigin } from "../../../company/_utils";
 import { agentUrl } from "../../../../../lib/public-origins";
+import { subscriptionDenied } from "../../../../../lib/company-subscription";
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[character] ?? character));
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
     if (payload.acceptedTerms !== true && payload.acceptedTerms !== "on") throw new Error("Примите лицензионное соглашение и политику конфиденциальности");
     const program = await getPublicProgramBySlug(slug);
     if (!program) return Response.json({ error: "Программа недоступна" }, { status: 404 });
+    { const denied = await subscriptionDenied(program.companyId); if (denied) return denied; }
     if (!program.missions.some((mission) => mission.id === missionId)) return Response.json({ error: "Задание недоступно" }, { status: 404 });
     const db = getDb();
     const userRows = await db.select().from(users).where(eq(users.email, email)).limit(1);

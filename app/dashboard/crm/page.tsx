@@ -4,6 +4,7 @@ import { requireChatGPTUser } from "../../chatgpt-auth";
 import { getCompanyForUser } from "../../../db/company";
 import { getSubmissionsForCompany } from "../../../db/programs";
 import { CrmWorkspace, type CrmLead } from "./crm-workspace";
+import { crmBoard } from "../../../db/crm-board";
 
 export const metadata: Metadata = { title: "CRM" };
 export const dynamic = "force-dynamic";
@@ -17,9 +18,11 @@ export default async function CrmPage({ searchParams }: { searchParams: Promise<
   const company = await getCompanyForUser(user.userId);
   if (!company) redirect("/onboarding");
 
-  const submissions = await getSubmissionsForCompany(company.id);
+  const board = await crmBoard(company);
+  const selected = query.submission ? (await getSubmissionsForCompany(company.id, { ids: [query.submission] }))[0] : null;
+  const submissions = selected && !board.items.some((item) => item.id === selected.id) ? [...board.items, selected] : board.items;
 
   return <div className="dashboard-content crm-page crm-page-immersive">
-    <CrmWorkspace companyName={company.name} initialItems={submissions as CrmLead[]} initialSelectedId={query.submission || ""} initialSettings={{ monthlyGoal: company.crmMonthlyGoal, averageCheck: company.crmAverageCheck, conversionRate: company.crmConversionRate, currency: company.crmGoalCurrency }} />
+    <CrmWorkspace companyName={company.name} initialItems={submissions as CrmLead[]} initialBoard={board} initialSelectedId={query.submission || ""} initialSettings={{ monthlyGoal: company.crmMonthlyGoal, averageCheck: company.crmAverageCheck, conversionRate: company.crmConversionRate, currency: company.crmGoalCurrency }} />
   </div>;
 }

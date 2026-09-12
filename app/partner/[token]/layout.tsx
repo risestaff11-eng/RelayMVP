@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import SiteImage from "next/image";
 import { notFound } from "next/navigation";
 import { getPartnerPortal } from "../../../db/partner";
 import { SafeLink as Link } from "@/app/safe-link";
@@ -35,7 +36,7 @@ export default async function PartnerLayout({ children, params }: { children: Re
       <section className="partner-portal-main">
         <header className="partner-portal-topbar">
           <div className="partner-top-identity">
-            <div className="partner-mini-avatar">{portal.profile.avatarObjectKey ? <img src={`/api/partner/avatar?token=${token}`} alt="Аватар агента" /> : <span>{initials}</span>}</div>
+            <div className="partner-mini-avatar">{portal.profile.avatarObjectKey ? <SiteImage unoptimized width={64} height={64} src={`/api/partner/avatar?token=${token}`} alt="Аватар агента" /> : <span>{initials}</span>}</div>
             <div className="partner-top-copy"><small>АГЕНТ</small><strong>{(portal.profile.firstName) ? (portal.profile.firstName) : (<bdi data-no-translate>{portal.partner.email}</bdi>)}</strong><PartnerEarningStrip token={token} activeCount={activeMissions.length} bestReward={bestReward?.rewardLabel} currency={portal.program.currency} /></div>
           </div>
           <a className="partner-company-switch-mobile" href="/agent">{<bdi data-no-translate>{portal.company.name}</bdi>} · сменить</a>

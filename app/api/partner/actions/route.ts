@@ -5,6 +5,7 @@ import { partnerMissionAcceptances, partnerProfiles, submissionDisputes } from "
 import { recordRewardReceipt } from "../../../../lib/reward-transfer";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
 import { deferIntegrationEvent, recordIntegrationEvent } from "../../../../lib/integrations/service";
+import { subscriptionDenied } from "../../../../lib/company-subscription";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
 
     if (action === "ACCEPT_MISSION") {
+      { const denied = await subscriptionDenied(portal.company.id); if (denied) return denied; }
       const missionId = cleanString(payload.missionId, 80);
       const mission = portal.missions.find((item) => item.id === missionId);
       if (!mission) throw new Error("Задание не найдено");
@@ -51,7 +53,7 @@ export async function POST(request: Request) {
       if (!confirmed || reward.partnerConfirmedAt) return Response.json({ ok: true, partnerConfirmedAt: reward.partnerConfirmedAt });
       const confirmedAt = await recordRewardReceipt(reward.partnerId, rewardId);
       if (!confirmedAt) throw new Error("Выплата уже изменена. Обновите страницу.");
-      deferIntegrationEvent(recordIntegrationEvent({
+      await deferIntegrationEvent(recordIntegrationEvent({
         companyId: portal.company.id,
         eventType: "reward.updated",
         aggregateType: "reward",
