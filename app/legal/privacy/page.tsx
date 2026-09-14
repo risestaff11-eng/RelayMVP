@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import { publicMetadata } from "@/lib/public-metadata";
 import { SafeLink as Link } from "@/app/safe-link";
 import { MarketingLogo } from "@/app/marketing-logo";
 
-export const metadata: Metadata = { title: "Политика конфиденциальности", description: "Как RiseStaff обрабатывает и защищает данные компаний и агентов.", alternates: { canonical: "https://risestaff.kz/legal/privacy" } };
+export const metadata = publicMetadata("Политика конфиденциальности", "Как RiseStaff обрабатывает и защищает данные компаний и агентов.", "/legal/privacy");
 
 export default function PrivacyPage() {
   return <main className="legal-page"><article className="legal-document">

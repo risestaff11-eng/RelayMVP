@@ -60,6 +60,29 @@ test("keeps Russian as default and restores the shared Kazakh preference", async
   assert.match(html, /class="active" aria-pressed="true">ҚАЗ/);
 });
 
+test("old program links redirect permanently without losing attribution or access", async () => {
+  const response = await route("https://agents.risestaff.kz/p/relay-kz-13c34fa?access=test-token&join=mission&utm_source=partner");
+  assert.equal(response.status, 308);
+  assert.equal(response.headers.get("location"), "https://agents.risestaff.kz/p/risestaff-13c34fa?access=test-token&join=mission&utm_source=partner");
+});
+
+test("public pages expose consistent RiseStaff titles, previews and canonical URLs", async () => {
+  for (const path of ["/", "/pricing", "/integrators", "/legal/privacy", "/legal/license"]) {
+    const response = await render(path);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    const title = html.match(/<title>(.*?)<\/title>/s)?.[1];
+    assert.ok(title?.includes("RiseStaff"), path);
+    assert.equal(title.match(/RiseStaff/g).length, 1, path);
+    const metadata = [...html.matchAll(/<(?:meta|link)\b[^>]+>/g)].map((match) => match[0]).join("\n");
+    assert.doesNotMatch(metadata, /relay/i, path);
+    assert.match(metadata, /property="og:site_name" content="RiseStaff"/);
+    assert.ok(metadata.includes(`property="og:url" content="https://risestaff.kz${path === "/" ? "" : path}"`), path);
+    const text = html.replace(/<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>/g, "").replace(/<[^>]+>/g, " ");
+    assert.doesNotMatch(text, /\brelay\b/i, path);
+  }
+});
+
 test("broker domain renders its own landing without disturbing product routing", async () => {
   const response = await route("https://broker.risestaff.kz/?utm_source=partner");
   assert.equal(response.status, 200);
@@ -89,7 +112,7 @@ test("renders the RiseStaff landing page", async () => {
   const html = await response.text();
   assert.match(html, /RiseStaff/);
   assert.match(html, /Заработать на рекомендациях/);
-  assert.match(html, /https:\/\/agents\.risestaff\.kz\/p\/relay-kz-13c34fa/);
+  assert.match(html, /https:\/\/agents\.risestaff\.kz\/p\/risestaff-13c34fa/);
   assert.match(html, /<html lang="ru"/);
   assert.match(html, /relay-language-switcher/);
   assert.match(html, />ҚАЗ</);

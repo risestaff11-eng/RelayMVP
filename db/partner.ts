@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { getDb } from ".";
 import { hashPartnerToken } from "../lib/partner-token";
+import { publicProgramSlug, storedProgramSlug } from "../lib/program-brand-alias";
 import { parseSubmissionFormFields } from "../lib/submission-form";
 import {
   companies,
@@ -91,7 +92,7 @@ export async function getPartnerPortal(token: string) {
       instructions: parseList(mission.instructionsJson),
       proofRequirements: parseList(mission.proofRequirementsJson),
       programName: missionProgram.name,
-      programSlug: missionProgram.slug,
+      programSlug: publicProgramSlug(missionProgram.slug),
       programExpiresAt: missionProgram.expiresAt,
       currency: missionProgram.currency,
       resources: resourceRows.filter((resource) => resource.missionId === mission.id).map(({ id, fileName, mimeType, size }) => ({ id, fileName, mimeType, size })),
@@ -116,8 +117,8 @@ export async function getPartnerPortal(token: string) {
     partner: activePartner,
     partners: identityRows,
     company,
-    program: currentProgram,
-    programs: availableProgramRows,
+    program: { ...currentProgram, slug: publicProgramSlug(currentProgram.slug) },
+    programs: availableProgramRows.map((row) => ({ ...row, slug: publicProgramSlug(row.slug) })),
     historyOnly: availableProgramRows.length === 0,
     missions: serializedMissions,
     submissions: serializedSubmissions,
@@ -174,7 +175,7 @@ export async function getMissionForPublicSubmission(programSlug: string, mission
     .from(missions)
     .innerJoin(programs, eq(missions.programId, programs.id))
     .innerJoin(companies, eq(programs.companyId, companies.id))
-    .where(and(eq(programs.slug, programSlug), eq(programs.status, "ACTIVE"), eq(missions.id, missionId), eq(missions.status, "ACTIVE")))
+    .where(and(eq(programs.slug, storedProgramSlug(programSlug)), eq(programs.status, "ACTIVE"), eq(missions.id, missionId), eq(missions.status, "ACTIVE")))
     .limit(1);
   const row = rows[0];
   return row ? { ...row, program: { ...row.program, formFields: parseSubmissionFormFields(row.program.submissionFormJson) } } : null;

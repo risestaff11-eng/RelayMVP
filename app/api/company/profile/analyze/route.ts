@@ -85,7 +85,7 @@ async function fetchHtml(input: URL) {
     const response = await fetch(current, {
       redirect: "manual",
       signal: AbortSignal.timeout(25000),
-      headers: { "user-agent": "RiseStaffProfileBot/1.1 (+https://relay-agent-sales-rustam.frosty-whale-0805.chatgpt.site)" },
+      headers: { "user-agent": "RiseStaffProfileBot/1.1 (+https://risestaff.kz)" },
     });
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const location = response.headers.get("location");
@@ -200,7 +200,7 @@ export async function POST(request: Request) {
         thinkingLevel: "low",
       });
     } catch {
-      ai = { data: fallbackProfile(company), model: "relay-fallback", inputTokens: 0, outputTokens: 0, totalTokens: 0, thoughtsTokens: 0 };
+      ai = { data: fallbackProfile(company), model: "risestaff-fallback", inputTokens: 0, outputTokens: 0, totalTokens: 0, thoughtsTokens: 0 };
       warning = [warning, "AI временно не ответил. Создан безопасный редактируемый черновик — его можно дополнить и подтвердить."].filter(Boolean).join(" ");
     }
 

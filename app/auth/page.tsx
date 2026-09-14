@@ -4,7 +4,7 @@ import { getAccountUser } from "../../lib/account-auth";
 import { companyReturnTo } from "../../lib/auth-navigation";
 import { AuthFlow } from "./auth-flow";
 
-export const metadata: Metadata = { title: "Вход в RiseStaff", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: { absolute: "Вход в RiseStaff" }, robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function AuthPage({ searchParams }: { searchParams: Promise<{ returnTo?: string }> }) {

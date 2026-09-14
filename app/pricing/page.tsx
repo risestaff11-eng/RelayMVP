@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import { publicMetadata } from "@/lib/public-metadata";
 import { SafeLink as Link } from "@/app/safe-link";
 import { MarketingLogo } from "../marketing-logo";
 import { PAID_PLANS, TRIAL_DAYS } from "@/lib/subscription-plans";
 import { formatInteger, countRu } from "@/lib/format-display";
 
-export const metadata: Metadata = { title: "Тарифы RiseStaff", description: "14 дней без карты. Три тарифа для управления рекомендациями, клиентами и вознаграждениями.", alternates: { canonical: "https://risestaff.kz/pricing" } };
+export const metadata = publicMetadata("Тарифы RiseStaff", "14 дней без карты. Три тарифа для управления рекомендациями, клиентами и вознаграждениями.", "/pricing");
 
 export default function PricingPage() {
   return <main className="marketing-subpage pricing-page">

@@ -1,4 +1,4 @@
-const CACHE = "relay-shell-v3";
+const CACHE = "risestaff-shell-v4";
 const SHELL = ["/", "/favicon.svg", "/manifest.webmanifest", "/install-bootstrap.js", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
