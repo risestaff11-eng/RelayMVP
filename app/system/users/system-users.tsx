@@ -4,6 +4,7 @@ import { localizeInterface } from "../../../lib/interface-locale";
 import { useMemo, useState } from "react";
 import { countRu, formatDateTimeSeconds, formatInteger } from "@/lib/format-display";
 import { SubscriptionControl } from "./subscription-control";
+import { currencySummary } from "@/lib/currency-totals";
 
 type Row = {
   id: string;
@@ -34,6 +35,7 @@ type Row = {
   paidRewardsCount: number;
   paidRewardsAmount: number;
   dueRewardsAmount: number;
+  rewardAmountsJson: string;
   lastAgentActivityAt: string | null;
   lastSubmissionAt: string | null;
 };
@@ -128,6 +130,7 @@ export function SystemUsers({
   const [tokenAmounts, setTokenAmounts] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
+  const [attention, setAttention] = useState("ALL");
   const [activity, setActivity] = useState("ALL");
   const [registered, setRegistered] = useState("ALL");
   const [sort, setSort] = useState("LAST_LOGIN");
@@ -148,6 +151,13 @@ export function SystemUsers({
         );
       if (!matchesQuery || (status !== "ALL" && row.status !== status))
         return false;
+      const endsAt = timestamp(row.subscriptionEndsAt);
+      if (attention === "TRIAL_ENDING" && !(row.planCode === "TRIAL" && endsAt > now && endsAt <= now + 5 * 86400000)) return false;
+      if (attention === "EXPIRED" && !(endsAt > 0 && endsAt <= now && row.subscriptionStatus !== "LEGACY")) return false;
+      if (attention === "SUSPENDED" && row.subscriptionStatus !== "SUSPENDED") return false;
+      if (attention === "NO_PROGRAM" && (!row.companyId || row.activeProgramCount > 0)) return false;
+      if (attention === "NO_AGENT" && (!row.companyId || row.agentCount > 0)) return false;
+      if (attention === "NO_LEAD" && (!row.companyId || row.submissionCount > 0)) return false;
       if (activity === "NEVER" && row.lastLoginAt) return false;
       if (activity !== "ALL" && activity !== "NEVER") {
         if (
@@ -174,7 +184,7 @@ export function SystemUsers({
         return right.paidRewardsAmount - left.paidRewardsAmount;
       return timestamp(right.lastLoginAt) - timestamp(left.lastLoginAt);
     });
-  }, [activity, generatedAtTimestamp, query, registered, rows, sort, status]);
+  }, [activity, attention, generatedAtTimestamp, query, registered, rows, sort, status]);
 
   const summary = useMemo(() => {
     const active30 = rows.filter(
@@ -189,11 +199,9 @@ export function SystemUsers({
       programs: rows.reduce((total, row) => total + row.programCount, 0),
       agents: rows.reduce((total, row) => total + row.agentCount, 0),
       results: rows.reduce((total, row) => total + row.submissionCount, 0),
-      paid:
-        rows.reduce((total, row) => total + row.paidRewardsAmount, 0) +
-        deletedRows.reduce((total, row) => total + row.paidRewardsAmount, 0),
+      paid: currencySummary(rows.map((row) => row.rewardAmountsJson), "paid"),
     };
-  }, [deletedRows, generatedAtTimestamp, rows]);
+  }, [generatedAtTimestamp, rows]);
 
   async function login(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -342,8 +350,8 @@ export function SystemUsers({
       "Активных агентов",
       "Результатов",
       "Ждут проверки",
-      "Выплачено, KZT",
-      "К выплате, KZT",
+      "Переводы по валютам",
+      "К выплате по валютам",
       "AI-кредиты",
       "AI использовано",
     ];
@@ -363,8 +371,8 @@ export function SystemUsers({
       row.activeAgentCount,
       row.submissionCount,
       row.pendingSubmissionCount,
-      row.paidRewardsAmount,
-      row.dueRewardsAmount,
+      currencySummary([row.rewardAmountsJson], "paid"),
+      currencySummary([row.rewardAmountsJson], "due"),
       row.tokenBalance ?? 0,
       row.tokensUsed ?? 0,
     ]);
@@ -385,7 +393,7 @@ export function SystemUsers({
           0,
           row.submissionsCount,
           0,
-          row.paidRewardsAmount,
+          "Нет разбивки по валютам",
           0,
           0,
           0,
@@ -482,12 +490,21 @@ export function SystemUsers({
         </article>
         <article className="accent">
           <small>ВЫПЛАЧЕНО АГЕНТАМ</small>
-          <strong>{formatInteger(summary.paid)} ₸</strong>
-          <span>включая удалённые кабинеты</span>
+          <strong data-no-translate>{summary.paid}</strong>
+          <span>Отметки компаний, без удалённых кабинетов</span>
         </article>
       </section>
 
       <section className="system-controls" aria-label="Фильтры кабинетов">
+        <label><span>Требует внимания</span><select value={attention} onChange={(event) => setAttention(event.target.value)}>
+          <option value="ALL">Все компании</option>
+          <option value="TRIAL_ENDING">Пробный период: осталось до 5 дней</option>
+          <option value="EXPIRED">Подписка закончилась</option>
+          <option value="SUSPENDED">Тариф приостановлен</option>
+          <option value="NO_PROGRAM">Нет опубликованной программы</option>
+          <option value="NO_AGENT">Нет первого агента</option>
+          <option value="NO_LEAD">Нет первой заявки</option>
+        </select></label>
         <label className="system-search">
           <span>Поиск</span>
           <input
@@ -544,7 +561,7 @@ export function SystemUsers({
             <option value="PROGRAMS">Больше программ</option>
             <option value="AGENTS">Больше агентов</option>
             <option value="RESULTS">Больше результатов</option>
-            <option value="PAID">Больше выплат</option>
+            <option value="PAID">Больше выплат в KZT</option>
           </select>
         </label>
       </section>
@@ -686,12 +703,12 @@ export function SystemUsers({
                   </article>
                   <article>
                     <small>ВЫПЛАЧЕНО</small>
-                    <strong>{formatInteger(row.paidRewardsAmount)} ₸</strong>
+                    <strong data-no-translate>{currencySummary([row.rewardAmountsJson], "paid")}</strong>
                     <span>{countRu(row.paidRewardsCount, "выплата", "выплаты", "выплат")}</span>
                   </article>
                   <article>
                     <small>К ВЫПЛАТЕ</small>
-                    <strong>{formatInteger(row.dueRewardsAmount)} ₸</strong>
+                    <strong data-no-translate>{currencySummary([row.rewardAmountsJson], "due")}</strong>
                     <span>подтверждённые награды</span>
                   </article>
                   <article>
@@ -739,7 +756,7 @@ export function SystemUsers({
                       disabled={busy === row.id || row.status === "active"}
                       onClick={() => void update(row.id, "active")}
                     >
-                      {row.status === "active" ? "Активирован" : "Активировать"}
+                      {row.status === "active" ? "Вход разрешён" : "Разрешить вход"}
                     </button>
                     <button
                       className={row.status === "blocked" ? "is-blocked" : ""}

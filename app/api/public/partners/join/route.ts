@@ -44,7 +44,8 @@ export async function POST(request: Request) {
     const phone = identityRows[0]?.phone || submittedPhone || userRows[0]?.phone || "";
     const statements = [];
     if (!userRows[0]) statements.push(db.insert(users).values({ id: userId, email, displayName, phone, createdAt: now, updatedAt: now }));
-    else if (!identityRows[0]) statements.push(db.update(users).set({ displayName, phone, updatedAt: now }).where(eq(users.id, userId)));
+    // Public participation must never overwrite an existing account's identity.
+    // Program-specific contact details belong to the partner record below.
     statements.push(db.insert(userRoles).values({ userId, role: "PARTNER", createdAt: now }).onConflictDoNothing());
     if (existingRows[0]) statements.push(db.update(partners).set({ userId, name: displayName, phone, lastActiveAt: now }).where(eq(partners.id, partnerId)));
     else statements.push(

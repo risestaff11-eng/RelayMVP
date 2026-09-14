@@ -880,6 +880,22 @@ export const reportFiles = sqliteTable(
   (table) => [index("idx_report_files_report").on(table.reportId, table.createdAt)],
 );
 
+export const leadNotificationJobs = sqliteTable("lead_notification_jobs", {
+  submissionId: text("submission_id").primaryKey().references(() => submissions.id),
+  companyId: text("company_id").notNull().references(() => companies.id),
+  status: text("status").notNull().default("PENDING"),
+  attempts: integer("attempts").notNull().default(0),
+  nextAttemptAt: text("next_attempt_at"),
+  leaseToken: text("lease_token"),
+  leaseUntil: text("lease_until"),
+  lastError: text("last_error").notNull().default(""),
+  sentAt: text("sent_at"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  index("idx_lead_notifications_due").on(table.status, table.nextAttemptAt),
+  index("idx_lead_notifications_company").on(table.companyId, table.status),
+]);
+
 export const reportRevisions = sqliteTable(
   "report_revisions",
   {

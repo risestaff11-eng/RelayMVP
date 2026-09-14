@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SafeLink as Link } from "@/app/safe-link";
 import { DashboardIcon } from "./dashboard-icon";
+import { useDialogFocus } from "@/app/use-dialog-focus";
 
 const items = [
   { group: "РАБОТА", href: "/dashboard", label: "Рабочий стол", hint: "Сводка и следующие действия", icon: "home", exact: true },
@@ -23,6 +24,7 @@ const groups = ["РАБОТА", "СЕТЬ", "КОНТРОЛЬ", "НАСТРОЙ�
 export function DashboardNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  useDialogFocus(open, "company-mobile-drawer");
   const isActive = (item: { href: string; exact?: boolean }) => item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
   useEffect(() => {

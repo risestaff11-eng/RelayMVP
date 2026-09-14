@@ -2,7 +2,7 @@ import { subscriptionDenied } from "@/lib/company-subscription";
 import { and, eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getCompanyForUser } from "../../../../db/company";
-import { ensureReportTemplate } from "../../../../db/reports";
+import { ensureReportTemplate, getCompanyReportPage, getCompanyReports } from "../../../../db/reports";
 import { getDb } from "../../../../db";
 import { agentReports, reportRevisions, reportTemplates } from "../../../../db/schema";
 import { DEFAULT_REPORT_METRICS, REPORT_FIELD_TYPES, type ReportField } from "../../../../lib/reporting";
@@ -10,6 +10,23 @@ import { cleanString, sameOrigin } from "../_utils";
 import { companyPermissionDenied, hasCompanyPermission } from "../../../../lib/company-permissions";
 
 async function context() { const user = await getChatGPTUser(); if (!user) return null; const company = await getCompanyForUser(user.userId); return company ? { user, company } : null; }
+
+export async function GET(request: Request) {
+  const ctx = await context();
+  if (!ctx) return Response.json({ error: "Сначала войдите" }, { status: 401 });
+  const denied = await subscriptionDenied(ctx.company, "REPORTS"); if (denied) return denied;
+  const query = new URL(request.url).searchParams;
+  const id = query.get("id");
+  if (id) {
+    const report = (await getCompanyReports(ctx.company.id, { id, limit: 1, publishedOnly: true }))[0];
+    return report ? Response.json({ report }) : Response.json({ error: "Отчёт не найден" }, { status: 404 });
+  }
+  return Response.json(await getCompanyReportPage(ctx.company.id, {
+    query: cleanString(query.get("query"), 120), program: cleanString(query.get("program"), 80), status: cleanString(query.get("status"), 30),
+    audio: query.get("audio") === "true", files: query.get("files") === "true",
+    offset: Math.min(1000000, Math.max(0, Math.floor(Number(query.get("offset")) || 0))),
+  }));
+}
 
 export async function PATCH(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 }); const ctx = await context(); if (!ctx) return Response.json({ error: "Сначала войдите" }, { status: 401 });

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { SafeLink as Link } from "@/app/safe-link";
 import { chatGPTSignOutPath, requireChatGPTUser } from "../chatgpt-auth";
 import { getCompanyForUser } from "../../db/company";
 import { DashboardNav } from "./_components/dashboard-nav";
@@ -30,7 +29,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <aside className="sidebar">
         <CompanyBrand company={{ id: company.id, name: company.name, logoObjectKey: company.logoObjectKey }} />
         <DashboardNav />
-        <div className="sidebar-footer"><Link className="sidebar-ai-agent" href="/dashboard/assistant"><span>✦</span><div><strong>RiseStaff</strong><small>Помощник по программам</small></div><b>→</b></Link><p className="powered-by-relay">Powered by RiseStaff</p></div>
+        <div className="sidebar-footer"><p className="powered-by-relay">Powered by RiseStaff</p></div>
       </aside>
 
       <section className="dashboard-main">
