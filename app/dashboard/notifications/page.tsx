@@ -6,11 +6,16 @@ import { getRewardsForCompany, getSubmissionsForCompany } from "../../../db/prog
 import { SafeLink as Link } from "@/app/safe-link";
 import { countRu, formatDateTime, formatMoney } from "@/lib/format-display";
 import { payoutDueAt, slaState } from "@/lib/workflow";
+import { EmailDeliveryStatus } from "./email-delivery-status";
 
 export const metadata: Metadata = { title: "Уведомления" };
 export const dynamic = "force-dynamic";
 
-export default async function NotificationsPage() {
+export default function NotificationsPage() {
+  return <><NotificationsContent /><EmailDeliveryStatus /></>;
+}
+
+async function NotificationsContent() {
   const user = await requireChatGPTUser("/dashboard/notifications");
   const company = await getCompanyForUser(user.userId);
   if (!company) redirect("/onboarding");

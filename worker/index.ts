@@ -4,6 +4,7 @@ import handler from "vinext/server/app-router-entry";
 import { canonicalRedirectFor } from "../lib/domain-routing";
 import { drainDueIntegrationDeliveries, safeIntegrationEvent } from "../lib/integrations/service";
 import { drainCompanyApplicationNotifications } from "../lib/company-application-service";
+import { drainLeadNotifications } from "../lib/company-submission-notifications";
 import { secureResponse } from "../lib/security-headers";
 
 interface Env {
@@ -39,6 +40,7 @@ function scheduleIntegrationDrain(env: Env, ctx: ExecutionContext) {
   ctx.waitUntil(Promise.all([
     safeIntegrationEvent(drainDueIntegrationDeliveries()),
     drainCompanyApplicationNotifications().catch(() => console.error("Company application notification drain failed")),
+    drainLeadNotifications().catch(() => console.error("Lead notification drain failed")),
   ]));
 }
 
@@ -99,6 +101,7 @@ const worker = {
     ctx.waitUntil(Promise.all([
       safeIntegrationEvent(drainDueIntegrationDeliveries()),
       drainCompanyApplicationNotifications().catch(() => console.error("Company application notification drain failed")),
+      drainLeadNotifications().catch(() => console.error("Lead notification drain failed")),
     ]));
   },
 };

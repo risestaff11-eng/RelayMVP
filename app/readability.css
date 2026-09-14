@@ -291,3 +291,16 @@ body { font-size: 16px; }
   .landing-shell :where(.lp-compare li, .lp-ai-copy li, .lp-payment-grid p, .lp-example-steps p, .lp-application-copy li) { font-size: 14px; }
   .landing-shell :where(.lp-primary, .lp-secondary, .lp-final-secondary, .lp-nav-cta) { min-height: 50px; font-size: 14px; }
 }
+/* Secondary navigation is optional, but keeps the same accessible touch target. */
+.partner-nav > button, .agent-side-drawer nav > button {
+  min-height: 44px;
+  padding: 12px 16px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  white-space: normal;
+  text-align: left;
+  cursor: pointer;
+}

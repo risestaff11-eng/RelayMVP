@@ -1,6 +1,6 @@
 "use client";
-/* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/media-has-caption */
-import { useMemo, useState } from "react";
+/* eslint-disable jsx-a11y/media-has-caption */
+import { useEffect, useRef, useState } from "react";
 import type { ReportField } from "../../../lib/reporting";
 import { reportMetricEntries, reportMetricValue, reportMoney } from "../../../lib/reporting";
 import { countRu } from "@/lib/format-display";
@@ -67,12 +67,14 @@ export function ReportsWorkspace({
   companyName,
   template,
   initialReports,
+  initialHasMore = false,
   overview,
   programs,
 }: {
   companyName: string;
   template: { id: string; fields: ReportField[]; metrics: string[] };
   initialReports: Report[];
+  initialHasMore?: boolean;
   overview: {
     total: number;
     submittedAgents: number;
@@ -83,6 +85,12 @@ export function ReportsWorkspace({
   programs: Array<{ id: string; name: string }>;
 }) {
   const [reports, setReports] = useState(initialReports);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const generation = useRef(0);
+  const opening = useRef(0);
   const [fields, setFields] = useState(template.fields);
   const [metrics, setMetrics] = useState(template.metrics);
   const [settings, setSettings] = useState(false);
@@ -101,23 +109,52 @@ export function ReportsWorkspace({
   const [pending, setPending] = useState(false);
   const [statusPending, setStatusPending] = useState("");
   const [acceptedReport, setAcceptedReport] = useState<Report | null>(null);
-  const visible = useMemo(
-    () =>
-      reports.filter(
-        (item) =>
-          (!filters.query ||
-            `${item.partnerName} ${item.partnerEmail}`
-              .toLowerCase()
-              .includes(filters.query.toLowerCase())) &&
-          (!filters.program || item.programId === filters.program) &&
-          (!filters.status || item.status === filters.status) &&
-          (!filters.audio ||
-            item.files.some((file) => file.kind === "AUDIO")) &&
-          (!filters.files ||
-            item.files.some((file) => file.kind === "ATTACHMENT")),
-      ),
-    [reports, filters],
-  );
+  const visible = reports;
+  useEffect(() => {
+    const controller = new AbortController();
+    const current = ++generation.current;
+    const timer = setTimeout(async () => {
+      setLoading(true); setLoadError("");
+      try {
+        const query = new URLSearchParams(Object.entries(filters).map(([key, value]) => [key, String(value)]));
+        const response = await fetch(`/api/company/reports?${query}`, { signal: controller.signal });
+        if (!response.ok) throw new Error();
+        const data = await response.json() as { reports: Report[]; hasMore: boolean };
+        if (current === generation.current) { setReports(data.reports); setHasMore(data.hasMore); }
+      } catch { if (!controller.signal.aborted) setLoadError("Не удалось загрузить отчёты. Повторите попытку."); }
+      finally { if (!controller.signal.aborted) setLoading(false); }
+    }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [filters, retry]);
+
+  async function loadMore() {
+    if (loading) return;
+    const current = generation.current;
+    setLoading(true); setLoadError("");
+    try {
+      const query = new URLSearchParams(Object.entries(filters).map(([key, value]) => [key, String(value)]));
+      query.set("offset", String(reports.length));
+      const response = await fetch(`/api/company/reports?${query}`);
+      if (!response.ok) throw new Error();
+      const data = await response.json() as { reports: Report[]; hasMore: boolean };
+      if (current === generation.current) {
+        setReports((rows) => [...rows, ...data.reports.filter((item: Report) => !rows.some((row) => row.id === item.id))]);
+        setHasMore(data.hasMore);
+      }
+    } catch { if (current === generation.current) setLoadError("Не удалось загрузить отчёты. Повторите попытку."); }
+    finally { if (current === generation.current) setLoading(false); }
+  }
+
+  async function openReport(report: Report) {
+    const current = ++opening.current;
+    setNotice("Загружаем подробности отчёта…");
+    try {
+      const response = await fetch(`/api/company/reports?id=${encodeURIComponent(report.id)}`);
+      if (!response.ok) throw new Error();
+      const data = await response.json() as { report: Report };
+      if (current === opening.current) { setSelected(data.report); setNotice(""); }
+    } catch { if (current === opening.current) setNotice("Не удалось открыть отчёт. Нажмите на карточку ещё раз."); }
+  }
   function updateField(id: string, patch: Partial<ReportField>) {
     setFields(
       fields.map((field) => (field.id === id ? { ...field, ...patch } : field)),
@@ -328,9 +365,12 @@ export function ReportsWorkspace({
         {visible
           .filter((item) => item.status !== "DRAFT")
           .map((report) => (
-            <article
+            <div
               key={report.id}
-              onClick={() => setSelected(report)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); void openReport(report); } }}
+              onClick={() => void openReport(report)}
             >
               <header>
                 <span>{statusNames[report.status]}</span>
@@ -351,15 +391,18 @@ export function ReportsWorkspace({
               <footer>
                 <b>{countRu(report.files.length, "файл", "файла", "файлов")}</b>
                 <b>
-                  {Object.values(report.metrics).filter(Boolean).length}{" "}
-                  показателей
+                  Показатели внутри
                 </b>
                 <i>Открыть →</i>
               </footer>
-            </article>
+            </div>
           ))}
       </div>
-      {notice && <div className="inline-notice">{notice}</div>}
+      {loading && <p role="status">Загружаем отчёты…</p>}
+      {loadError && <p role="alert">{loadError} <button type="button" onClick={() => setRetry((value) => value + 1)}>Повторить</button></p>}
+      {!loading && !loadError && !reports.length && <p>Отчётов по выбранным условиям нет.</p>}
+      {hasMore && <button type="button" disabled={loading} onClick={() => void loadMore()}>Показать ещё 25 отчётов</button>}
+      {notice && <div className="inline-notice" role="status">{notice}</div>}
       {selected && (
         <div className="report-sheet-backdrop">
           <section className="report-sheet company-report-detail">

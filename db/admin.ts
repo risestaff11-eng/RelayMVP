@@ -32,6 +32,7 @@ export type CompanyAdminRow = {
   paidRewardsCount: number;
   paidRewardsAmount: number;
   dueRewardsAmount: number;
+  rewardAmountsJson: string;
   lastAgentActivityAt: string | null;
   lastSubmissionAt: string | null;
 };
@@ -87,8 +88,10 @@ export async function listCompanyUsers(): Promise<CompanyAdminRow[]> {
     submissionCount: sql<number>`coalesce((select count(*) from submissions s where s.company_id = ${companies.id}), 0)`,
     pendingSubmissionCount: sql<number>`coalesce((select count(*) from submissions s where s.company_id = ${companies.id} and s.status in ('SUBMITTED', 'REVIEWING')), 0)`,
     paidRewardsCount: sql<number>`coalesce((select count(*) from rewards r where r.company_id = ${companies.id} and r.status = 'PAID'), 0)`,
-    paidRewardsAmount: sql<number>`coalesce((select sum(r.amount) from rewards r where r.company_id = ${companies.id} and r.status = 'PAID'), 0)`,
-    dueRewardsAmount: sql<number>`coalesce((select sum(r.amount) from rewards r where r.company_id = ${companies.id} and r.status = 'APPROVED'), 0)`,
+    // Compatibility numeric fields are explicitly KZT, never a cross-currency sum.
+    paidRewardsAmount: sql<number>`coalesce((select sum(r.amount) from rewards r where r.company_id = ${companies.id} and r.status = 'PAID' and r.currency = 'KZT'), 0)`,
+    dueRewardsAmount: sql<number>`coalesce((select sum(r.amount) from rewards r where r.company_id = ${companies.id} and r.status = 'APPROVED' and r.currency = 'KZT'), 0)`,
+    rewardAmountsJson: sql<string>`(select json_group_array(json_object('currency', currency, 'paid', paid, 'due', due)) from (select r.currency, sum(case when r.status = 'PAID' then r.amount else 0 end) as paid, sum(case when r.status = 'APPROVED' then r.amount else 0 end) as due from rewards r where r.company_id = ${companies.id} and r.status in ('PAID','APPROVED') group by r.currency))`,
     lastAgentActivityAt: sql<string | null>`(select max(coalesce(p.last_active_at, p.joined_at)) from partners p where p.company_id = ${companies.id})`,
     lastSubmissionAt: sql<string | null>`(select max(s.created_at) from submissions s where s.company_id = ${companies.id})`,
   }).from(users)
@@ -141,6 +144,7 @@ export async function deleteCompanyUser(userId: string) {
       .bind(deletionId, userId, source.companyId, source.company || source.name, maskedEmail(source.email), emailDomain, source.programCount, source.agentCount, source.submissionCount, source.paidRewardsCount, source.paidRewardsAmount, deletedAt),
   ];
   const deletionSql = [
+    "DELETE FROM lead_notification_jobs WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM product_milestones WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM subscription_events WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM support_sessions WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
