@@ -9,14 +9,25 @@ import { companies } from "../../../db/schema";
 import { PartnerEntry } from "./partner-entry";
 import { PublicMissionAction } from "./public-mission-action";
 import { countRu } from "@/lib/format-display";
+import { agentUrl } from "@/lib/public-origins";
 
 export const dynamic = "force-dynamic";
 const typeNames: Record<string, string> = { LEAD: "Лиды", DEAL: "Сделки", IMAGE: "Имидж", ENGAGEMENT: "Вовлечение" };
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ access?: string; join?: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const program = await getPublicProgramBySlug(slug);
-  return { title: program?.name ?? "Агентская программа", description: program?.description ?? "Агентская программа в RiseStaff", referrer: "no-referrer" };
+  const query = await searchParams;
+  const title = program?.name ?? "Агентская программа";
+  const description = program?.description ?? "Агентская программа в RiseStaff";
+  const canonical = agentUrl(`/p/${program?.slug ?? slug}`);
+  return {
+    title, description, referrer: "no-referrer",
+    alternates: { canonical },
+    robots: { index: Boolean(program) && !query.access && !query.join, follow: true },
+    openGraph: { title, description, url: canonical, siteName: "RiseStaff", type: "website", images: [] },
+    twitter: { card: "summary", title, description, images: [] },
+  };
 }
 
 export default async function PublicProgramPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ access?: string; join?: string }> }) {

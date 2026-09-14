@@ -6,6 +6,7 @@ import { getFilesBucket } from "../../../../lib/storage";
 import { visibleSubmissionFormFields, type SubmissionFormField } from "../../../../lib/submission-form";
 import { cleanString, sameOrigin } from "../../company/_utils";
 import { agentUrl } from "../../../../lib/public-origins";
+import { publicProgramSlug } from "../../../../lib/program-brand-alias";
 import { notifyCompanyNewSubmission } from "../../../../lib/company-submission-notifications";
 import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone, isSelfReferral, SELF_REFERRAL_MESSAGE, hasHoneypotValue } from "../../../../lib/submission-antifraud";
 import { reviewDueAt } from "../../../../lib/workflow";
@@ -28,10 +29,10 @@ export async function POST(request: Request) {
     const form = await request.formData();
     if (hasHoneypotValue(form.get("website_url"))) return Response.json({ error: "Не удалось отправить форму" }, { status: 400 });
     const token = cleanString(form.get("token"), 80);
-    const programSlug = cleanString(form.get("programSlug"), 80);
+    const programSlug = publicProgramSlug(cleanString(form.get("programSlug"), 80));
     const missionId = cleanString(form.get("missionId"), 80);
     const portal = await getPartnerPortal(token);
-    if (!portal || !portal.programs.some((item) => item.slug === programSlug)) return Response.json({ error: "Ссылка агента недействительна для этой программы" }, { status: 401 });
+    if (!portal || !portal.programs.some((item) => publicProgramSlug(item.slug) === programSlug)) return Response.json({ error: "Ссылка агента недействительна для этой программы" }, { status: 401 });
     const target = await getMissionForPublicSubmission(programSlug, missionId);
     if (!target || !portal.programs.some((item) => item.id === target.program.id)) return Response.json({ error: "Задание недоступно" }, { status: 404 });
     { const denied = await subscriptionDenied(target.company.id); if (denied) return denied; }

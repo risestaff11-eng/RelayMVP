@@ -101,6 +101,14 @@ const structuredData = {
       "@id": "https://risestaff.kz/#organization",
       name: "RiseStaff",
       url: "https://risestaff.kz/",
+      legalName: "ТОО «TR2»",
+      telephone: "+77765086000",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "ул. Иманова 18/1",
+        addressLocality: "Астана",
+        addressCountry: "KZ",
+      },
       logo: {
         "@type": "ImageObject",
         url: "https://risestaff.kz/icon-512.png",
@@ -163,7 +171,7 @@ export default async function Home() {
         <div className="lp-header-actions">
           <a
             className="lp-agent-login"
-            href={agentUrl("/p/relay-kz-13c34fa")}
+            href={agentUrl("/p/risestaff-13c34fa")}
             data-track="agent_login"
           >
             Заработать на рекомендациях

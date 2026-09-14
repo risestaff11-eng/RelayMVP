@@ -1,4 +1,5 @@
 import { AGENT_ORIGIN, COMPANY_ORIGIN, MARKETING_ORIGIN } from "./public-origins";
+import { brandedProgramPath } from "./program-brand-alias";
 
 const productionHosts = new Set([
   "risestaff.kz",
@@ -45,7 +46,7 @@ export function canonicalRedirectFor(requestUrl: string) {
     return redirectUrl(url, MARKETING_ORIGIN);
   }
   if (isCompanyPath(url.pathname)) return redirectUrl(url, COMPANY_ORIGIN);
-  if (isAgentPath(url.pathname)) return redirectUrl(url, AGENT_ORIGIN);
+  if (isAgentPath(url.pathname)) return redirectUrl(url, AGENT_ORIGIN, brandedProgramPath(url.pathname));
   if (url.hostname === "broker.risestaff.kz") {
     if (url.pathname === "/broker" || url.pathname === "/broker/") return redirectUrl(url, "https://broker.risestaff.kz", "/");
     if (url.pathname === "/legal" || url.pathname.startsWith("/legal/")) return redirectUrl(url, MARKETING_ORIGIN);

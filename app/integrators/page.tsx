@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import { publicMetadata } from "@/lib/public-metadata";
 import { SafeLink as Link } from "@/app/safe-link";
 import { MarketingLogo } from "../marketing-logo";
 
-export const metadata: Metadata = { title: "Интеграторам RiseStaff", description: "Настраивайте RiseStaff для компаний и зарабатывайте на запуске, материалах и сопровождении агентских программ.", alternates: { canonical: "https://risestaff.kz/integrators" } };
+export const metadata = publicMetadata("Интеграторам RiseStaff", "Настраивайте RiseStaff для компаний и зарабатывайте на запуске, материалах и сопровождении агентских программ.", "/integrators");
 const whatsapp = "https://wa.me/77765086000?text=%D0%A0%D1%83%D1%81%20%D0%A1%D0%B0%D0%BB%D0%B5%D0%BC%20%D0%B4%D0%B0%D0%B2%D0%B0%D0%B9%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D0%BC%20RiseStaff";
 
 export default function IntegratorsPage() {

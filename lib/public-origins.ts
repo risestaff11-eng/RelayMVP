@@ -1,3 +1,5 @@
+import { brandedProgramPath } from "./program-brand-alias";
+
 export const MARKETING_ORIGIN = "https://risestaff.kz";
 export const COMPANY_ORIGIN = "https://company.risestaff.kz";
 export const AGENT_ORIGIN = "https://agents.risestaff.kz";
@@ -16,6 +18,6 @@ export function companyUrl(path = "/dashboard") {
 }
 
 export function agentUrl(path: string) {
-  return withPath(AGENT_ORIGIN, path);
+  return withPath(AGENT_ORIGIN, brandedProgramPath(path));
 }
 

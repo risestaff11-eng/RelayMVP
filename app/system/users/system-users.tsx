@@ -224,6 +224,17 @@ export function SystemUsers({
     window.location.reload();
   }
 
+  async function updateBrand() {
+    setError("");
+    try {
+      const response = await fetch("/api/system/brand", { method: "POST" });
+      if (!response.ok) throw new Error();
+      window.location.reload();
+    } catch {
+      setError("Не удалось обновить название. Повторите попытку.");
+    }
+  }
+
   async function addTokens(id: string) {
     const tokenAmount = Math.round(Number(tokenAmounts[id]));
     if (!tokenAmount || tokenAmount < 1)
@@ -407,7 +418,7 @@ export function SystemUsers({
     );
     const link = document.createElement("a");
     link.href = url;
-    link.download = `relay-admin-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `risestaff-admin-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -442,6 +453,7 @@ export function SystemUsers({
         </div>
         <div className="system-admin-actions">
           <button type="button" onClick={downloadCsv}>↓ Скачать сводку CSV</button>
+          {rows.some((row) => /^(relay(?:\.kz)?)$/i.test(row.company)) && <button type="button" onClick={() => void updateBrand()}>Обновить бренд RiseStaff в собственных программах</button>}
           <button type="button" onClick={() => void logout()}>Выйти из админки</button>
         </div>
       </header>

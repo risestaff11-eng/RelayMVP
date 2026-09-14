@@ -3,6 +3,7 @@ import { getDb } from ".";
 import { missionResources, missions, partners, programs, rewards, submissionAttachments, submissionStatusEvents, submissions } from "./schema";
 import { parseSubmissionFormFields, type SubmissionFormField } from "../lib/submission-form";
 import { isAnalyticsProgram } from "../lib/workflow";
+import { publicProgramSlug, storedProgramSlug } from "../lib/program-brand-alias";
 
 function batches<T>(values: T[], size = 80): T[][] {
   return Array.from({ length: Math.ceil(values.length / size) }, (_, i) => values.slice(i * size, (i + 1) * size));
@@ -113,7 +114,7 @@ async function attachMissions(programRows: Array<typeof programs.$inferSelect>) 
     id: program.id,
     companyId: program.companyId,
     name: program.name,
-    slug: program.slug,
+    slug: publicProgramSlug(program.slug),
     description: program.description,
     goal: program.goal,
     currency: program.currency,
@@ -144,7 +145,7 @@ export async function getProgramForCompany(companyId: string, programId: string)
 }
 
 export async function getPublicProgramBySlug(slug: string) {
-  const rows = await getDb().select().from(programs).where(and(eq(programs.slug, slug), eq(programs.status, "ACTIVE"))).limit(1);
+  const rows = await getDb().select().from(programs).where(and(eq(programs.slug, storedProgramSlug(slug)), eq(programs.status, "ACTIVE"))).limit(1);
   const result = await attachMissions(rows);
   return result[0] ?? null;
 }

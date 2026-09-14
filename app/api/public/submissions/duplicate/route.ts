@@ -1,13 +1,14 @@
 import { and, eq, gte, notInArray, or } from "drizzle-orm";
 import { getDb } from "../../../../../db";
 import { programs, submissions } from "../../../../../db/schema";
+import { storedProgramSlug } from "../../../../../lib/program-brand-alias";
 import { cleanString, sameOrigin } from "../../../company/_utils";
 import { duplicateCutoff, normalizeContactEmail, normalizeContactPhone } from "../../../../../lib/submission-antifraud";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Недопустимый источник запроса" }, { status: 403 });
   const payload = await request.json() as Record<string, unknown>;
-  const slug = cleanString(payload.programSlug, 80);
+  const slug = storedProgramSlug(cleanString(payload.programSlug, 80));
   const email = normalizeContactEmail(cleanString(payload.contactEmail, 180));
   const phone = normalizeContactPhone(cleanString(payload.contactPhone, 40));
   if (!slug || (!email && !phone)) return Response.json({ duplicate: false });
