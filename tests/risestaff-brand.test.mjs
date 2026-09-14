@@ -2,6 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { eq } from "drizzle-orm";
 import { agentFixture } from "./helpers/agent-fixture.mjs";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { typescriptLoader } from "./helpers/load-typescript.mjs";
+
+test("brand maintenance action does not depend on the account display name and stays admin-only", () => {
+  const load = typescriptLoader();
+  const { SystemUsers } = load(new URL("../app/system/users/system-users.tsx", import.meta.url));
+  const props = { initialRows: [], initialDeletedRows: [], initialApplications: [], initialCompanyApplications: [], generatedAt: "2026-09-15T00:00:00Z" };
+  const label = "Обновить бренд RiseStaff в собственных программах";
+  assert.ok(renderToStaticMarkup(createElement(SystemUsers, { ...props, authorized: true })).includes(label));
+  assert.ok(!renderToStaticMarkup(createElement(SystemUsers, { ...props, authorized: false })).includes(label));
+});
 
 test("old and branded program URLs use the same mission, agent and submission workflow", async () => {
   for (const slug of ["relay-kz-13c34fa", "risestaff-13c34fa"]) {
