@@ -127,6 +127,7 @@ export function SystemUsers({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState("");
+  const [updatingBrand, setUpdatingBrand] = useState(false);
   const [tokenAmounts, setTokenAmounts] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
@@ -225,6 +226,8 @@ export function SystemUsers({
   }
 
   async function updateBrand() {
+    if (updatingBrand) return;
+    setUpdatingBrand(true);
     setError("");
     try {
       const response = await fetch("/api/system/brand", { method: "POST" });
@@ -232,6 +235,7 @@ export function SystemUsers({
       window.location.reload();
     } catch {
       setError("Не удалось обновить название. Повторите попытку.");
+      setUpdatingBrand(false);
     }
   }
 
@@ -453,7 +457,7 @@ export function SystemUsers({
         </div>
         <div className="system-admin-actions">
           <button type="button" onClick={downloadCsv}>↓ Скачать сводку CSV</button>
-          {rows.some((row) => /^(relay(?:\.kz)?)$/i.test(row.company)) && <button type="button" onClick={() => void updateBrand()}>Обновить бренд RiseStaff в собственных программах</button>}
+          <button type="button" disabled={updatingBrand} aria-busy={updatingBrand} onClick={() => void updateBrand()}>Обновить бренд RiseStaff в собственных программах</button>
           <button type="button" onClick={() => void logout()}>Выйти из админки</button>
         </div>
       </header>
