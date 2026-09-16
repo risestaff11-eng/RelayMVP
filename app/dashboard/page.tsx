@@ -8,6 +8,7 @@ import { getCompanyOperations, getProgramsForCompany, getSubmissionsForCompany }
 import { ProgramQuickActions } from "./_components/program-quick-actions";
 import { countRu, formatActivityDate, formatMoneyGroups } from "@/lib/format-display";
 import { FirstRunGuide } from "./_components/first-run-guide";
+import { nextCompanyProgram } from "@/lib/company-workspace";
 
 export const metadata: Metadata = { title: "Кабинет компании" };
 export const dynamic = "force-dynamic";
@@ -21,7 +22,8 @@ export default async function DashboardPage() {
   const hasProgram = programs.some((program) => program.status !== "ARCHIVED");
   const hasPublished = programs.some((program) => program.status === "ACTIVE");
   const showFirstRun = !hasPublished || stats.partners === 0 || stats.submissions === 0;
-  const nextHref = stats.awaitingReview > 0 ? "/dashboard/crm" : !hasProgram ? "/dashboard/programs/new" : `/dashboard/programs/${programs[0].id}`;
+  const nextProgram = nextCompanyProgram(programs);
+  const nextHref = stats.awaitingReview > 0 ? "/dashboard/crm?quick=ACTION" : !nextProgram ? "/dashboard/programs/new" : `/dashboard/programs/${nextProgram.id}`;
   const nextLabel = stats.awaitingReview > 0 ? `${countRu(stats.awaitingReview, "новая заявка", "новые заявки", "новых заявок")} — посмотреть` : !hasProgram ? "Создать программу" : hasPublished ? "Управлять программой" : "Продолжить настройку";
   const latestProgram = programs[0];
   const latestResult = submissions[0];
@@ -39,14 +41,14 @@ export default async function DashboardPage() {
         <Link className="button button-primary" href={nextHref}>{nextLabel} <span>→</span></Link>
       </div>
 
-      {showFirstRun && <FirstRunGuide hasProfile={Boolean(profile)} hasProgram={hasProgram} hasPublished={hasPublished} partnerCount={stats.partners} submissionCount={stats.submissions} awaitingReview={stats.awaitingReview} programId={programs[0]?.id} />}
+      {showFirstRun && <FirstRunGuide hasProfile={Boolean(profile)} hasProgram={hasProgram} hasPublished={hasPublished} partnerCount={stats.partners} submissionCount={stats.submissions} awaitingReview={stats.awaitingReview} programId={nextProgram?.id} />}
 
       <section className="metrics" aria-label="Основные показатели">
         <Link className="metric metric-link" href="/dashboard/programs"><div className="metric-top"><span>АКТИВНЫЕ ПРОГРАММЫ</span><span className="metric-icon">◇</span></div><strong>{stats.activePrograms}</strong><small>{countRu(stats.programs, "созданная программа", "созданные программы", "созданных программ")} · открыть →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/agent-rating"><div className="metric-top"><span>КТО ВАС РЕКОМЕНДУЕТ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{countRu(stats.contributedPartners, "уже привёл заявку", "уже привели заявку", "уже привели заявку")} · открыть CRM →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/agent-rating"><div className="metric-top"><span>КТО ВАС РЕКОМЕНДУЕТ</span><span className="metric-icon">○</span></div><strong>{stats.partners}</strong><small>{countRu(stats.contributedPartners, "уже привёл заявку", "уже привели заявку", "уже привели заявку")} · открыть рейтинг →</small></Link>
         <Link className="metric metric-link" href="/dashboard/crm"><div className="metric-top"><span>КЛИЕНТЫ В CRM</span><span className="metric-icon">↗</span></div><strong>{stats.submissions}</strong><small>{countRu(stats.awaitingReview, "ждёт решения", "ждут решения", "ждут решения")} · перейти →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">¤</span></div><strong>{formatMoneyGroups(stats.approvedRewardsByCurrency)}</strong><small>Начислено компанией · открыть →</small></Link>
-        <Link className="metric metric-link" href="/dashboard/rewards"><div className="metric-top"><span>АГЕНТЫ ПОДТВЕРДИЛИ</span><span className="metric-icon">✓</span></div><strong>{formatMoneyGroups(stats.paidRewardsByCurrency)}</strong><small>Деньги фактически получены · открыть →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/rewards?filter=APPROVED"><div className="metric-top"><span>К ВЫПЛАТЕ</span><span className="metric-icon">¤</span></div><strong>{formatMoneyGroups(stats.approvedRewardsByCurrency)}</strong><small>Начислено компанией · открыть →</small></Link>
+        <Link className="metric metric-link" href="/dashboard/rewards?filter=CONFIRMED"><div className="metric-top"><span>АГЕНТЫ ПОДТВЕРДИЛИ</span><span className="metric-icon">✓</span></div><strong>{formatMoneyGroups(stats.paidRewardsByCurrency)}</strong><small>Деньги фактически получены · открыть →</small></Link>
       </section>
 
       <section className="dashboard-grid">
@@ -58,7 +60,7 @@ export default async function DashboardPage() {
         </div>
 
         <aside className="panel">
-          <div className="panel-header"><h2>Последние события</h2><span>Обновляется автоматически</span></div>
+          <div className="panel-header"><h2>Последние события</h2><span>На момент открытия страницы</span></div>
           <div className="activity-list">{activities.map((activity, index) => <div className="activity" key={`${activity.title}-${index}`}><span className="activity-mark">{activity.mark}</span><div><strong>{activity.title}</strong><p>{activity.text}</p><small>{formatActivityDate(activity.date)}</small><Link href={activity.href}>{activity.action} →</Link></div></div>)}</div>
         </aside>
       </section>

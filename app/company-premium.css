@@ -562,3 +562,23 @@
 @media (min-width:761px) {
   .crm-mobile-summary-toggle { display: none; }
 }
+/* Company work queues: compact controls, explicit financial confirmation. */
+.company-drafts { margin: 1rem 0; padding: 1rem 1.25rem; border: 1px solid var(--border, #deded7); border-radius: 1rem; background: #fff; }
+.company-drafts summary { cursor: pointer; font-size: 1rem; font-weight: 700; min-height: 2.75rem; align-content: center; }
+.company-drafts p { font-size: 1rem; line-height: 1.5; }
+.company-drafts > div { display: grid; gap: .5rem; }
+.company-drafts a { display: flex; justify-content: space-between; gap: 1rem; padding: .875rem; border-radius: .5rem; background: #f4f5f0; text-decoration: none; }
+.company-drafts strong { overflow-wrap: anywhere; }
+.company-drafts a span { flex-shrink: 0; }
+.company-transfer-confirm { margin: 1rem; padding: 1.25rem; border: 1px solid #889750; border-radius: .75rem; background: #f4f8e9; font-size: 1rem; line-height: 1.5; }
+.company-transfer-confirm > div { display: flex; flex-wrap: wrap; gap: .75rem; }
+.company-transfer-confirm button, .payout-record footer button, .payout-workspace .table-empty button { min-height: 2.75rem; padding: .65rem 1rem; font-size: .875rem; }
+.payout-toolbar select { min-height: 2.75rem; max-width: 100%; padding: .5rem .75rem; font: inherit; background: #fff; color: #191c14; border: 1px solid #deded7; border-radius: .5rem; }
+.company-drafts a:focus-visible, .company-drafts summary:focus-visible, .company-transfer-confirm button:focus-visible { outline: 3px solid #64772b; outline-offset: 3px; }
+@media (max-width: 700px) {
+  .company-drafts a { flex-direction: column; gap: .5rem; }
+  .company-drafts a span { flex-shrink: 1; }
+  .company-transfer-confirm { margin: .75rem; padding: 1rem; }
+  .company-transfer-confirm button { flex: 1 1 12rem; }
+  .payout-toolbar select { width: 100%; font-size: 1rem; }
+}

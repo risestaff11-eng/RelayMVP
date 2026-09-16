@@ -21,6 +21,7 @@ export default async function ProgramsPage() {
   const [confirmedProfile, latestProfile, programList] = await Promise.all([getConfirmedCompanyProfile(company.id), getLatestCompanyProfile(company.id), getProgramsForCompany(company.id)]);
   const profile = confirmedProfile ?? latestProfile;
   const activePrograms = programList.filter((program) => ["ACTIVE", "PAUSED"].includes(program.status));
+  const drafts = programList.filter((program) => program.status === "DRAFT");
   const archivedPrograms = programList.filter((program) => program.status === "ARCHIVED");
 
   return (
@@ -39,7 +40,13 @@ export default async function ProgramsPage() {
         <div><small>ЗАДАНИЙ</small><strong>{activePrograms.reduce((total, program) => total + program.missions.length, 0)}</strong></div>
       </section>
 
-      {activePrograms.length === 0 ? (
+      {drafts.length > 0 && <details className="company-drafts" open={activePrograms.length === 0}>
+        <summary>Черновики программ · {drafts.length}</summary>
+        <p>Ещё не видны агентам. Продолжите настройку и опубликуйте, когда будете готовы.</p>
+        <div>{drafts.map((program) => <Link key={program.id} href={`/dashboard/programs/${program.id}`}><strong data-no-translate>{program.name}</strong><span>Продолжить настройку →</span></Link>)}</div>
+      </details>}
+
+      {activePrograms.length === 0 && drafts.length === 0 ? (
         <section className="panel program-zero-state">
           <div className="program-zero-copy"><span className="module-kicker">ПЕРВЫЙ ЗАПУСК</span><h2>Создайте программу из четырёх типов заданий</h2><p>Выберите лиды, сделки, имидж или вовлечение. RiseStaff подготовит редактируемые задания, а вы установите вознаграждение, проверку и сроки выплаты.</p><Link className="button button-primary" href="/dashboard/programs/new">Начать создание<span>→</span></Link></div>
           <div className="mission-type-preview">{Object.entries(typeNames).map(([type, label], index) => <div className={`type-preview type-${type.toLowerCase()}`} key={type}><span>0{index + 1}</span><strong>{label}</strong><small>{type === "LEAD" ? "Квалифицированный контакт" : type === "DEAL" ? "Подтверждённая продажа" : type === "IMAGE" ? "Публикация или кейс" : "Обучение и комьюнити"}</small></div>)}</div>

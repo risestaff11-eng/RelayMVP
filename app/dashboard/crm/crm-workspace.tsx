@@ -74,17 +74,17 @@ function humanEvent(event: Event) {
   return Object.entries(names).reduce((text, [status, label]) => text.replaceAll(status, `«${label}»`), raw);
 }
 
-export function CrmWorkspace({ companyName, initialItems, initialSettings, initialSelectedId = "", initialBoard }: { companyName: string; initialItems: CrmLead[]; initialSettings: CrmSettings; initialSelectedId?: string; initialBoard?: Board }) {
+export function CrmWorkspace({ companyName, initialItems, initialSettings, initialSelectedId = "", initialQuick = "ALL", initialBoard }: { companyName: string; initialItems: CrmLead[]; initialSettings: CrmSettings; initialSelectedId?: string; initialQuick?: "ALL" | "ACTION"; initialBoard?: Board }) {
   const [items, setItems] = useState(initialItems);
   const [settings, setSettings] = useState(initialSettings);
   const [goalOpen, setGoalOpen] = useState(false);
   const [selected, setSelected] = useState<CrmLead | null>(() => initialItems.find((item) => item.id === initialSelectedId) || null);
   const [query, setQuery] = useState("");
-  const [quick, setQuick] = useState<(typeof quickFilters)[number][0]>("ALL");
+  const [quick, setQuick] = useState<(typeof quickFilters)[number][0]>(initialQuick);
   const [program, setProgram] = useState("ALL");
   const [ambassador, setAmbassador] = useState("ALL");
   const [mobileStage, setMobileStage] = useState<CrmStageId>("NEW");
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(initialQuick !== "ALL");
   const [pending, setPending] = useState("");
   const [notice, setNotice] = useState("");
   const [dragged, setDragged] = useState("");
@@ -210,13 +210,14 @@ export function CrmWorkspace({ companyName, initialItems, initialSettings, initi
     </header>
 
     <section className="crm-toolbar" aria-label="Поиск и фильтры CRM">
-      <label className="crm-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Имя, телефон, программа или амбассадор" /></label>
+      <label className="crm-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Поиск клиента" placeholder="Имя, телефон, программа или амбассадор" /></label>
       <button className={`crm-filter-toggle ${filtersOpen ? "active" : ""}`} type="button" aria-expanded={filtersOpen} aria-controls="crm-filter-controls" onClick={() => setFiltersOpen((value) => !value)}>Фильтры{quick !== "ALL" || program !== "ALL" || ambassador !== "ALL" ? " · выбраны" : ""}<span aria-hidden="true">{filtersOpen ? "⌃" : "⌄"}</span></button>
       <div className={`crm-filter-controls ${filtersOpen ? "open" : ""}`} id="crm-filter-controls">
         <select value={quick} onChange={(event) => setQuick(event.target.value as (typeof quickFilters)[number][0])} aria-label="Состояние">{quickFilters.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>
         <select value={program} onChange={(event) => setProgram(event.target.value)} aria-label="Программа"><option value="ALL">Все программы</option>{programs.map((item) => <option key={item}>{item}</option>)}</select>
         <select value={ambassador} onChange={(event) => setAmbassador(event.target.value)} aria-label="Амбассадор"><option value="ALL">Все амбассадоры</option>{ambassadors.map(([email, name]) => <option value={email} key={email}>{name}</option>)}</select>
       </div>
+      {(query || quick !== "ALL" || program !== "ALL" || ambassador !== "ALL") && <button type="button" onClick={() => { setQuery(""); setQuick("ALL"); setProgram("ALL"); setAmbassador("ALL"); }}>Сбросить фильтры</button>}
     </section>
 
     {notice && <div className="crm-notice" role="status">{notice}<button type="button" onClick={() => setNotice("")} aria-label="Закрыть сообщение">×</button></div>}
