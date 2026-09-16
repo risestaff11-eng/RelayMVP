@@ -643,6 +643,7 @@ export const partnerReferralLinks = sqliteTable(
 
 export const partnerProfiles = sqliteTable("partner_profiles", {
   partnerId: text("partner_id").primaryKey().references(() => partners.id),
+  notificationsReadAt: text("notifications_read_at"),
   firstName: text("first_name").notNull().default(""),
   lastName: text("last_name").notNull().default(""),
   middleName: text("middle_name").notNull().default(""),
@@ -895,6 +896,26 @@ export const leadNotificationJobs = sqliteTable("lead_notification_jobs", {
   index("idx_lead_notifications_due").on(table.status, table.nextAttemptAt),
   index("idx_lead_notifications_company").on(table.companyId, table.status),
 ]);
+
+export const agentDrafts = sqliteTable("agent_drafts", {
+  partnerId: text("partner_id").notNull().references(() => partners.id),
+  missionId: text("mission_id").notNull().references(() => missions.id),
+  valuesJson: text("values_json").notNull().default("{}"),
+  requestId: text("request_id").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, table => [primaryKey({ columns: [table.partnerId, table.missionId] }), index("idx_agent_drafts_expiry").on(table.expiresAt)]);
+
+export const agentEmailJobs = sqliteTable("agent_email_jobs", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id").notNull().references(() => companies.id),
+  submissionId: text("submission_id").notNull().references(() => submissions.id),
+  status: text("status").notNull().default("PENDING"),
+  attempts: integer("attempts").notNull().default(0),
+  nextAttemptAt: text("next_attempt_at").notNull(),
+  leaseToken: text("lease_token"),
+  leaseUntil: text("lease_until"),
+}, table => [index("idx_agent_email_due").on(table.status, table.nextAttemptAt)]);
 
 export const reportRevisions = sqliteTable(
   "report_revisions",

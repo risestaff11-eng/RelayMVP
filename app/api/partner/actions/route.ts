@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { getPartnerPortal } from "../../../../db/partner";
 import { partnerMissionAcceptances, partnerProfiles, submissionDisputes } from "../../../../db/schema";
@@ -17,6 +17,14 @@ export async function POST(request: Request) {
     if (!portal) return Response.json({ error: "Ссылка недействительна или устарела" }, { status: 401 });
     const db = getDb();
     const now = new Date().toISOString();
+
+    if(action === "READ_EVENTS") {
+      const requested=cleanString(payload.through,40);
+      const events=portal.submissions.flatMap(s=>s.events).filter(e=>e.actorType!=="PARTNER"&&!e.actorType.startsWith("PARTNER_"));
+      const through=events.filter(e=>e.createdAt<=requested).map(e=>e.createdAt).sort().at(-1);
+      if(through&&(!portal.profile.notificationsReadAt||through>portal.profile.notificationsReadAt)) for(const partner of portal.partners) await db.insert(partnerProfiles).values({partnerId:partner.id,notificationsReadAt:through}).onConflictDoUpdate({target:partnerProfiles.partnerId,set:{notificationsReadAt:sql`CASE WHEN ${partnerProfiles.notificationsReadAt} IS NULL OR ${partnerProfiles.notificationsReadAt} < ${through} THEN ${through} ELSE ${partnerProfiles.notificationsReadAt} END`}});
+      return Response.json({ok:true});
+    }
 
     if (action === "ACCEPT_MISSION") {
       { const denied = await subscriptionDenied(portal.company.id); if (denied) return denied; }

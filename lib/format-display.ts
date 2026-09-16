@@ -41,10 +41,10 @@ export function countRu(value: number, one: string, few: string, many: string) {
   return `${formatInteger(value)} ${pluralizeRu(value, one, few, many)}`;
 }
 
-export function formatMoneyGroups(items: Array<{ amount: number; currency: string }>) {
+export function formatMoneyGroups(items: Array<{ amount: number; currency: string }>, fallbackCurrency = "KZT") {
   const totals = new Map<string, number>();
   for (const item of items) totals.set(item.currency || "KZT", (totals.get(item.currency || "KZT") ?? 0) + item.amount);
-  if (!totals.size) return formatMoney(0, "KZT");
+  if (!totals.size) return formatMoney(0, fallbackCurrency);
   return [...totals].map(([currency, amount]) => formatMoney(amount, currency)).join(" · ");
 }
 

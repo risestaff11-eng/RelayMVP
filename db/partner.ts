@@ -126,6 +126,7 @@ export async function getPartnerPortal(token: string) {
     acceptances: acceptanceRows,
     knowledgeItems: knowledgeRows,
     profile: {
+      notificationsReadAt: profileRows.map(p=>p.notificationsReadAt||"").sort().at(-1)||null,
       firstName: profile?.firstName || partner.name.split(/\s+/)[0] || "",
       lastName: profile?.lastName || partner.name.split(/\s+/).slice(1).join(" "),
       middleName: profile?.middleName ?? "",

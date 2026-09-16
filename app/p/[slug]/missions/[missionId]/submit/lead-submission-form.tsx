@@ -18,6 +18,12 @@ function formatPhoneInput(value: string) {
 
 export function LeadSubmissionForm({ programSlug, missionId, missionType, token, formFields }: { programSlug: string; missionId: string; missionType: string; token: string; formFields: SubmissionFormField[] }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const submittingRef=useRef(false);
+  const dirtyRef=useRef(false);
+  const savesRef=useRef<Promise<unknown>>(Promise.resolve());
+  const [requestId,setRequestId]=useState("");
+  const [draftReady,setDraftReady]=useState(false);
+  const [draftNotice,setDraftNotice]=useState("");
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const voiceInput = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -42,10 +48,28 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
   const [editingReviewField, setEditingReviewField] = useState<string | null>(null);
   const commercial = missionType === "LEAD" || missionType === "DEAL";
   const visible = useMemo(() => visibleSubmissionFormFields(formFields, missionType), [formFields, missionType]);
+  const compact=visible.filter(f=>f.type!=="FILE").length<=6&&!visible.some(f=>f.type==="FILE"&&f.required);
   const contactFields = visible.filter((field) => field.stage === "CONTACT");
   const contextFields = visible.filter((field) => field.stage === "CONTEXT");
   const [values, setValues] = useState<Record<string, FieldValue>>(() => Object.fromEntries(visible.map((field) => [field.id, field.type === "CHECKBOX" ? false : ""])));
 
+  useEffect(()=>{
+    let alive=true;
+    const fallback=crypto.randomUUID();
+    fetch("/api/partner/draft",{method:"POST",signal:AbortSignal.timeout(8000),headers:{"content-type":"application/json"},body:JSON.stringify({token,missionId,action:"READ"})})
+      .then(async r=>{if(!r.ok)throw Error();return r.json() as Promise<{draft:null|{values:Record<string,FieldValue>;requestId:string}}>;}).then(data=>{if(!alive)return;setRequestId(fallback);const draft=data.draft;if(draft&&!dirtyRef.current){setValues(current=>({...current,...draft.values}));setRequestId(draft.requestId);setDraftNotice("Черновик восстановлен. Файлы и аудио нужно прикрепить заново.");}setDraftReady(true);})
+      .catch(()=>{if(alive){setRequestId(fallback);setDraftNotice("Черновик временно недоступен. Не закрывайте страницу до отправки.");}});
+    return ()=>{alive=false;};
+  },[token,missionId]);
+  useEffect(()=>{
+    if(!draftReady||!dirtyRef.current||submittingRef.current)return;
+    const timer=setTimeout(()=>{savesRef.current=savesRef.current.catch(()=>{}).then(async()=>{
+      if(submittingRef.current)return;
+      try{const response=await fetch("/api/partner/draft",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({token,missionId,action:"SAVE",values,requestId})});if(!response.ok)throw Error();setDraftNotice("Черновик сохранён на 24 часа. Файлы и аудио не сохраняются.");}catch{setDraftNotice("Не удалось сохранить черновик. Введённые данные остаются в форме.");}
+    });},800);
+    return ()=>clearTimeout(timer);
+  },[values,draftReady,requestId,missionId,token]);
+  useEffect(()=>{const warn=(event:BeforeUnloadEvent)=>{if(dirtyRef.current&&!submittingRef.current){event.preventDefault();event.returnValue="";}};window.addEventListener("beforeunload",warn);return()=>window.removeEventListener("beforeunload",warn);},[]);
   useEffect(() => () => {
     if (timerRef.current) clearInterval(timerRef.current);
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -53,7 +77,7 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
   }, [voiceUrl]);
 
   function fieldName(field: SubmissionFormField) { return `field__${field.id}`; }
-  function setFieldValue(fieldId: string, value: FieldValue) { setValues((current) => ({ ...current, [fieldId]: value })); }
+  function setFieldValue(fieldId: string, value: FieldValue) { dirtyRef.current=true; setValues((current) => ({ ...current, [fieldId]: value })); }
   function valueForSemantic(semantic: SubmissionFormField["semantic"]) {
     const field = visible.find((item) => item.semantic === semantic);
     return field ? String(values[field.id] || "") : "";
@@ -95,7 +119,7 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
       }
       const element = form.elements.namedItem(fieldName(field));
       if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
-        if (!element.reportValidity()) return false;
+        if (!element.checkValidity()) { const details=element.closest("details"); if(details) details.open=true; element.reportValidity(); return false; }
       }
     }
     setError("");
@@ -111,6 +135,7 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
     try {
       const response = await fetch("/api/public/submissions/duplicate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ programSlug, contactEmail: valueForSemantic("CONTACT_EMAIL"), contactPhone: phone }) });
       const data = await response.json() as { duplicate?: boolean };
+      if (!response.ok) throw new Error();
       if (data.duplicate) { setDuplicate(true); setError("Такой контакт уже закреплён в программе. Данные другого агента не раскрываются."); return; }
       setDuplicate(false); setStep(2); window.scrollTo({ top: 0, behavior: "smooth" });
     } catch { setError("Не удалось проверить контакт. Попробуйте ещё раз."); }
@@ -124,11 +149,14 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (step === 1) return void nextFromContact();
-    if (step === 2) return void reviewResult();
+    if (submittingRef.current || !requestId) return;
+    if (!compact && step === 1) return void nextFromContact();
+    if (!compact && step === 2) return void reviewResult();
     if (!validateStage(1) || !validateStage(2)) return;
+    submittingRef.current=true;
     setPending(true); setError("");
     const form = new FormData(event.currentTarget);
+    form.set("requestId",requestId);
     form.set("programSlug", programSlug); form.set("missionId", missionId); form.set("token", token);
     form.set("audioTranscript", voiceTranscript);
     form.set("audioDurationSeconds", String(voiceDurationSeconds));
@@ -143,11 +171,13 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
     for (const [fieldId, selected] of Object.entries(files)) for (const file of selected) form.append(`file__${fieldId}`, file);
     if (voiceFile && includeVoice) form.set("voiceNote", voiceFile);
     try {
+      await savesRef.current.catch(()=>{});
       const response = await fetch("/api/public/submissions", { method: "POST", body: form });
       const data = await response.json() as { partnerUrl?: string; submissionId?: string; error?: string };
       if (!response.ok || !data.partnerUrl) throw new Error(data.error || "Не удалось отправить результат");
-      window.location.assign(data.submissionId ? `/partner/${token}/submissions/${data.submissionId}` : data.partnerUrl);
-    } catch (reason) { setPending(false); setError(reason instanceof Error ? reason.message : "Не удалось отправить результат"); }
+      dirtyRef.current=false;
+      window.location.assign(data.submissionId ? `/partner/${token}/submissions/${data.submissionId}?sent=1` : data.partnerUrl);
+    } catch (reason) { submittingRef.current=false; setPending(false); setError(reason instanceof Error ? reason.message : "Не удалось отправить результат"); }
   }
 
   function addFiles(field: SubmissionFormField, event: React.ChangeEvent<HTMLInputElement>) {
@@ -176,6 +206,7 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
       const response = await fetch("/api/partner/audio/transcribe", { method: "POST", body: form });
       const data = await response.json() as { transcript?: string; answers?: VoiceAnswer[]; missingFields?: string[]; durationSeconds?: number; error?: string };
       if (!response.ok || !data.transcript) throw new Error(data.error || "Не удалось расшифровать запись");
+      dirtyRef.current=true;
       setVoiceTranscript(data.transcript);
       setVoiceDurationSeconds(Math.max(0, Math.min(60, Math.round(data.durationSeconds || durationSeconds))));
       setValues((current) => {
@@ -266,11 +297,12 @@ export function LeadSubmissionForm({ programSlug, missionId, missionType, token,
   const reviewFields = visible.filter((field) => field.type !== "FILE");
   return <form ref={formRef} className="lead-submission-form agent-dialog-form" onSubmit={submit}>
     <AntiSpamField />
-    <div className="lead-form-stepper"><span className={step === 1 ? "active" : "done"}><b>{step > 1 ? "✓" : "1"}</b> Контакт</span><i /><span className={step === 2 ? "active" : step > 2 ? "done" : ""}><b>{step > 2 ? "✓" : "2"}</b> Контекст</span><i /><span className={step === 3 ? "active" : ""}><b>3</b> Проверка</span></div>
+    {!compact && <div className="lead-form-stepper"><span className={step === 1 ? "active" : "done"}><b>{step > 1 ? "✓" : "1"}</b> Контакт</span><i /><span className={step === 2 ? "active" : step > 2 ? "done" : ""}><b>{step > 2 ? "✓" : "2"}</b> Контекст</span><i /><span className={step === 3 ? "active" : ""}><b>3</b> Проверка</span></div>}
+    {draftNotice && <p role="status" className="agent-draft-notice">{draftNotice}</p>}
 
-    {step < 3 && <section className="voice-answer-card"><div className="dialog-system-message"><span>R</span><div><strong>Можно рассказать всё голосом</strong><p>Запишите сообщение до 60 секунд. RiseStaff расшифрует его, разложит данные по полям и попросит вас всё проверить.</p></div></div><div className="voice-controls">{recording ? <button className="voice-record-button recording" type="button" onClick={stopRecording}><i>■</i><span>Остановить · 0:{String(recordingSeconds).padStart(2, "0")}</span></button> : <button className="voice-record-button" type="button" disabled={voicePending} onClick={() => void startRecording()}><i>●</i><span>{voiceFile ? "Записать заново" : "Записать ответ"}</span></button>}<button type="button" className="voice-upload-button" disabled={recording || voicePending} onClick={() => voiceInput.current?.click()}>Загрузить аудио</button><input ref={voiceInput} type="file" accept="audio/*" capture hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void acceptVoiceFile(file); }} /></div>{voicePending && <div className="voice-processing"><i /><span>Расшифровываем и готовим черновик ответов…</span></div>}{voiceFile && !voicePending && <div className="voice-result"><audio controls src={voiceUrl}><track kind="captions" srcLang="ru" label="Расшифровка" src={`data:text/vtt;charset=utf-8,${encodeURIComponent(`WEBVTT\\n\\n00:00.000 --> 00:59.999\\n${voiceTranscript || "Голосовой ответ агента"}`)}`} /></audio><small>{voiceDurationSeconds ? `${voiceDurationSeconds} сек.` : "до 60 сек."}</small><button type="button" onClick={clearVoice}>Удалить запись</button><label><input type="checkbox" checked={includeVoice} onChange={(event) => setIncludeVoice(event.target.checked)} /><span>Передать оригинал записи компании</span></label></div>}{voiceTranscript && <details className="voice-transcript"><summary>Расшифровка записи</summary><textarea value={voiceTranscript} onChange={(event) => setVoiceTranscript(event.target.value)} rows={5} /></details>}{voiceNotice && <p className="voice-notice">✓ {voiceNotice}</p>}</section>}
+    {step < 3 && <details className="agent-voice-option"><summary>Заполнить голосом</summary><section className="voice-answer-card"><div className="dialog-system-message"><span>R</span><div><strong>Можно рассказать всё голосом</strong><p>Запишите сообщение до 60 секунд. RiseStaff расшифрует его, разложит данные по полям и попросит вас всё проверить.</p></div></div><div className="voice-controls">{recording ? <button className="voice-record-button recording" type="button" onClick={stopRecording}><i>■</i><span>Остановить · 0:{String(recordingSeconds).padStart(2, "0")}</span></button> : <button className="voice-record-button" type="button" disabled={voicePending} onClick={() => void startRecording()}><i>●</i><span>{voiceFile ? "Записать заново" : "Записать ответ"}</span></button>}<button type="button" className="voice-upload-button" disabled={recording || voicePending} onClick={() => voiceInput.current?.click()}>Загрузить аудио</button><input ref={voiceInput} type="file" accept="audio/*" capture hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void acceptVoiceFile(file); }} /></div>{voicePending && <div className="voice-processing"><i /><span>Расшифровываем и готовим черновик ответов…</span></div>}{voiceFile && !voicePending && <div className="voice-result"><audio controls src={voiceUrl}><track kind="captions" srcLang="ru" label="Расшифровка" src={`data:text/vtt;charset=utf-8,${encodeURIComponent(`WEBVTT\\n\\n00:00.000 --> 00:59.999\\n${voiceTranscript || "Голосовой ответ агента"}`)}`} /></audio><small>{voiceDurationSeconds ? `${voiceDurationSeconds} сек.` : "до 60 сек."}</small><button type="button" onClick={clearVoice}>Удалить запись</button><label><input type="checkbox" checked={includeVoice} onChange={(event) => setIncludeVoice(event.target.checked)} /><span>Передать оригинал записи компании</span></label></div>}{voiceTranscript && <details className="voice-transcript"><summary>Расшифровка записи</summary><textarea value={voiceTranscript} onChange={(event) => setVoiceTranscript(event.target.value)} rows={5} /></details>}{voiceNotice && <p className="voice-notice">✓ {voiceNotice}</p>}</section></details>}
 
-    {step === 1 && <div className="lead-step-panel active"><div className="dialog-system-message"><span>R</span><div><strong>{commercial ? "Кого вы рекомендуете?" : "Какой результат вы получили?"}</strong><p>{commercial ? "Укажите контакт. Система проверит дубликат до передачи данных компании." : "Заполните основные данные результата. Можно использовать готовую расшифровку выше."}</p></div></div><section className="dialog-answer-card"><div className="partner-form-grid dynamic-result-fields">{contactFields.map(renderField)}</div></section>{duplicate && <div className="duplicate-warning"><strong>Контакт уже зарегистрирован</strong><p>Выберите другого потенциального клиента.</p></div>}{error && <div className="inline-notice error" role="alert">{error}</div>}<button className="button button-primary partner-submit-button" type="button" onClick={() => void nextFromContact()} disabled={pending}>{pending ? "Проверяем контакт…" : "Продолжить"}<span>→</span></button></div>}
+    {step === 1 && <div className="lead-step-panel active"><div className={compact?"agent-form-intro":"dialog-system-message"}>{!compact&&<span>R</span>}<div><strong>{commercial ? "Кого вы рекомендуете?" : "Какой результат вы получили?"}</strong>{!compact&&<p>{commercial ? "Укажите контакт. Система проверит дубликат до передачи данных компании." : "Заполните основные данные результата. Можно использовать готовую расшифровку выше."}</p>}</div></div><section className="dialog-answer-card"><div className="partner-form-grid dynamic-result-fields">{contactFields.filter(f=>!compact||f.required).map(renderField)}</div>{compact && <><div className="partner-form-grid dynamic-result-fields">{contextFields.filter(f=>f.required).map(renderField)}</div>{visible.some(f=>!f.required)&&<details><summary>Добавить подробности</summary>{visible.filter(f=>!f.required).map(renderField)}</details>}</>}</section>{duplicate && <div className="duplicate-warning"><strong>Контакт уже зарегистрирован</strong><p>Выберите другого потенциального клиента.</p></div>}{error && <div className="inline-notice error" role="alert">{error}</div>}<button className="button button-primary partner-submit-button" type={compact?"submit":"button"} onClick={compact?undefined:()=>void nextFromContact()} disabled={pending||!requestId}>{pending?"Проверяем контакт…":compact?"Подтвердить и отправить":"Продолжить"}<span>→</span></button></div>}
 
     {step === 2 && <div className="lead-step-panel active"><div className="dialog-system-message"><span>R</span><div><strong>Добавьте контекст и подтверждения</strong><p>Компания увидит эти ответы вместе с контактом, файлами и ожидаемой наградой.</p></div></div><section className="dialog-answer-card"><div className="partner-form-stack dynamic-result-fields">{contextFields.map(renderField)}</div></section>{error && <div className="inline-notice error" role="alert">{error}</div>}<div className="lead-final-actions"><button type="button" onClick={() => { setStep(1); setError(""); }}>← Назад</button><button className="button button-primary partner-submit-button" type="button" onClick={reviewResult}>Проверить ответы <span>→</span></button></div></div>}
 

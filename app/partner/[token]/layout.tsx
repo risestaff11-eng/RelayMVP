@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { getPartnerPortal } from "../../../db/partner";
 import { SafeLink as Link } from "@/app/safe-link";
 import { PartnerNav } from "../_components/partner-nav";
-import { PartnerEarningStrip } from "../_components/partner-earning-strip";
 import { MarketingLogo } from "../../marketing-logo";
 import { CompanyLogo } from "../../dashboard/_components/company-brand";
 import { QuickResultLauncher } from "../_components/partner-actions";
@@ -12,6 +11,7 @@ import { countRu } from "@/lib/format-display";
 import { LanguageSwitcher } from "../../language-switcher";
 import { cookies } from "next/headers";
 import { AccessLinkExpiry } from "../_components/access-link-expiry";
+import { AgentInbox } from "../_components/agent-inbox";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false }, referrer: "no-referrer", title: "Кабинет агента" };
@@ -22,8 +22,6 @@ export default async function PartnerLayout({ children, params }: { children: Re
   if (!portal) notFound();
   const locale = (await cookies()).get("relay_locale")?.value === "kk" ? "kk" : "ru";
   const initials = `${portal.profile.firstName[0] || ""}${portal.profile.lastName[0] || ""}`.toUpperCase() || "A";
-  const activeMissions = portal.missions.filter((mission) => mission.status === "ACTIVE");
-  const bestReward = [...activeMissions].sort((left, right) => right.rewardValue - left.rewardValue)[0];
 
   return (
     <main className="partner-portal-shell">
@@ -36,13 +34,13 @@ export default async function PartnerLayout({ children, params }: { children: Re
       <section className="partner-portal-main">
         <header className="partner-portal-topbar">
           <div className="partner-top-identity">
-            <div className="partner-mini-avatar">{portal.profile.avatarObjectKey ? <SiteImage unoptimized width={64} height={64} src={`/api/partner/avatar?token=${token}`} alt="Аватар агента" /> : <span>{initials}</span>}</div>
-            <div className="partner-top-copy"><small>АГЕНТ</small><strong>{(portal.profile.firstName) ? (portal.profile.firstName) : (<bdi data-no-translate>{portal.partner.email}</bdi>)}</strong><PartnerEarningStrip token={token} activeCount={activeMissions.length} bestReward={bestReward?.rewardLabel} currency={portal.program.currency} /></div>
+            <Link className="partner-mini-avatar" href={`/partner/${token}/profile`} aria-label="Мой профиль">{portal.profile.avatarObjectKey ? <SiteImage unoptimized width={64} height={64} src={`/api/partner/avatar?token=${token}`} alt="Аватар агента" /> : <span>{initials}</span>}</Link>
+            <div className="partner-top-copy"><strong data-no-translate>{portal.profile.firstName || portal.partner.email}</strong></div>
           </div>
           <a className="partner-company-switch-mobile" href="/agent">{<bdi data-no-translate>{portal.company.name}</bdi>} · сменить</a>
           <div className="partner-top-actions"><LanguageSwitcher locale={locale} className="agent-language-switcher" manageTranslation={false} compact /><QuickResultLauncher token={token} missions={portal.missions} acceptedMissionIds={portal.acceptances.filter((item) => item.status === "ACTIVE").map((item) => item.missionId)} /></div>
         </header>
-        <AccessLinkExpiry expiresAt={portal.accessExpiresAt} now={portal.accessCheckedAt} />
+        <AgentInbox token={token} readAt={portal.profile.notificationsReadAt} events={portal.submissions.flatMap(s=>s.events.filter(e=>e.actorType!=="PARTNER"&&!e.actorType.startsWith("PARTNER_")).map(e=>({...e,submissionId:s.id,name:s.contactName||s.contactCompany}))).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}><AccessLinkExpiry expiresAt={portal.accessExpiresAt} now={portal.accessCheckedAt}/></AgentInbox>
         {portal.historyOnly && <div className="form-notice">Программы завершены или приостановлены. История заявок и выплаты доступны; новые задания пока недоступны.</div>}
         {children}
       </section>

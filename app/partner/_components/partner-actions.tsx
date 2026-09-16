@@ -1,9 +1,9 @@
 "use client";
 import SiteImage from "next/image";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDialogFocus } from "@/app/use-dialog-focus";
 import { SafeLink as Link } from "@/app/safe-link";
-import { typeNames } from "../_lib";
 
 async function partnerAction(body: Record<string, unknown>) {
   const response = await fetch("/api/partner/actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -11,29 +11,21 @@ async function partnerAction(body: Record<string, unknown>) {
   if (!response.ok) throw new Error(data.error || "Не удалось выполнить действие");
 }
 
-export function AcceptMissionButton({ token, missionId, accepted = false, resultHref }: { token: string; missionId: string; accepted?: boolean; resultHref?: string }) {
+export function AcceptMissionButton({ token, missionId, accepted = false, resultHref, actionLabel = "Передать результат" }: { token: string; missionId: string; accepted?: boolean; resultHref?: string; actionLabel?: string }) {
   const [state, setState] = useState<"idle" | "pending" | "done">(accepted ? "done" : "idle");
   const [error, setError] = useState("");
   async function accept() { setState("pending"); setError(""); try { await partnerAction({ token, action: "ACCEPT_MISSION", missionId }); setState("done"); if (resultHref) window.location.assign(resultHref); } catch (reason) { setState("idle"); setError(reason instanceof Error ? reason.message : "Ошибка"); } }
-  return <div className="partner-inline-action">{state === "done" && resultHref ? <Link className="accepted-result-link" href={resultHref}>Передать результат →</Link> : <button type="button" onClick={accept} disabled={state !== "idle"}>{state === "pending" ? "Открываем…" : state === "done" ? "Задание добавлено ✓" : resultHref ? "Передать результат" : "Взять задание"}</button>}<small aria-live="polite">{error}</small></div>;
+  return <div className="partner-inline-action">{state === "done" && resultHref ? <Link className="accepted-result-link" href={resultHref}>{actionLabel} →</Link> : <button type="button" onClick={accept} disabled={state !== "idle"}>{state === "pending" ? "Открываем…" : state === "done" ? "Задание добавлено ✓" : resultHref ? actionLabel : "Взять задание"}</button>}<small aria-live="polite">{error}</small></div>;
 }
 
-type OpportunityMission = { id: string; type: string; title: string; description: string; instructions: string[]; proofRequirements: string[]; resources: Array<{ id: string; fileName: string; mimeType: string; size: number }>; rewardLabel: string; verificationRules: string; status: string; programName: string; programSlug: string; programExpiresAt: string | null };
-
-export function OpportunityBrowser({ missions, acceptedMissionIds, token }: { missions: OpportunityMission[]; acceptedMissionIds: string[]; token: string }) {
-  const [type, setType] = useState("ALL");
-  const filtered = useMemo(() => type === "ALL" ? missions : missions.filter((mission) => mission.type === type), [missions, type]);
-  const [activeId, setActiveId] = useState(missions[0]?.id || "");
-  const active = filtered.find((mission) => mission.id === activeId) ?? filtered[0];
-  return <><div className="opportunity-type-tabs" role="tablist" aria-label="Типы заданий">{[["ALL", "Все"], ["LEAD", "Лиды"], ["DEAL", "Сделки"], ["IMAGE", "Имидж"], ["ENGAGEMENT", "Вовлечение"]].map(([value, label]) => <button className={type === value ? "active" : ""} type="button" role="tab" aria-selected={type === value} onClick={() => { setType(value); const next = value === "ALL" ? missions[0] : missions.find((mission) => mission.type === value); setActiveId(next?.id || ""); }} key={value}>{label}<b>{value === "ALL" ? missions.length : missions.filter((mission) => mission.type === value).length}</b></button>)}</div>{active ? <section className="opportunity-cascade"><nav aria-label="Доступные задания">{filtered.map((mission) => <button className={`type-${mission.type.toLowerCase()} ${active.id === mission.id ? "active" : ""}`} type="button" onClick={() => setActiveId(mission.id)} key={mission.id}><span>{typeNames[mission.type]}</span><strong>{<bdi data-no-translate>{mission.title}</bdi>}</strong><small>{mission.rewardLabel}</small></button>)}</nav><article className={`opportunity-focus type-${active.type.toLowerCase()}`}><div className="opportunity-focus-head"><div><span>{typeNames[active.type]} · {<bdi data-no-translate>{active.programName}</bdi>}</span><h2>{active.title}</h2></div><b>● МОЖНО ЗАРАБОТАТЬ</b></div><p>{active.description}</p><div className="opportunity-focus-reward"><small>ВАШ ЗАРАБОТОК</small><strong>{active.rewardLabel}</strong><span>{active.programExpiresAt ? `до ${new Date(active.programExpiresAt).toLocaleDateString("ru-RU")}` : "Без дедлайна"}</span></div><div className="opportunity-focus-columns"><section><h3>Что сделать</h3><ol>{active.instructions.map((item) => <li key={item}>{item}</li>)}</ol></section><section><h3>Что приложить</h3><ul>{active.proofRequirements.map((item) => <li key={item}>{item}</li>)}</ul>{active.resources.length > 0 && <div className="mission-agent-files"><strong>Материалы компании</strong>{active.resources.map((resource) => <a href={`/api/partner/mission-files/${resource.id}?token=${token}`} key={resource.id}>↓ {<bdi data-no-translate>{resource.fileName}</bdi>}<small>{Math.max(1, Math.round(resource.size / 1024))} КБ</small></a>)}</div>}</section></div><div className="opportunity-verification"><small>КОГДА ЗАСЧИТАЮТ</small><p>{active.verificationRules}</p></div><div className="opportunity-card-actions"><AcceptMissionButton token={token} missionId={active.id} accepted={acceptedMissionIds.includes(active.id)} resultHref={`/partner/${token}/submit/${active.id}`} /></div></article></section> : <section className="partner-large-empty"><span>◇</span><h2>Таких заданий пока нет</h2><p>Выберите другой тип — новые возможности появляются после публикации компанией.</p></section>}</>;
-}
-
-export function QuickResultLauncher({ token, missions, acceptedMissionIds }: { token: string; missions: Array<{ id: string; title: string; programName: string; rewardLabel: string; status: string }>; acceptedMissionIds: string[] }) {
-  const [open, setOpen] = useState(false);
-  const accepted = missions.filter((mission) => mission.status === "ACTIVE" && acceptedMissionIds.includes(mission.id));
-  if (accepted.length === 0) return <Link className="quick-result-launcher" href={`/partner/${token}/opportunities`}><span>＋</span> Передать лид или результат</Link>;
-  if (accepted.length === 1) return <Link className="quick-result-launcher" href={`/partner/${token}/submit/${accepted[0].id}`}><span>＋</span> Передать лид или результат</Link>;
-  return <><button className="quick-result-launcher" type="button" onClick={() => setOpen(true)}><span>＋</span> Передать лид или результат</button>{open && <div className="relay-modal-backdrop"><button className="relay-modal-dismiss-layer" type="button" onClick={() => setOpen(false)} aria-label="Закрыть выбор задания" /><section className="relay-modal quick-result-modal" role="dialog" aria-modal="true" aria-labelledby="quick-result-title"><button className="relay-modal-close" type="button" onClick={() => setOpen(false)} aria-label="Закрыть">×</button><span>МОИ ЗАДАНИЯ</span><h2 id="quick-result-title">К какому заданию относится результат?</h2><p>Выбранное задание будет зафиксировано вместе с результатом и наградой.</p><div>{accepted.map((mission) => <Link href={`/partner/${token}/submit/${mission.id}`} key={mission.id}><span><small>{<bdi data-no-translate>{mission.programName}</bdi>}</small><strong>{<bdi data-no-translate>{mission.title}</bdi>}</strong></span><b>{mission.rewardLabel}</b><i>→</i></Link>)}</div></section></div>}</>;
+export function QuickResultLauncher({ token, missions, acceptedMissionIds }: { token: string; missions: Array<{ id: string; title: string; programName: string; rewardLabel: string; status: string; type?: string }>; acceptedMissionIds: string[] }) {
+ const [open,setOpen]=useState(false); useDialogFocus(open,"agent-result-picker");
+ useEffect(()=>{if(!open)return;const close=(e:KeyboardEvent)=>{if(e.key==="Escape")setOpen(false);};window.addEventListener("keydown",close);return()=>window.removeEventListener("keydown",close);},[open]);
+ const active=missions.filter(m=>m.status==="ACTIVE").sort((a,b)=>Number(acceptedMissionIds.includes(b.id))-Number(acceptedMissionIds.includes(a.id)));
+ const label=active.length&&active.every(m=>m.type==="LEAD"||m.type==="DEAL")?"Передать клиента":"Передать результат";
+ if(!active.length) return null;
+ if(active.length===1&&acceptedMissionIds.includes(active[0].id)) return <Link className="quick-result-launcher" href={`/partner/${token}/submit/${active[0].id}`}>{label}</Link>;
+ return <><button type="button" className="quick-result-launcher" onClick={()=>setOpen(true)}>{label}</button>{open&&<div className="relay-modal-backdrop"><button type="button" className="relay-modal-dismiss-layer" aria-label="Закрыть" onClick={()=>setOpen(false)}/><section id="agent-result-picker" className="relay-modal quick-result-modal" role="dialog" aria-modal="true" aria-labelledby="agent-result-title"><button type="button" className="relay-modal-close" onClick={()=>setOpen(false)} aria-label="Закрыть">×</button><h2 id="agent-result-title">Выберите задание</h2>{active.map(m=><article key={m.id} className="agent-picker-item"><small data-no-translate>{m.programName}</small><h3 data-no-translate>{m.title}</h3><strong data-no-translate>{m.rewardLabel}</strong><Link href={`/partner/${token}/opportunities#task-${m.id}`}>Условия задания →</Link><AcceptMissionButton token={token} missionId={m.id} accepted={acceptedMissionIds.includes(m.id)} resultHref={`/partner/${token}/submit/${m.id}`}/></article>)}</section></div>}</>;
 }
 
 export function DisputeButton({ token, submissionId, opened }: { token: string; submissionId: string; opened: boolean }) {
@@ -45,8 +37,9 @@ export function DisputeButton({ token, submissionId, opened }: { token: string; 
   return <div className="dispute-action"><button type="button" onClick={() => setShow(!show)}>Открыть спор</button>{show && <div><textarea value={reason} onChange={(event) => setReason(event.target.value)} rows={3} placeholder="Что произошло и какого решения вы ожидаете" /><button type="button" disabled={reason.trim().length < 10} onClick={submit}>Отправить спор</button></div>}<small aria-live="polite">{notice}</small></div>;
 }
 
-export function RewardReceiptConfirmation({ token, rewardId, confirmed, supportHref }: { token: string; rewardId: string; confirmed: boolean; supportHref: string }) {
+export function RewardReceiptConfirmation({ token, rewardId, confirmed, supportHref, amount, companyName }: { token: string; rewardId: string; confirmed: boolean; supportHref: string; amount?: string; companyName?: string }) {
   const [checked, setChecked] = useState(confirmed);
+  const [confirming,setConfirming]=useState(false);
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState("");
   async function change(next: boolean) {
@@ -54,11 +47,12 @@ export function RewardReceiptConfirmation({ token, rewardId, confirmed, supportH
     try {
       await partnerAction({ token, action: "CONFIRM_REWARD", rewardId, confirmed: next });
       setChecked(next);
+      setConfirming(false);
       setNotice(next ? "Получение подтверждено. Выплата учтена в статистике." : "Подтверждение снято.");
     } catch (error) { setNotice(error instanceof Error ? error.message : "Не удалось обновить выплату"); }
     finally { setPending(false); }
   }
-  return <div className="reward-receipt-confirmation"><label><input type="checkbox" checked={checked} disabled={pending || checked} onChange={(event) => void change(event.target.checked)} /><span>{checked ? "Деньги получены" : "Подтвердить получение"}</span></label>{!checked && <a href={supportHref} target="_blank" rel="noreferrer">Не получили деньги? Написать в поддержку</a>}<small aria-live="polite">{notice}</small></div>;
+  return <div className="reward-receipt-confirmation">{checked?<strong>Деньги получены</strong>:confirming?<div className="agent-receipt-check"><p>Подтвердите: деньги действительно поступили на ваш счёт.</p><strong data-no-translate>{amount} · {companyName}</strong><button type="button" disabled={pending} onClick={()=>void change(true)}>Да, деньги получены</button><button type="button" disabled={pending} onClick={()=>setConfirming(false)}>Отмена</button></div>:<button type="button" onClick={()=>setConfirming(true)}>Подтвердить получение</button>}{!checked&&<a href={supportHref} target="_blank" rel="noreferrer">Деньги не пришли</a>}<small aria-live="polite">{notice}</small></div>;
 }
 
 export function CopyTextButton({ text, label = "Скопировать" }: { text: string; label?: string }) {

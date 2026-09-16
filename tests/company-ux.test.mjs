@@ -60,8 +60,10 @@ test("company can set a reward that is then visible to the ambassador", async ()
   assert.match(workspace, /amount: calculatedReward/);
   assert.match(workspace, /После сохранения сумма появится в кабинете амбассадора/);
   assert.match(submissionApi, /requestedAmount/);
-  assert.match(agentList, /К ВЫПЛАТЕ/);
-  assert.match(agentDetail, /formatMoney\(submission\.reward\.amount/);
+  assert.match(agentList, /AgentClientList clients=\{p\.submissions\}/);
+  assert.match(agentDetail, /agentReward\(s\.reward/);
+  const display = await readFile(new URL("../lib/agent-workspace.ts", import.meta.url), "utf8");
+  assert.match(display, /formatMoney\(reward\.amount, reward\.currency\)/);
 });
 
 test("company cabinet refinement covers responsive and accessible states", async () => {

@@ -144,6 +144,8 @@ export async function deleteCompanyUser(userId: string) {
       .bind(deletionId, userId, source.companyId, source.company || source.name, maskedEmail(source.email), emailDomain, source.programCount, source.agentCount, source.submissionCount, source.paidRewardsCount, source.paidRewardsAmount, deletedAt),
   ];
   const deletionSql = [
+    "DELETE FROM agent_email_jobs WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
+    "DELETE FROM agent_drafts WHERE partner_id IN (SELECT id FROM partners WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?))",
     "DELETE FROM lead_notification_jobs WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM product_milestones WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
     "DELETE FROM subscription_events WHERE company_id IN (SELECT id FROM companies WHERE owner_user_id = ?)",
