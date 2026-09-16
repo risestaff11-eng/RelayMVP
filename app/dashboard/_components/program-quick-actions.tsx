@@ -1,7 +1,7 @@
 "use client";
 
 import { localizeInterface } from "../../../lib/interface-locale";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export function ProgramQuickActions({ id, initialStatus }: { id: string; initialStatus: string }) {
@@ -9,10 +9,14 @@ export function ProgramQuickActions({ id, initialStatus }: { id: string; initial
   const [status, setStatus] = useState(initialStatus);
   const [pending, setPending] = useState("");
   const [notice, setNotice] = useState("");
+  const inFlight = useRef(false);
 
   async function change(nextStatus: "ACTIVE" | "PAUSED" | "ARCHIVED") {
+    if (inFlight.current) return;
     if (nextStatus === "ARCHIVED" && !window.confirm(localizeInterface("Переместить программу в архив? Агентская ссылка перестанет открываться."))) return;
+    inFlight.current = true;
     setPending(nextStatus); setNotice("");
+    try {
     const response = await fetch(`/api/programs/${id}/status`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status: nextStatus }) });
     const data = await response.json() as { error?: string; status?: string };
     if (response.ok && data.status) {
@@ -20,7 +24,12 @@ export function ProgramQuickActions({ id, initialStatus }: { id: string; initial
       setNotice(nextStatus === "ACTIVE" ? "Запущена" : nextStatus === "PAUSED" ? "На паузе" : "В архиве");
       router.refresh();
     } else setNotice(data.error || "Не удалось изменить статус");
-    setPending("");
+    } catch {
+      setNotice("Не удалось связаться с сервером. Повторите попытку.");
+    } finally {
+      inFlight.current = false;
+      setPending("");
+    }
   }
 
   return <div className="program-quick-actions" aria-label="Управление программой">
