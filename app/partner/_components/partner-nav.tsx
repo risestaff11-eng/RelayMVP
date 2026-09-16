@@ -8,9 +8,8 @@ import { useDialogFocus } from "@/app/use-dialog-focus";
 
 const items = [
   ["", "Главная", "Ваш следующий шаг", "⌂"],
-  ["/opportunities", "Доступные задания", "Что можно выбрать", "✦"],
-  ["/missions", "В работе", "Принятые задания", "◎"],
-  ["/submissions", "Мои заявки", "Решения компании и статусы", "↗"],
+  ["/opportunities", "Задания", "Мои и доступные задания", "✦"],
+  ["/submissions", "Мои клиенты", "Решения компании и статусы", "↗"],
   ["/reports", "Отчёты", "Сдать отчёт и посмотреть историю", "▥"],
   ["/payouts", "Выплаты", "Начисления и даты выплат", "₸"],
   ["/materials", "База знаний", "Компания, сообщения и материалы", "▤"],
@@ -28,7 +27,7 @@ export function PartnerNav({ token }: { token: string }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const hrefFor = (suffix: string) => `${root}${suffix}`;
   const isActive = (suffix: string) => suffix ? pathname.startsWith(hrefFor(suffix)) : pathname === root;
-  const primaryPaths = new Set(["", "/opportunities", "/submissions", "/payouts", "/profile"]);
+  const primaryPaths = new Set(["", "/opportunities", "/submissions", "/payouts"]);
   const visibleItems = items.filter(([suffix]) => advanced || primaryPaths.has(suffix) || isActive(suffix));
 
   const closeMenu = useCallback(() => {
@@ -46,9 +45,10 @@ export function PartnerNav({ token }: { token: string }) {
   }, [open, closeMenu]);
 
   return <>
+    <nav className="agent-bottom-nav" aria-label="Основные разделы">{items.filter(([suffix])=>primaryPaths.has(suffix)).map(([suffix,label,,icon])=><Link key={suffix} href={hrefFor(suffix)} aria-current={isActive(suffix)?"page":undefined}><i aria-hidden="true">{icon}</i><span>{label}</span></Link>)}</nav>
     <nav className="partner-nav" aria-label="Навигация агента">
       {visibleItems.map(([suffix, label, , icon]) => <Link className={isActive(suffix) ? "active" : undefined} aria-current={isActive(suffix) ? "page" : undefined} href={hrefFor(suffix)} key={suffix}><i aria-hidden="true">{icon}</i><span>{label}</span></Link>)}
-      <button type="button" aria-expanded={advanced} onClick={() => setAdvanced(!advanced)}>{advanced ? "Скрыть дополнительные разделы" : "Ещё: задания, отчёты и материалы"}</button>
+      <button type="button" aria-expanded={advanced} onClick={() => setAdvanced(!advanced)}>{advanced ? "Скрыть дополнительные разделы" : "Ещё: профиль, отчёты и материалы"}</button>
     </nav>
 
     <button ref={triggerRef} className="mobile-menu-trigger agent-menu-trigger" type="button" aria-label="Открыть меню" aria-expanded={open} aria-controls="agent-mobile-drawer" onClick={() => setOpen(true)}><i /><i /><i /></button>
@@ -57,7 +57,7 @@ export function PartnerNav({ token }: { token: string }) {
       <header><div className="mobile-drawer-brand"><div className="mobile-drawer-logo"><MarketingLogo /></div><div><small>RISESTAFF</small><strong>КАБИНЕТ АГЕНТА</strong></div></div><button ref={closeRef} type="button" aria-label="Закрыть меню" onClick={closeMenu}>×</button></header>
       <nav aria-label="Мобильная навигация агента">
         {visibleItems.map(([suffix, label, hint, icon]) => <Link key={suffix} className={isActive(suffix) ? "active" : undefined} href={hrefFor(suffix)} aria-current={isActive(suffix) ? "page" : undefined} onClick={() => setOpen(false)}><i aria-hidden="true">{icon}</i><span><strong>{label}</strong><small>{hint}</small></span><b aria-hidden="true">→</b></Link>)}
-        <button type="button" aria-expanded={advanced} onClick={() => setAdvanced(!advanced)}>{advanced ? "Скрыть дополнительные разделы" : "Ещё: задания, отчёты и материалы"}</button>
+        <button type="button" aria-expanded={advanced} onClick={() => setAdvanced(!advanced)}>{advanced ? "Скрыть дополнительные разделы" : "Ещё: профиль, отчёты и материалы"}</button>
       </nav>
       <footer className="mobile-telegram-footer"><a href="https://t.me/relayagents" target="_blank" rel="noreferrer"><i>↗</i><span><strong>RiseStaff Agents</strong><small>Telegram-канал для всех агентов</small></span><b>Открыть</b></a></footer>
     </aside>

@@ -10,7 +10,7 @@ const quote = (value) => `"${value.replaceAll('"', '""')}"`;
  * Requires Node >=22.16, which supports array results for joined SQL projections:
  * https://nodejs.org/en/blog/release/v22.16.0
  */
-export function agentFixture({ rateTable = true, captureSubmissionEmail = true } = {}) {
+export function agentFixture({ rateTable = true, captureSubmissionEmail = true, moduleOverrides = {} } = {}) {
   const sqlite = new DatabaseSync(":memory:");
   let transactionQueue = Promise.resolve();
   const binding = {
@@ -47,6 +47,7 @@ export function agentFixture({ rateTable = true, captureSubmissionEmail = true }
     "cloudflare:workers": { env: runtime },
     "next/headers": { cookies: async () => ({ get: (key) => jar.get(key), set: (key, value, options) => jar.set(key, { value, options }) }) },
     "next/navigation": { redirect: (url) => { throw new Error(`REDIRECT:${url}`); }, notFound: () => { throw new Error("NOT_FOUND"); } },
+    ...moduleOverrides,
   });
   const schema = load(new URL("../../db/schema.ts", import.meta.url));
   const dialect = new SQLiteSyncDialect();

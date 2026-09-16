@@ -6,6 +6,7 @@ import { drainDueIntegrationDeliveries, safeIntegrationEvent } from "../lib/inte
 import { drainCompanyApplicationNotifications } from "../lib/company-application-service";
 import { drainLeadNotifications } from "../lib/company-submission-notifications";
 import { secureResponse } from "../lib/security-headers";
+import { drainAgentNotifications } from "../lib/agent-work-notifications";
 
 interface Env {
   ASSETS: Fetcher;
@@ -41,6 +42,7 @@ function scheduleIntegrationDrain(env: Env, ctx: ExecutionContext) {
     safeIntegrationEvent(drainDueIntegrationDeliveries()),
     drainCompanyApplicationNotifications().catch(() => console.error("Company application notification drain failed")),
     drainLeadNotifications().catch(() => console.error("Lead notification drain failed")),
+    drainAgentNotifications().catch(() => console.error("Agent notification drain failed")),
   ]));
 }
 
@@ -102,6 +104,7 @@ const worker = {
       safeIntegrationEvent(drainDueIntegrationDeliveries()),
       drainCompanyApplicationNotifications().catch(() => console.error("Company application notification drain failed")),
       drainLeadNotifications().catch(() => console.error("Lead notification drain failed")),
+      drainAgentNotifications().catch(() => console.error("Agent notification drain failed")),
     ]));
   },
 };

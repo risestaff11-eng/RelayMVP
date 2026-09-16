@@ -18,6 +18,7 @@ import "./readability.css";
 import "./mobile-overhaul.css";
 import "./integrations.css";
 import "./subscription.css";
+import "./agent-workspace.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

@@ -5,7 +5,7 @@ import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { getCompanyForUser } from "../../../../db/company";
 import { getProgramForCompany } from "../../../../db/programs";
-import { companies, missionResources, missions, programs, submissions } from "../../../../db/schema";
+import { agentDrafts, partnerMissionAcceptances, partnerReferralLinks, companies, missionResources, missions, programs, submissions } from "../../../../db/schema";
 import { getFilesBucket } from "../../../../lib/storage";
 import { cleanList, cleanString, sameOrigin } from "../../company/_utils";
 import { agentUrl } from "../../../../lib/public-origins";
@@ -154,6 +154,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const resources = await getDb().select().from(missionResources).where(eq(missionResources.missionId, missionId));
   await Promise.all(resources.map((resource) => getFilesBucket().delete(resource.objectKey)));
   await getDb().batch([
+    getDb().delete(agentDrafts).where(eq(agentDrafts.missionId, missionId)),
+    getDb().delete(partnerMissionAcceptances).where(eq(partnerMissionAcceptances.missionId, missionId)),
+    getDb().delete(partnerReferralLinks).where(eq(partnerReferralLinks.missionId, missionId)),
     getDb().delete(missionResources).where(eq(missionResources.missionId, missionId)),
     getDb().delete(missions).where(and(eq(missions.id, missionId), eq(missions.programId, id))),
   ]);

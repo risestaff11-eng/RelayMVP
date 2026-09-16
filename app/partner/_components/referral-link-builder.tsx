@@ -9,6 +9,7 @@ export function ReferralLinkBuilder({ token, missions }: { token: string; missio
   const [url, setUrl] = useState("");
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState("");
+  const [message,setMessage]=useState("Заполните короткую форму — я передам ваш запрос компании.");
 
   async function createLink() {
     if (!selectedId) return;
@@ -24,15 +25,13 @@ export function ReferralLinkBuilder({ token, missions }: { token: string; missio
 
   async function copyLink() {
     if (!url) return;
-    await navigator.clipboard.writeText(url);
-    setNotice("Ссылка скопирована");
+    try{await navigator.clipboard.writeText(url);setNotice("Ссылка скопирована");}catch{setNotice("Не удалось скопировать. Выделите ссылку и скопируйте вручную.");}
   }
 
   async function shareLink() {
     if (!url) return;
     const mission = missions.find((item) => item.id === selectedId);
-    if (navigator.share) await navigator.share({ title: mission?.title || "Рекомендация", text: "Заполните короткую форму — я передам ваш запрос компании.", url });
-    else await copyLink();
+    try{if(navigator.share)await navigator.share({title:mission?.title||"Рекомендация",text:message,url});else await copyLink();}catch(error){if(!(error instanceof Error&&error.name==="AbortError"))setNotice("Не удалось открыть отправку. Скопируйте ссылку.");}
   }
 
   if (!missions.length) return <section className="partner-large-empty"><span>↗</span><h2>Сначала возьмите задание</h2><p>Реферальная ссылка доступна для заданий на лид или сделку, которые вы взяли в работу.</p><a className="button button-primary" href={`/partner/${token}/opportunities`}>Выбрать задание <span>→</span></a></section>;
@@ -41,7 +40,7 @@ export function ReferralLinkBuilder({ token, missions }: { token: string; missio
     <div className="referral-explainer"><span>01</span><div><strong>Выберите задание</strong><p>Клиент увидит только название компании и короткую форму: имя, контакт и комментарий.</p></div></div>
     <label><span>Задание</span><select value={selectedId} onChange={(event) => { setSelectedId(event.target.value); setUrl(""); setNotice(""); }}>{missions.map((mission) => <option key={mission.id} value={mission.id} data-no-translate>{mission.programName} · {mission.title} · {mission.rewardLabel}</option>)}</select></label>
     <button className="button button-primary referral-create-button" type="button" disabled={pending} onClick={() => void createLink()}>{pending ? "Создаём…" : "Создать ссылку"}<span>→</span></button>
-    {url && <div className="referral-ready"><small>ВАША ССЫЛКА</small><a href={url} target="_blank" rel="noreferrer">{url}</a><div><button type="button" onClick={() => void copyLink()}>Копировать</button><button type="button" onClick={() => void shareLink()}>Отправить клиенту</button></div><p>Ссылка действует 180 дней и ведёт только на форму клиента. Доступ к вашему кабинету закрыт.</p></div>}
+    {url && <div className="referral-ready"><label><span>Сообщение клиенту</span><textarea value={message} maxLength={1000} onChange={e=>setMessage(e.target.value)} rows={3}/></label><small>ВАША ССЫЛКА</small><a href={url} target="_blank" rel="noreferrer">{url}</a><div><button type="button" onClick={() => void copyLink()}>Копировать</button><button type="button" onClick={() => void shareLink()}>Отправить клиенту</button></div><p>Ссылка действует 180 дней и ведёт только на форму клиента. Доступ к вашему кабинету закрыт.</p></div>}
     {notice && <p className="referral-notice" role="status">{notice}</p>}
   </section>;
 }

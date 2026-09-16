@@ -1,7 +1,7 @@
 import { and, eq, gte, notInArray, or } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { getMissionForPublicSubmission, getPartnerPortal } from "../../../../db/partner";
-import { integrationEvents, submissionAttachments, submissionStatusEvents, submissions } from "../../../../db/schema";
+import { agentDrafts, integrationEvents, submissionAttachments, submissionStatusEvents, submissions } from "../../../../db/schema";
 import { getFilesBucket } from "../../../../lib/storage";
 import { visibleSubmissionFormFields, type SubmissionFormField } from "../../../../lib/submission-form";
 import { cleanString, sameOrigin } from "../../company/_utils";
@@ -33,6 +33,11 @@ export async function POST(request: Request) {
     const missionId = cleanString(form.get("missionId"), 80);
     const portal = await getPartnerPortal(token);
     if (!portal || !portal.programs.some((item) => publicProgramSlug(item.slug) === programSlug)) return Response.json({ error: "Ссылка агента недействительна для этой программы" }, { status: 401 });
+    const requestId=cleanString(form.get("requestId"),80);
+    if(requestId&&!/^[a-zA-Z0-9-]{16,80}$/.test(requestId)) throw new Error("Некорректный идентификатор отправки");
+    const digest=requestId?await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify([portal.company.id,portal.partners.find(p=>p.programId===portal.programs.find(g=>publicProgramSlug(g.slug)===programSlug)?.id)?.id||portal.partner.id,missionId,requestId]))):null;
+    const stableId=digest?[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,"0")).join(""):null;
+    if(stableId){const saved=(await getDb().select().from(submissions).where(eq(submissions.id,stableId)).limit(1))[0];if(saved&&portal.partners.some(p=>p.id===saved.partnerId)&&saved.missionId===missionId)return Response.json({partnerUrl:agentUrl(`/partner/${token}`),submissionId:saved.id},{status:200});}
     const target = await getMissionForPublicSubmission(programSlug, missionId);
     if (!target || !portal.programs.some((item) => item.id === target.program.id)) return Response.json({ error: "Задание недоступно" }, { status: 404 });
     { const denied = await subscriptionDenied(target.company.id); if (denied) return denied; }
@@ -69,6 +74,7 @@ export async function POST(request: Request) {
     const db = getDb();
     const duplicateConditions = [contactEmail ? eq(submissions.contactEmail, contactEmail) : null, contactPhone ? eq(submissions.contactPhone, contactPhone) : null].filter(Boolean);
     const duplicateRows = duplicateConditions.length && ["LEAD", "DEAL"].includes(target.mission.type) ? await db.select({ id: submissions.id }).from(submissions).where(and(eq(submissions.companyId, target.company.id), gte(submissions.createdAt, duplicateCutoff()), notInArray(submissions.reviewStatus, ["REJECTED"]), duplicateConditions.length === 2 ? or(duplicateConditions[0]!, duplicateConditions[1]!) : duplicateConditions[0]!)).limit(1) : [];
+    if (stableId && duplicateRows.some(row=>row.id===stableId)) return Response.json({partnerUrl:agentUrl(`/partner/${token}`),submissionId:stableId},{status:200});
     if (duplicateRows.length) return Response.json({ error: "Этот контакт уже закреплён за другой рекомендацией компании. RiseStaff сохранил первоначальное авторство; данные другого участника не раскрываются." }, { status: 409 });
 
     const allFiles = fields.flatMap((field) => form.getAll(`file__${field.id}`).filter((item): item is File => item instanceof File && item.size > 0).map((file) => ({ field, file })));
@@ -79,7 +85,7 @@ export async function POST(request: Request) {
     const voiceMime = voiceNote?.type.split(";", 1)[0].toLowerCase() ?? "";
     if (voiceNote && (voiceNote.size > 10 * 1024 * 1024 || !allowedAudioTypes.has(voiceMime))) throw new Error("Голосовая запись должна быть не больше 10 МБ и в формате WEBM, M4A, MP3, OGG, AAC или WAV");
 
-    const submissionId = crypto.randomUUID();
+    const submissionId = stableId || crypto.randomUUID();
     const now = new Date().toISOString();
     const attachmentRows: Array<typeof submissionAttachments.$inferInsert> = externalLinks.map((url) => ({ id: crypto.randomUUID(), submissionId, externalUrl: url, fileName: new URL(url).hostname, mimeType: "text/uri-list", size: 0, createdAt: now }));
     const missionPartner = portal.partners.find((item) => item.programId === target.program.id);
@@ -104,8 +110,24 @@ export async function POST(request: Request) {
     const integrationPayload = { submissionId, programId: target.program.id, missionId, partnerId: missionPartner.id, contactName, contactCompany, contactEmail, contactPhone, source: "AGENT_PORTAL", createdAt: now };
     const integrationIdempotencyKey = `submission.created:${submissionId}`;
     const integrationStatement = db.insert(integrationEvents).values({ id: crypto.randomUUID(), companyId: target.company.id, eventType: "submission.created", aggregateType: "submission", aggregateId: submissionId, payloadJson: JSON.stringify(integrationPayload), idempotencyKey: integrationIdempotencyKey, createdAt: now });
-    if (attachmentRows.length) await db.batch([submissionStatement, eventStatement, integrationStatement, db.insert(submissionAttachments).values(attachmentRows)]);
-    else await db.batch([submissionStatement, eventStatement, integrationStatement]);
+    const clearDraft=db.delete(agentDrafts).where(and(eq(agentDrafts.partnerId,missionPartner.id),eq(agentDrafts.missionId,missionId)));
+    try {
+      if (attachmentRows.length) await db.batch([submissionStatement,eventStatement,integrationStatement,db.insert(submissionAttachments).values(attachmentRows),clearDraft]);
+      else await db.batch([submissionStatement,eventStatement,integrationStatement,clearDraft]);
+    } catch(error) {
+      // A lost response can follow a committed batch. Never delete a file that
+      // is already referenced by a committed attachment row.
+      for(const attachment of attachmentRows)if(attachment.objectKey) {
+        try {
+          const persisted=await db.select({id:submissionAttachments.id}).from(submissionAttachments).where(eq(submissionAttachments.id,attachment.id)).limit(1);
+          if(!persisted.length)await getFilesBucket().delete(attachment.objectKey);
+        } catch { /* Keep the object when persistence cannot be determined. */ }
+      }
+      if(stableId){const saved=(await db.select().from(submissions).where(eq(submissions.id,stableId)).limit(1))[0];if(saved&&saved.partnerId===missionPartner.id&&saved.missionId===missionId){
+        return Response.json({partnerUrl:agentUrl(`/partner/${token}`),submissionId:saved.id},{status:200});
+      }}
+      throw error;
+    }
     await notifyCompanyNewSubmission(target.company.id, submissionId);
     await deferIntegrationEvent(recordIntegrationEvent({
       companyId: target.company.id,

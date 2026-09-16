@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPartnerPortal } from "../../../../db/partner";
 import { formatMoneyGroups } from "@/lib/format-display";
+import { agentReward } from "@/lib/agent-workspace";
 import { money, shortDate } from "../../_lib";
 import { RewardReceiptConfirmation } from "../../_components/partner-actions";
 import { EarningsGoalCalculator } from "../../_components/earnings-goal-calculator";
@@ -20,13 +21,13 @@ export default async function PartnerPayoutsPage({ params }: { params: Promise<{
 
   return (
     <div className="partner-portal-content">
-      <div className="partner-page-heading"><div><span>ВАШ ЗАРАБОТОК</span><h1>Все вознаграждения под контролем</h1><p>Смотрите начисления, подтверждайте получение и планируйте следующую цель.</p></div></div>
+      <div className="partner-page-heading"><div><span>ВАШ ЗАРАБОТОК</span><h1>Выплаты</h1><p>Начисления, сроки и подтверждение получения.</p></div></div>
 
       <section className="payout-hero">
-        <small>ДОСТУПНО К ВЫПЛАТЕ</small>
-        <strong>{formatMoneyGroups(approved)}</strong>
+        <small>КОМПАНИЯ ДОЛЖНА ВЫПЛАТИТЬ</small>
+        <strong>{formatMoneyGroups(approved,portal.program.currency)}</strong>
         <span>Компания переводит деньги самостоятельно</span>
-        <div className="payout-hero-summary"><b>Получено: {formatMoneyGroups(received)}</b>{markedByCompany.length > 0 && <b>Компания отметила оплату: {formatMoneyGroups(markedByCompany)}</b>}</div>
+        <div className="payout-hero-summary"><b>Получено: {formatMoneyGroups(received,portal.program.currency)}</b>{markedByCompany.length > 0 && <b>Компания отметила оплату: {formatMoneyGroups(markedByCompany,portal.program.currency)}</b>}</div>
       </section>
 
       {portal.rewards.length ? (
@@ -35,15 +36,15 @@ export default async function PartnerPayoutsPage({ params }: { params: Promise<{
           {portal.rewards.map((reward) => {
             const submission = portal.submissions.find((item) => item.id === reward.submissionId);
             const complete = reward.status === "PAID" && Boolean(reward.partnerConfirmedAt);
-            const status = complete ? "Получено" : reward.status === "PAID" ? "Компания отметила перевод" : reward.status === "APPROVED" ? "К выплате" : reward.status === "PENDING" ? "Ожидается" : "Отменено";
-            const sla = slaState(payoutDueAt(reward.approvedAt, reward.plannedAt, portal.company.payoutSlaDays), reward.status === "PAID");
+            const status = agentReward(reward).label;
+            const sla = slaState(payoutDueAt(reward.approvedAt, reward.plannedAt, portal.company.payoutSlaDays), ["PAID","CANCELLED"].includes(reward.status),portal.accessCheckedAt);
             return (
               <article key={reward.id}>
-                <div><strong>{submission?.mission?.title || "Вознаграждение"}</strong><small>{<bdi data-no-translate>{submission?.contactCompany}</bdi>}</small></div>
+                <div><a href={`/partner/${token}/submissions/${reward.submissionId}`}><strong data-no-translate>{submission?.contactName || submission?.contactCompany || "Вознаграждение"}</strong></a><small data-no-translate>{submission?.mission?.title}</small></div>
                 <span>{<bdi data-no-translate>{portal.company.name}</bdi>}</span>
                 <b>{money(reward.amount, reward.currency)}</b>
                 <span className={sla.overdue ? "sla-label overdue" : "sla-label"}>{reward.plannedAt ? shortDate(reward.plannedAt) : sla.label}</span>
-                <div><em className={`reward-status-${complete ? "received" : reward.status.toLowerCase()}`}>{status}</em>{reward.status === "PAID" && <RewardReceiptConfirmation token={token} rewardId={reward.id} confirmed={Boolean(reward.partnerConfirmedAt)} supportHref={supportHref} />}</div>
+                <div><em className={`reward-status-${complete ? "received" : reward.status.toLowerCase()}`}>{status}</em>{reward.status === "PAID" && <RewardReceiptConfirmation token={token} rewardId={reward.id} confirmed={Boolean(reward.partnerConfirmedAt)} amount={money(reward.amount,reward.currency)} companyName={portal.company.name} supportHref={supportHref} />}</div>
               </article>
             );
           })}
@@ -52,7 +53,7 @@ export default async function PartnerPayoutsPage({ params }: { params: Promise<{
         <section className="partner-large-empty"><span>₸</span><h2>Начислений пока нет</h2><p>Выберите задание, передайте подходящую рекомендацию и выполните условие — здесь появится ваш заработок.</p></section>
       )}
 
-      <EarningsGoalCalculator currency={portal.program.currency} />
+      <details className="agent-help"><summary>Спланировать заработок</summary><EarningsGoalCalculator currency={portal.program.currency} /></details>
     </div>
   );
 }
