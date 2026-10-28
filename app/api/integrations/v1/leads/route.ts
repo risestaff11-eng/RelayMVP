@@ -25,6 +25,8 @@ export async function POST(request: Request) {
   const contactEmail = normalizeContactEmail(text(body.contactEmail, 240));
   const contactPhone = normalizeContactPhone(text(body.contactPhone, 80));
   const comment = text(body.comment, 2400);
+  const source = text(body.source, 120) || "EXTERNAL_API";
+  const attribution = { source, utmSource: text(body.utm_source, 160), utmMedium: text(body.utm_medium, 160), utmCampaign: text(body.utm_campaign, 200), externalId: text(body.externalId, 200) };
   const estimatedDealAmount = Math.max(0, Math.round(Number(body.estimatedDealAmount) || 0));
   if (!programId || !missionId || !partnerId) return apiError("Укажите programId, missionId и partnerId", 400, "RELATIONS_REQUIRED");
   if (!contactName && !contactCompany) return apiError("Укажите имя клиента или компанию", 400, "CONTACT_REQUIRED");
@@ -44,10 +46,10 @@ export async function POST(request: Request) {
   const eventId = crypto.randomUUID();
   const timelineId = crypto.randomUUID();
   const now = new Date().toISOString();
-  const eventPayload = { submissionId, programId, missionId, partnerId, contactName, contactCompany, contactEmail, contactPhone, source: "EXTERNAL_API" };
+  const eventPayload = { submissionId, programId, missionId, partnerId, contactName, contactCompany, contactEmail, contactPhone, ...attribution };
   const saved = await db.batch([
     db.prepare("INSERT OR IGNORE INTO integration_events (id, company_id, event_type, aggregate_type, aggregate_id, payload_json, idempotency_key, created_at) VALUES (?, ?, 'submission.created', 'submission', ?, ?, ?, ?)").bind(eventId, access.companyId, submissionId, JSON.stringify(eventPayload), fullIdempotencyKey, now),
-    db.prepare("INSERT INTO submissions (id, company_id, program_id, mission_id, partner_id, type, contact_name, contact_company, contact_email, contact_phone, payload_json, status, review_status, sales_status, ownership_status, review_due_at, estimated_deal_amount, deal_amount, company_comment, created_at, updated_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', 'PENDING', 'NONE', 'CLEAR', ?, ?, 0, '', ?, ? WHERE EXISTS (SELECT 1 FROM integration_events WHERE id = ?)").bind(submissionId, access.companyId, programId, missionId, partnerId, target.missionType, contactName, contactCompany, contactEmail, contactPhone, JSON.stringify({ partnerComment: comment, referralSource: "EXTERNAL_API", apiKeyId: access.keyId }), reviewDueAt(now, Number(target.reviewSlaHours) || 48), estimatedDealAmount, now, now, eventId),
+    db.prepare("INSERT INTO submissions (id, company_id, program_id, mission_id, partner_id, type, contact_name, contact_company, contact_email, contact_phone, payload_json, status, review_status, sales_status, ownership_status, review_due_at, estimated_deal_amount, deal_amount, company_comment, created_at, updated_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', 'PENDING', 'NONE', 'CLEAR', ?, ?, 0, '', ?, ? WHERE EXISTS (SELECT 1 FROM integration_events WHERE id = ?)").bind(submissionId, access.companyId, programId, missionId, partnerId, target.missionType, contactName, contactCompany, contactEmail, contactPhone, JSON.stringify({ partnerComment: comment, referralSource: source, attribution, apiKeyId: access.keyId }), reviewDueAt(now, Number(target.reviewSlaHours) || 48), estimatedDealAmount, now, now, eventId),
     db.prepare("INSERT INTO submission_status_events (id, submission_id, from_status, to_status, actor_type, comment, created_at) SELECT ?, ?, NULL, 'SUBMITTED', 'INTEGRATION', ?, ? WHERE EXISTS (SELECT 1 FROM submissions WHERE id = ?)").bind(timelineId, submissionId, "Заявка получена через API", now, submissionId),
   ]);
   if (!saved[0].meta.changes) {

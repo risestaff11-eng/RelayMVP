@@ -34,9 +34,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!company) return Response.json({ error: "Компания не найдена" }, { status: 404 });
   if (!hasCompanyPermission(company.role, "CRM_MANAGE")) return companyPermissionDenied();
   { const denied = await subscriptionDenied(company, "CORE"); if (denied) return denied; }
+  const { id } = await params;
+  let payload: Record<string, unknown>;
+  try { payload = await request.json() as Record<string, unknown>; }
+  catch { return Response.json({ error: "Тело запроса должно быть JSON" }, { status: 400 }); }
+  return applySubmissionUpdate(company, id, payload);
+}
+
+// Internal callers must resolve the tenant and authorization before this command.
+// Both the company UI and CRM synchronization use this same settlement workflow.
+export async function applySubmissionUpdate(company: { id: string }, id: string, payload: Record<string, unknown>, actorType = "COMPANY") {
   try {
-    const { id } = await params;
-    const payload = await request.json() as Record<string, unknown>;
     const requestedAmount = payload.amount === undefined ? undefined : Number(payload.amount);
     if (requestedAmount !== undefined && (!Number.isSafeInteger(requestedAmount) || requestedAmount < 0)) throw new Error("Укажите корректную сумму вознаграждения");
     const requestedPlannedAt = cleanString(payload.plannedAt, 30) || null;
@@ -108,8 +116,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const gate = "EXISTS (SELECT 1 FROM submission_status_events WHERE id = ?)";
     const statements = [
       d1.prepare(`INSERT INTO submission_status_events (id, submission_id, from_status, to_status, actor_type, comment, created_at)
-        SELECT ?, id, status, ?, 'COMPANY', ?, ? FROM submissions WHERE id = ? AND company_id = ? AND updated_at = ? AND status = ? AND company_comment = ? AND deal_amount = ? AND ${rewardGuard} RETURNING id`)
-        .bind(eventId, nextLegacyStatus, transitionComment || "Карточка заявки обновлена", now, id, company.id, submission.updatedAt, submission.status, submission.companyComment, submission.dealAmount, ...rewardArgs),
+        SELECT ?, id, status, ?, ?, ?, ? FROM submissions WHERE id = ? AND company_id = ? AND updated_at = ? AND status = ? AND company_comment = ? AND deal_amount = ? AND ${rewardGuard} RETURNING id`)
+        .bind(eventId, nextLegacyStatus, actorType, transitionComment || "Карточка заявки обновлена", now, id, company.id, submission.updatedAt, submission.status, submission.companyComment, submission.dealAmount, ...rewardArgs),
       d1.prepare(`UPDATE submissions SET status = ?, review_status = ?, sales_status = ?, company_comment = ?, estimated_deal_amount = ?, deal_amount = ?, assigned_to_user_id = ?, next_action = ?, next_action_at = ?, updated_at = ? WHERE id = ? AND ${gate}`)
         .bind(nextLegacyStatus, reviewStatus, salesStatus, comment, estimatedDealAmount, dealAmount, assignedToUserId, nextAction, nextActionAt, now, id, eventId),
     ];
@@ -141,7 +149,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       payload: integrationPayload,
     }));
     return Response.json({ ok: true, status: nextLegacyStatus, reviewStatus, salesStatus, rewardStatus: nextRewardStatus, estimatedDealAmount, dealAmount, rewardAmount: amount,
-      event: { id: eventId, fromStatus: submission.status, toStatus: nextLegacyStatus, actorType: "COMPANY", comment: transitionComment || "Карточка заявки обновлена", createdAt: now } });
+      event: { id: eventId, fromStatus: submission.status, toStatus: nextLegacyStatus, actorType, comment: transitionComment || "Карточка заявки обновлена", createdAt: now } });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Не удалось обновить результат" }, { status: 400 });
   }

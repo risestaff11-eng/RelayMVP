@@ -3,6 +3,7 @@ import { decryptIntegrationSecret, encryptIntegrationSecret, randomToken, sha256
 import { normalizeWebhookUrl } from "./url";
 import { companySubscription } from "../company-subscription";
 import { subscriptionAllows } from "../subscription-plans";
+import { deliverAmo } from "./amocrm";
 
 export const INTEGRATION_EVENT_TYPES = [
   "submission.created",
@@ -17,7 +18,7 @@ export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 
 type WebhookConfig = { url: string; eventTypes: IntegrationEventType[]; timeoutMs: number };
 export type IntegrationOverview = {
-  connections: Array<{ id: string; name: string; status: string; lastSuccessAt: string | null; lastErrorAt: string | null; lastError: string; config: { url: string; eventTypes: string[] } }>;
+  connections: Array<{ id: string; name: string; provider: string; status: string; lastSuccessAt: string | null; lastErrorAt: string | null; lastError: string; config: { url: string; eventTypes: string[] } }>;
   deliveries: Array<{ id: string; status: string; attemptCount: number; responseStatus: number | null; lastError: string; deliveredAt: string | null; createdAt: string; eventType: string; aggregateType: string; aggregateId: string; connectionName: string }>;
   apiKeys: Array<{ id: string; name: string; tokenPrefix: string; scopes: string[]; lastUsedAt: string | null; expiresAt: string | null; revokedAt: string | null; createdAt: string }>;
 };
@@ -39,8 +40,9 @@ async function materializeMissingDeliveries(companyId: string) {
     (id, event_id, connection_id, status, attempt_count, next_attempt_at, created_at, updated_at)
     SELECT lower(hex(randomblob(16))), e.id, c.id, 'PENDING', 0, ?, ?, ?
     FROM integration_events e
-    JOIN integration_connections c ON c.company_id = e.company_id AND c.provider = 'WEBHOOK' AND c.status = 'ACTIVE'
+    JOIN integration_connections c ON c.company_id = e.company_id AND c.provider IN ('WEBHOOK','AMOCRM') AND c.status = 'ACTIVE'
     WHERE e.company_id = ? AND e.event_type <> 'integration.test'
+      AND (c.provider <> 'AMOCRM' OR e.created_at >= json_extract(c.config_json, '$.startsAt'))
       AND EXISTS (SELECT 1 FROM json_each(c.config_json, '$.eventTypes') WHERE value = e.event_type)
       AND NOT EXISTS (SELECT 1 FROM integration_deliveries d WHERE d.event_id = e.id AND d.connection_id = c.id)
     ORDER BY e.created_at DESC
@@ -63,7 +65,7 @@ async function recoverStaleDeliveries(companyId: string) {
 export async function getIntegrationOverview(companyId: string): Promise<IntegrationOverview> {
   const db = getD1();
   const [connections, deliveries, keys] = await Promise.all([
-    db.prepare("SELECT id, name, status, config_json AS configJson, last_success_at AS lastSuccessAt, last_error_at AS lastErrorAt, last_error AS lastError FROM integration_connections WHERE company_id = ? ORDER BY created_at DESC").bind(companyId).all<{ id: string; name: string; status: string; configJson: string; lastSuccessAt: string | null; lastErrorAt: string | null; lastError: string }>(),
+    db.prepare("SELECT id, name, provider, status, config_json AS configJson, last_success_at AS lastSuccessAt, last_error_at AS lastErrorAt, last_error AS lastError FROM integration_connections WHERE company_id = ? ORDER BY created_at DESC").bind(companyId).all<{ id: string; name: string; provider: string; status: string; configJson: string; lastSuccessAt: string | null; lastErrorAt: string | null; lastError: string }>(),
     db.prepare("SELECT d.id, d.status, d.attempt_count AS attemptCount, d.response_status AS responseStatus, d.last_error AS lastError, d.delivered_at AS deliveredAt, d.created_at AS createdAt, e.event_type AS eventType, e.aggregate_type AS aggregateType, e.aggregate_id AS aggregateId, c.name AS connectionName FROM integration_deliveries d JOIN integration_events e ON e.id = d.event_id JOIN integration_connections c ON c.id = d.connection_id WHERE e.company_id = ? ORDER BY d.created_at DESC LIMIT 50").bind(companyId).all<IntegrationOverview["deliveries"][number]>(),
     db.prepare("SELECT id, name, token_prefix AS tokenPrefix, scopes_json AS scopesJson, last_used_at AS lastUsedAt, expires_at AS expiresAt, revoked_at AS revokedAt, created_at AS createdAt FROM integration_api_keys WHERE company_id = ? ORDER BY created_at DESC").bind(companyId).all<{ id: string; name: string; tokenPrefix: string; scopesJson: string; lastUsedAt: string | null; expiresAt: string | null; revokedAt: string | null; createdAt: string }>(),
   ]);
@@ -148,8 +150,9 @@ export async function recordIntegrationEvent(input: { companyId: string; eventTy
     const stored = await db.prepare("SELECT id FROM integration_events WHERE idempotency_key = ?").bind(idempotencyKey).first<{ id: string }>();
     eventId = stored?.id || eventId;
   }
-  const connections = await db.prepare("SELECT id, config_json AS configJson FROM integration_connections WHERE company_id = ? AND provider = 'WEBHOOK' AND status = 'ACTIVE'").bind(input.companyId).all<{ id: string; configJson: string }>();
+  const connections = await db.prepare("SELECT id, provider, config_json AS configJson FROM integration_connections WHERE company_id = ? AND provider IN ('WEBHOOK','AMOCRM') AND status = 'ACTIVE'").bind(input.companyId).all<{ id: string; provider: string; configJson: string }>();
   for (const connection of connections.results) {
+    if (connection.provider === "AMOCRM") continue; // Materialized with the stored event timestamp by the drain.
     const config = json<WebhookConfig>(connection.configJson, { url: "", eventTypes: [], timeoutMs: 8_000 });
     if (input.eventType !== "integration.test" && !config.eventTypes.includes(input.eventType)) continue;
     await db.prepare("INSERT OR IGNORE INTO integration_deliveries (id, event_id, connection_id, status, attempt_count, next_attempt_at, created_at, updated_at) VALUES (?, ?, ?, 'PENDING', 0, ?, ?, ?)")
@@ -173,7 +176,7 @@ export async function testWebhookConnection(companyId: string, connectionId: str
 }
 
 export async function retryDelivery(companyId: string, deliveryId: string) {
-  const result = await getD1().prepare("UPDATE integration_deliveries SET status = 'PENDING', next_attempt_at = ?, last_error = '', updated_at = ? WHERE id = ? AND connection_id IN (SELECT id FROM integration_connections WHERE company_id = ?)").bind(isoNow(), isoNow(), deliveryId, companyId).run();
+  const result = await getD1().prepare("UPDATE integration_deliveries SET status = 'PENDING', next_attempt_at = ?, last_error = '', updated_at = ? WHERE id = ? AND status IN ('FAILED','RETRY') AND connection_id IN (SELECT id FROM integration_connections WHERE company_id = ?)").bind(isoNow(), isoNow(), deliveryId, companyId).run();
   if (!result.meta.changes) throw new Error("Доставка не найдена");
   await dispatchPendingDeliveries(companyId, deliveryId);
 }
@@ -184,7 +187,7 @@ export async function dispatchPendingDeliveries(companyId: string, onlyDeliveryI
   const db = getD1();
   await materializeMissingDeliveries(companyId);
   await recoverStaleDeliveries(companyId);
-  const rows = await db.prepare(`SELECT d.id, d.attempt_count AS attemptCount, e.id AS eventId, e.event_type AS eventType, e.aggregate_type AS aggregateType, e.aggregate_id AS aggregateId, e.payload_json AS payloadJson, e.created_at AS eventCreatedAt, c.id AS connectionId, c.config_json AS configJson, c.encrypted_credentials AS encryptedCredentials FROM integration_deliveries d JOIN integration_events e ON e.id = d.event_id JOIN integration_connections c ON c.id = d.connection_id WHERE e.company_id = ? AND c.status = 'ACTIVE' AND d.status IN ('PENDING','RETRY') AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?) AND (? IS NULL OR d.id = ?) ORDER BY d.created_at LIMIT 20`)
+  const rows = await db.prepare(`SELECT d.id, d.attempt_count AS attemptCount, e.id AS eventId, e.event_type AS eventType, e.aggregate_type AS aggregateType, e.aggregate_id AS aggregateId, e.payload_json AS payloadJson, e.created_at AS eventCreatedAt, c.id AS connectionId, c.provider, c.config_json AS configJson, c.encrypted_credentials AS encryptedCredentials FROM integration_deliveries d JOIN integration_events e ON e.id = d.event_id JOIN integration_connections c ON c.id = d.connection_id WHERE e.company_id = ? AND c.status = 'ACTIVE' AND d.status IN ('PENDING','RETRY') AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?) AND (? IS NULL OR d.id = ?) ORDER BY d.created_at LIMIT 20`)
     .bind(companyId, isoNow(), onlyDeliveryId || null, onlyDeliveryId || null).all<Record<string, unknown>>();
   for (const row of rows.results) {
     const claimed = await db.prepare("UPDATE integration_deliveries SET status = 'PROCESSING', updated_at = ? WHERE id = ? AND status IN ('PENDING','RETRY')").bind(isoNow(), row.id).run();
@@ -204,6 +207,10 @@ export async function dispatchPendingDeliveries(companyId: string, onlyDeliveryI
     let responseStatus: number | null = null;
     let error = "";
     try {
+      if (row.provider === "AMOCRM") {
+        await deliverAmo(companyId, String(row.connectionId), String(row.aggregateId));
+        responseStatus = 200;
+      } else {
       const secret = await decryptIntegrationSecret(String(row.encryptedCredentials || ""));
       const signature = await signWebhook(secret, timestamp, body);
       const response = await fetch(config.url, {
@@ -215,6 +222,7 @@ export async function dispatchPendingDeliveries(companyId: string, onlyDeliveryI
       });
       responseStatus = response.status;
       if (!response.ok) error = `HTTP ${response.status}`;
+      }
     } catch (caught) {
       error = caught instanceof Error ? caught.message.slice(0, 500) : "Ошибка сети";
     }
@@ -249,8 +257,9 @@ export async function drainDueIntegrationDeliveries() {
       UNION ALL
       SELECT e.company_id AS companyId
       FROM integration_events e
-      JOIN integration_connections c ON c.company_id = e.company_id AND c.provider = 'WEBHOOK' AND c.status = 'ACTIVE'
+      JOIN integration_connections c ON c.company_id = e.company_id AND c.provider IN ('WEBHOOK','AMOCRM') AND c.status = 'ACTIVE'
       WHERE e.event_type <> 'integration.test'
+        AND (c.provider <> 'AMOCRM' OR e.created_at >= json_extract(c.config_json, '$.startsAt'))
         AND EXISTS (SELECT 1 FROM json_each(c.config_json, '$.eventTypes') WHERE value = e.event_type)
         AND NOT EXISTS (SELECT 1 FROM integration_deliveries d WHERE d.event_id = e.id AND d.connection_id = c.id)
     ) ORDER BY companyId LIMIT 20`).bind(now, staleBefore).all<{ companyId: string }>();
