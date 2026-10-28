@@ -47,7 +47,7 @@ function whatsapp(phone: string, text: string) {
 }
 
 function leadTitle(item: CrmLead) { return item.contactName || item.contactCompany || "Клиент без имени"; }
-function sourceLabel(item: CrmLead) { return item.submittedByClient || item.referralSource === "CLIENT_SELF_SERVICE" ? "Реферальная ссылка амбассадора" : "Амбассадор"; }
+function sourceLabel(item: CrmLead) { if (item.submittedByClient || item.referralSource === "CLIENT_SELF_SERVICE") return "Реферальная ссылка амбассадора"; if (item.referralSource === "EXTERNAL_API") return "Внешний API"; if (item.referralSource && item.referralSource !== "AMBASSADOR_SUBMISSION") return <bdi data-no-translate>{item.referralSource}</bdi>; return "Амбассадор"; }
 function shortDate(value: string) { return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "short" }).format(new Date(value)).replace(".", ""); }
 
 function compactMoneyByCurrency(items: Array<{ amount: number; currency: string }>) {

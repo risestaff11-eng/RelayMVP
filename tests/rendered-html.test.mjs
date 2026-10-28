@@ -125,7 +125,7 @@ test("renders the RiseStaff landing page", async () => {
   assert.match(html, /рекомендации/);
   assert.match(html, /Одна заявка\. Вся история до выплаты/);
   assert.doesNotMatch(html, /Northstar CRM|внедрение CRM/i);
-  assert.match(html, /Контакт, сделка и вознаграждение в одном месте/);
+  assert.match(html, /Рекомендация поступает в amoCRM/);
   assert.doesNotMatch(html, /ТЕКУЩИЙ ПИЛОТ RISESTAFF/);
   assert.match(html, /не продаёт базу агентов/);
   assert.match(html, /Не теряйте клиентов/);

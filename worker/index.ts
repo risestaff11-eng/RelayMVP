@@ -7,6 +7,7 @@ import { drainCompanyApplicationNotifications } from "../lib/company-application
 import { drainLeadNotifications } from "../lib/company-submission-notifications";
 import { secureResponse } from "../lib/security-headers";
 import { drainAgentNotifications } from "../lib/agent-work-notifications";
+import { drainAmoSync } from "../lib/integrations/amocrm";
 
 interface Env {
   ASSETS: Fetcher;
@@ -40,6 +41,7 @@ function scheduleIntegrationDrain(env: Env, ctx: ExecutionContext) {
   lastIntegrationDrainAt = now;
   ctx.waitUntil(Promise.all([
     safeIntegrationEvent(drainDueIntegrationDeliveries()),
+    safeIntegrationEvent(drainAmoSync()),
     drainCompanyApplicationNotifications().catch(() => console.error("Company application notification drain failed")),
     drainLeadNotifications().catch(() => console.error("Lead notification drain failed")),
     drainAgentNotifications().catch(() => console.error("Agent notification drain failed")),
@@ -102,6 +104,7 @@ const worker = {
   async scheduled(_controller: ScheduledController, _env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(Promise.all([
       safeIntegrationEvent(drainDueIntegrationDeliveries()),
+      safeIntegrationEvent(drainAmoSync()),
       drainCompanyApplicationNotifications().catch(() => console.error("Company application notification drain failed")),
       drainLeadNotifications().catch(() => console.error("Lead notification drain failed")),
       drainAgentNotifications().catch(() => console.error("Agent notification drain failed")),

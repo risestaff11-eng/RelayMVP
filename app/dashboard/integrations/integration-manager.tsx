@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { IntegrationOverview } from "../../../lib/integrations/service";
+import { AmoCrmPanel } from "./amocrm-panel";
 
 
 const eventOptions = [
@@ -52,30 +53,33 @@ export function IntegrationManager({ initial }: { initial: IntegrationOverview }
 
   async function createWebhook(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const element = event.currentTarget;
+    const form = new FormData(element);
     const data = await request("/api/company/integrations", { method: "POST", body: JSON.stringify({ name: form.get("name"), url: form.get("url"), eventTypes: events }) });
     const connection = data?.connection as { signingSecret?: string } | undefined;
     if (connection?.signingSecret) setSecret({ title: "Секрет подписи webhook", value: connection.signingSecret });
-    if (data) event.currentTarget.reset();
+    if (data) element.reset();
   }
 
   async function createKey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const element = event.currentTarget;
+    const form = new FormData(element);
     const data = await request("/api/company/integrations/api-keys", { method: "POST", body: JSON.stringify({ name: form.get("name"), scopes }) });
     const key = data?.apiKey as { token?: string } | undefined;
     if (key?.token) setSecret({ title: "Новый API-ключ", value: key.token });
-    if (data) event.currentTarget.reset();
+    if (data) element.reset();
   }
 
   return <div className="dashboard-content integrations-page">
-    <header className="integration-heading"><div><span className="module-kicker">ЕДИНЫЙ ИНТЕГРАЦИОННЫЙ СЛОЙ</span><h1>Интеграции</h1><p>Передавайте события RiseStaff во внешние сервисы и управляйте доступом к API.</p></div><span className="integration-version">API v1</span></header>
-    <section className="integration-summary"><article><small>АКТИВНЫХ WEBHOOKS</small><strong>{summary.active}</strong></article><article><small>ОШИБОК ДОСТАВКИ</small><strong>{summary.errors}</strong></article><article><small>АКТИВНЫХ API-КЛЮЧЕЙ</small><strong>{summary.keys}</strong></article></section>
+    <header className="integration-heading"><div><span className="module-kicker">ЕДИНЫЙ ИНТЕГРАЦИОННЫЙ СЛОЙ</span><h1>Интеграции</h1><p>Передавайте рекомендации в CRM и возвращайте этапы сделки в кабинет агента.</p></div><span className="integration-version">API v1</span></header>
+    <section className="integration-summary"><article><small>АКТИВНЫХ ПОДКЛЮЧЕНИЙ</small><strong>{summary.active}</strong></article><article><small>ОШИБОК ДОСТАВКИ</small><strong>{summary.errors}</strong></article><article><small>АКТИВНЫХ API-КЛЮЧЕЙ</small><strong>{summary.keys}</strong></article></section>
+    <AmoCrmPanel connections={initial.connections} />
     {message && <div className="integration-alert error" role="alert">{message}</div>}
     {secret && <div className="integration-secret" role="status"><div><strong>{secret.title}</strong><p>Скопируйте сейчас. После закрытия значение больше не показывается.</p><code data-no-translate>{secret.value}</code></div><div><button type="button" onClick={() => navigator.clipboard.writeText(secret.value)}>Копировать</button><button type="button" onClick={() => setSecret(null)}>Закрыть</button></div></div>}
 
     <div className="integration-grid"><section className="integration-panel"><header><div><h2>Исходящие webhooks</h2><p>RiseStaff отправит событие сразу после изменения данных.</p></div></header><form className="integration-form" onSubmit={createWebhook}><label>Название<input name="name" required maxLength={80} placeholder="Например, CRM компании" /></label><label>Адрес webhook<input name="url" type="url" required placeholder="https://example.kz/webhooks/risestaff" /></label><fieldset><legend>Какие события отправлять</legend>{eventOptions.map((item) => <label key={item.value}><input type="checkbox" checked={events.includes(item.value)} onChange={() => setEvents((current) => current.includes(item.value) ? current.filter((value) => value !== item.value) : [...current, item.value])} />{item.label}</label>)}</fieldset><button className="integration-primary" disabled={!!busy} type="submit">Создать webhook</button></form>
-      <div className="integration-list">{initial.connections.length ? initial.connections.map((connection) => <article key={connection.id}><div><strong>{<bdi data-no-translate>{connection.name}</bdi>}</strong><code data-no-translate>{connection.config.url}</code><small>Успешно: {dateTime(connection.lastSuccessAt)}{connection.lastError ? ` · ${connection.lastError}` : ""}</small></div><span className={`integration-status ${connection.status.toLowerCase()}`}>{connection.status === "ACTIVE" ? "Активен" : "На паузе"}</span><div className="integration-actions"><button disabled={!!busy} type="button" onClick={() => request(`/api/company/integrations/${connection.id}/test`, { method: "POST", body: "{}" })}>Проверить</button><button disabled={!!busy} type="button" onClick={() => request(`/api/company/integrations/${connection.id}`, { method: "PATCH", body: JSON.stringify({ status: connection.status === "ACTIVE" ? "PAUSED" : "ACTIVE" }) })}>{connection.status === "ACTIVE" ? "Поставить на паузу" : "Включить"}</button></div></article>) : <p className="integration-empty">Webhooks ещё не созданы.</p>}</div>
+      <div className="integration-list">{initial.connections.some(c => c.provider === "WEBHOOK") ? initial.connections.filter(c => c.provider === "WEBHOOK").map((connection) => <article key={connection.id}><div><strong>{<bdi data-no-translate>{connection.name}</bdi>}</strong><code data-no-translate>{connection.config.url}</code><small>Успешно: {dateTime(connection.lastSuccessAt)}{connection.lastError ? ` · ${connection.lastError}` : ""}</small></div><span className={`integration-status ${connection.status.toLowerCase()}`}>{connection.status === "ACTIVE" ? "Активен" : "На паузе"}</span><div className="integration-actions"><button disabled={!!busy} type="button" onClick={() => request(`/api/company/integrations/${connection.id}/test`, { method: "POST", body: "{}" })}>Проверить</button><button disabled={!!busy} type="button" onClick={() => request(`/api/company/integrations/${connection.id}`, { method: "PATCH", body: JSON.stringify({ status: connection.status === "ACTIVE" ? "PAUSED" : "ACTIVE" }) })}>{connection.status === "ACTIVE" ? "Поставить на паузу" : "Включить"}</button></div></article>) : <p className="integration-empty">Webhooks ещё не созданы.</p>}</div>
     </section>
 
     <section className="integration-panel"><header><div><h2>API-ключи</h2><p>Каждый ключ получает только выбранные разрешения.</p></div></header><form className="integration-form" onSubmit={createKey}><label>Название<input name="name" required maxLength={80} placeholder="Например, интеграция с CRM" /></label><fieldset><legend>Разрешения</legend>{scopeOptions.map((item) => <label key={item.value}><input type="checkbox" checked={scopes.includes(item.value)} onChange={() => setScopes((current) => current.includes(item.value) ? current.filter((value) => value !== item.value) : [...current, item.value])} />{item.label}</label>)}</fieldset><button className="integration-primary" disabled={!!busy} type="submit">Создать API-ключ</button></form>
